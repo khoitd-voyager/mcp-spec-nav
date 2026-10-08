@@ -265147,7 +265147,7 @@ Node text: ${this.#forgottenText}`;
       return c > 3 && r && Object.defineProperty(target, key, r), r;
     }
     var SourceFileBase = ModuledNode(TextInsertableNode(StatementedNode(Node3)));
-    var SourceFile3 = class extends SourceFileBase {
+    var SourceFile2 = class extends SourceFileBase {
       #isSaved = false;
       #modifiedEventContainer = new common.EventContainer();
       #preModifiedEventContainer = new common.EventContainer();
@@ -265633,7 +265633,7 @@ Node text: ${this.#forgottenText}`;
     };
     __decorate([
       common.Memoize
-    ], SourceFile3.prototype, "isFromExternalLibrary", null);
+    ], SourceFile2.prototype, "isFromExternalLibrary", null);
     function updateStringLiteralReferences(nodeReferences) {
       for (const [stringLiteral, sourceFile] of nodeReferences) {
         if (ModuleUtils.isModuleSpecifierRelative(stringLiteral.getLiteralText()))
@@ -270572,7 +270572,7 @@ Node text: ${this.#forgottenText}`;
         const thisDirectory = this;
         return common.FileUtils.getRelativePathTo(this.getPath(), getPath());
         function getPath() {
-          return sourceFileDirOrPath instanceof SourceFile3 ? sourceFileDirOrPath.getFilePath() : sourceFileDirOrPath instanceof _Directory ? sourceFileDirOrPath.getPath() : thisDirectory._context.fileSystemWrapper.getStandardizedAbsolutePath(sourceFileDirOrPath, thisDirectory.getPath());
+          return sourceFileDirOrPath instanceof SourceFile2 ? sourceFileDirOrPath.getFilePath() : sourceFileDirOrPath instanceof _Directory ? sourceFileDirOrPath.getPath() : thisDirectory._context.fileSystemWrapper.getStandardizedAbsolutePath(sourceFileDirOrPath, thisDirectory.getPath());
         }
       }
       getRelativePathAsModuleSpecifierTo(sourceFileDirOrFilePath) {
@@ -270581,7 +270581,7 @@ Node text: ${this.#forgottenText}`;
         const moduleSpecifier = common.FileUtils.getRelativePathTo(this.getPath(), getPath()).replace(/((\.d\.ts$)|(\.[^/.]+$))/i, "");
         return moduleSpecifier.startsWith("../") ? moduleSpecifier : "./" + moduleSpecifier;
         function getPath() {
-          return sourceFileDirOrFilePath instanceof SourceFile3 ? getPathForSourceFile(sourceFileDirOrFilePath) : sourceFileDirOrFilePath instanceof _Directory ? getPathForDirectory(sourceFileDirOrFilePath) : getPathForFilePath(thisDirectory._context.fileSystemWrapper.getStandardizedAbsolutePath(sourceFileDirOrFilePath, thisDirectory.getPath()));
+          return sourceFileDirOrFilePath instanceof SourceFile2 ? getPathForSourceFile(sourceFileDirOrFilePath) : sourceFileDirOrFilePath instanceof _Directory ? getPathForDirectory(sourceFileDirOrFilePath) : getPathForFilePath(thisDirectory._context.fileSystemWrapper.getStandardizedAbsolutePath(sourceFileDirOrFilePath, thisDirectory.getPath()));
           function getPathForSourceFile(sourceFile) {
             return getPathForFilePath(sourceFile.getFilePath());
           }
@@ -270649,7 +270649,7 @@ Node text: ${this.#forgottenText}`;
         };
       }
       static #isAncestorOfDir(ancestor, descendant) {
-        if (descendant instanceof SourceFile3) {
+        if (descendant instanceof SourceFile2) {
           descendant = descendant.getDirectory();
           if (ancestor === descendant)
             return true;
@@ -270922,7 +270922,7 @@ Node text: ${this.#forgottenText}`;
       }
     };
     var kindToWrapperMappings = {
-      [common.SyntaxKind.SourceFile]: SourceFile3,
+      [common.SyntaxKind.SourceFile]: SourceFile2,
       [common.SyntaxKind.ArrayBindingPattern]: ArrayBindingPattern,
       [common.SyntaxKind.ArrayLiteralExpression]: ArrayLiteralExpression,
       [common.SyntaxKind.ArrayType]: ArrayTypeNode,
@@ -271319,7 +271319,7 @@ Node text: ${this.#forgottenText}`;
       getSourceFile(compilerSourceFile, options) {
         let wasAdded = false;
         const sourceFile = this.#sourceFileCacheByFilePath.get(compilerSourceFile.fileName) ?? this.#nodeCache.getOrCreate(compilerSourceFile, () => {
-          const createdSourceFile = new SourceFile3(this.#context, compilerSourceFile);
+          const createdSourceFile = new SourceFile2(this.#context, compilerSourceFile);
           if (!options.markInProject)
             this.#context.inProjectCoordinator.setSourceFileNotInProject(createdSourceFile);
           this.#addSourceFileToCache(createdSourceFile);
@@ -272978,7 +272978,7 @@ Node text: ${this.#forgottenText}`;
     exports2.ShorthandPropertyAssignmentBase = ShorthandPropertyAssignmentBase;
     exports2.Signature = Signature;
     exports2.SignaturedDeclaration = SignaturedDeclaration;
-    exports2.SourceFile = SourceFile3;
+    exports2.SourceFile = SourceFile2;
     exports2.SourceFileBase = SourceFileBase;
     exports2.SpreadAssignment = SpreadAssignment;
     exports2.SpreadAssignmentBase = SpreadAssignmentBase;
@@ -287612,7 +287612,9 @@ function fail(err) {
   const msg = err instanceof Error ? err.message : String(err);
   return { content: [{ type: "text", text: `L\u1ED6I: ${msg}` }], isError: true };
 }
-var serviceArg = external_exports.string().describe('Th\u01B0 m\u1EE5c service, vd "Server/BEXMP-order" ho\u1EB7c "BEXMP-storefront"');
+var serviceArg = external_exports.string().describe(
+  'Th\u01B0 m\u1EE5c service, t\u01B0\u01A1ng \u0111\u1ED1i so v\u1EDBi SPEC_NAV_ROOT. Vd "services/api", "packages/web", ho\u1EB7c "." n\u1EBFu root ch\xEDnh l\xE0 project.'
+);
 server2.registerTool(
   "spec_nav_callers",
   {

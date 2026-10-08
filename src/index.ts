@@ -24,7 +24,10 @@ function fail(err: unknown) {
 
 const serviceArg = z
   .string()
-  .describe('Thư mục service, vd "Server/BEXMP-order" hoặc "BEXMP-storefront"');
+  .describe(
+    'Thư mục service, tương đối so với SPEC_NAV_ROOT. Vd "services/api", ' +
+      '"packages/web", hoặc "." nếu root chính là project.',
+  );
 
 server.registerTool(
   "spec_nav_callers",

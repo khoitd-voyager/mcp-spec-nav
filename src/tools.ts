@@ -1,4 +1,4 @@
-import { Node, SyntaxKind, SourceFile } from "ts-morph";
+import { Node, SyntaxKind } from "ts-morph";
 import { getProject, relPath, enclosingFunction, EnclosingInfo } from "./project.js";
 
 export interface CallSite {
@@ -168,7 +168,8 @@ export function getSymbol(service: string, name: string): {
 
 /**
  * Enum/const cuối cùng khớp prefix, cộng giá trị kế tiếp.
- * Spec 8027 cần đúng việc này: "ERROR2_106 là dòng cuối → mã mới là ERROR2_107".
+ * Dùng khi append vào một danh sách có mã: "ERROR2_124 là mã cuối → mã mới
+ * là ERROR2_125", mà không phải đọc cả file constant.
  */
 export function nextEnumValue(service: string, filePath: string, prefix: string): {
   file: string;
