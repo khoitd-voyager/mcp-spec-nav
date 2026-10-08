@@ -1,0 +1,41 @@
+{
+  "name": "mcp-spec-nav",
+  "version": "0.1.0",
+  "description": "MCP server that reads TypeScript code structurally — call sites with their enclosing functions, file outlines, blast radius — so an agent stops grepping and opening whole files",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "mcp-spec-nav": "dist/index.cjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "code-navigation",
+    "ast",
+    "ts-morph",
+    "claude",
+    "llm-tokens"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ts-morph": "^24.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}
