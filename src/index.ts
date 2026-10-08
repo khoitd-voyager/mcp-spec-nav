@@ -13,32 +13,33 @@ import {
 
 const server = new McpServer({ name: "spec-nav", version: "0.1.0" });
 
-/** Gói kết quả thành text block, và báo lỗi dạng đọc được thay vì stack trace. */
+/** Wrap a result as a text block; surface errors as a readable line, not a stack. */
 function ok(payload: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
 }
 function fail(err: unknown) {
   const msg = err instanceof Error ? err.message : String(err);
-  return { content: [{ type: "text" as const, text: `LỖI: ${msg}` }], isError: true };
+  return { content: [{ type: "text" as const, text: `ERROR: ${msg}` }], isError: true };
 }
 
 const serviceArg = z
   .string()
   .describe(
-    'Thư mục service, tương đối so với SPEC_NAV_ROOT. Vd "services/api", ' +
-      '"packages/web", hoặc "." nếu root chính là project.',
+    'Service directory, relative to SPEC_NAV_ROOT. E.g. "services/api", ' +
+      '"packages/web", or "." when the root is the project itself.',
   );
 
 server.registerTool(
   "spec_nav_callers",
   {
     description:
-      "Mọi call site của một hàm/method, kèm HÀM BAO NGOÀI và tham số của nó. " +
-      "Dùng trước khi đổi signature: cho biết mỗi chỗ sửa đã có biến cần truyền " +
-      "trong scope chưa, và đang truyền mấy argument. Thay cho grep rồi mở từng file.",
+      "Every call site of a function or method, each with its ENCLOSING function " +
+      "and that function's parameters. Use before changing a signature: tells you " +
+      "which sites already have the value you need in scope, and how many arguments " +
+      "each one passes. Replaces grepping and then opening every file.",
     inputSchema: {
       service: serviceArg,
-      symbol: z.string().describe("Tên hàm/method, vd addCouponUserHistory"),
+      symbol: z.string().describe("Function or method name, e.g. recordHistory"),
     },
   },
   async ({ service, symbol }) => {
@@ -54,12 +55,12 @@ server.registerTool(
   "spec_nav_outline",
   {
     description:
-      "Cấu trúc một file: class, method, function, interface, enum — kèm line range. " +
-      "Dùng thay cho việc đọc cả file vài nghìn dòng chỉ để biết có gì ở đâu. " +
-      "Có line range rồi thì Read đúng đoạn cần.",
+      "A file's structure: classes, methods, functions, interfaces, enums, each " +
+      "with its line range. Use instead of reading a few thousand lines to learn " +
+      "what is where, then read only the range you need.",
     inputSchema: {
       service: serviceArg,
-      path: z.string().describe("Đường dẫn file, tương đối so với repo root"),
+      path: z.string().describe("File path, relative to the repo root"),
     },
   },
   async ({ service, path }) => {
@@ -75,11 +76,11 @@ server.registerTool(
   "spec_nav_symbol",
   {
     description:
-      "Signature + vị trí (file:line) của một symbol, không trả nội dung file. " +
-      "Dùng để dẫn chiếu chính xác vào spec.",
+      "A symbol's full signature and file:line, without returning file contents. " +
+      "Use to cite an exact location.",
     inputSchema: {
       service: serviceArg,
-      name: z.string().describe("Tên function/class/method/interface"),
+      name: z.string().describe("Name of a function, class, method or interface"),
     },
   },
   async ({ service, name }) => {
@@ -95,12 +96,13 @@ server.registerTool(
   "spec_nav_next_enum",
   {
     description:
-      "Giá trị enum/const cuối cùng khớp prefix, cộng giá trị kế tiếp đề xuất. " +
-      'Vd prefix "ERROR2_" trong error.constant.ts → biết mã cuối và mã mới nên dùng.',
+      "The highest existing enum/const value matching a prefix, plus the next free " +
+      'one. E.g. prefix "ERROR2_" in a constants file returns the last code in use ' +
+      "and the value to add.",
     inputSchema: {
       service: serviceArg,
-      path: z.string().describe("File chứa enum/const"),
-      prefix: z.string().describe('Tiền tố, vd "ERROR2_"'),
+      path: z.string().describe("File holding the enum or constants"),
+      prefix: z.string().describe('Prefix, e.g. "ERROR2_"'),
     },
   },
   async ({ service, path, prefix }) => {
@@ -116,11 +118,11 @@ server.registerTool(
   "spec_nav_blast_radius",
   {
     description:
-      "File nào import file này và import cái gì — phạm vi ảnh hưởng khi đổi export. " +
-      "Dùng trước khi đổi signature hoặc xoá export.",
+      "Which files import this one and what they pull in — the blast radius of " +
+      "changing or removing an export. Use before a signature change or a deletion.",
     inputSchema: {
       service: serviceArg,
-      path: z.string().describe("File cần kiểm tra"),
+      path: z.string().describe("File to check"),
     },
   },
   async ({ service, path }) => {
@@ -135,11 +137,11 @@ server.registerTool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // stderr để không lẫn vào stdout của giao thức MCP
-  console.error(`spec-nav MCP đã chạy, repo root = ${REPO_ROOT}`);
+  // stderr, so it does not corrupt the MCP protocol stream on stdout
+  console.error(`spec-nav running, repo root = ${REPO_ROOT}`);
 }
 
 main().catch((err) => {
-  console.error("spec-nav không khởi động được:", err);
+  console.error("spec-nav failed to start:", err);
   process.exit(1);
 });

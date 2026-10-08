@@ -35,7 +35,7 @@ No clone, no build. Point your MCP client at the GitHub repo:
   "mcpServers": {
     "spec-nav": {
       "command": "npx",
-      "args": ["-y", "github:khoitd/mcp-spec-nav"],
+      "args": ["-y", "github:khoitd-voyager/mcp-spec-nav"],
       "env": { "SPEC_NAV_ROOT": "/absolute/path/to/your/repo" }
     }
   }
@@ -52,11 +52,22 @@ pick it up.
 ### Local checkout
 
 ```bash
-git clone https://github.com/khoitd/mcp-spec-nav && cd mcp-spec-nav
+git clone https://github.com/khoitd-voyager/mcp-spec-nav && cd mcp-spec-nav
 npm install && npm run build
 ```
 
 Then use `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
+
+### Check it loaded
+
+In Claude Code, `/mcp` should list `spec-nav` with 5 tools. If it doesn't, run
+the binary by hand — it prints the root it resolved and exits non-zero on a bad
+path:
+
+```bash
+SPEC_NAV_ROOT=/your/repo npx -y github:khoitd-voyager/mcp-spec-nav
+# spec-nav running, repo root = /your/repo
+```
 
 ## Tools
 
@@ -108,6 +119,83 @@ file to find where the numbering stopped.
 { "service": "services/api", "path": "src/constants/errors.ts", "prefix": "ERROR2_" }
 → { "lastMatch": { "line": 66, "text": "code: 'ERROR2_124'," }, "suggestedNext": "ERROR2_125" }
 ```
+
+## Using it
+
+The tools are most useful in the stretch before you write any code — working
+out what a change touches. Three patterns cover most of it.
+
+### Adding a parameter to a widely-called function
+
+This is the one the tool was built for. You need to know every call site, and at
+each one whether the value you want to thread through is already in scope.
+
+```
+spec_nav_callers { service: "services/api", symbol: "recordHistory" }
+```
+
+Read `enclosingParams` per site. Sites whose enclosing function already takes
+`user` are a one-argument edit; the rest need the value threaded in from their
+own caller — so run `spec_nav_callers` again on *those* enclosing functions.
+`argCount` tells you whether optional parameters are already being passed, which
+decides whether you can append or have to pass `undefined` in a middle slot.
+
+Edit from the bottom of each file upward, since every insertion shifts the line
+numbers below it.
+
+### Finding where to insert into a coded list
+
+```
+spec_nav_next_enum { service: "services/api", path: "src/constants/errors.ts", prefix: "ERROR2_" }
+```
+
+Gives you the highest code in use, the line it's on, and the next free value —
+without reading several hundred lines of constants.
+
+### Before changing or removing an export
+
+```
+spec_nav_blast_radius { service: "services/api", path: "src/utils/phone.ts" }
+```
+
+`importedBy` lists each importing file with what it pulls in, so you can tell a
+type-only import from a real call path. Follow up with `spec_nav_callers` on the
+symbols that matter for proof.
+
+### Reading a large file
+
+Don't open it. Outline first, then read the range you actually need:
+
+```
+spec_nav_outline { service: "services/api", path: "src/services/order.ts" }
+→ method OrderService.confirmOrder :1249-1502
+```
+
+Then a normal file read with `offset: 1249, limit: 253`.
+
+### Agent instructions
+
+If you keep a `CLAUDE.md` or equivalent, a few lines go a long way, because the
+habit being replaced (grep, then open the file) is a strong one:
+
+```markdown
+Before editing a function's signature, call `spec_nav_callers` to get every
+call site with its enclosing function and parameters. Don't grep and open
+files to work this out.
+
+For files over ~200 lines, call `spec_nav_outline` first and read only the
+line range you need.
+```
+
+### What it won't tell you
+
+The tools report structure, not intent. They say a call site exists and what's
+in scope around it; they don't say whether passing the value there is correct,
+or whether a guard belongs before or after an existing check. Read the code at
+the line numbers they hand you for that.
+
+Line numbers also go stale the moment you start editing. Re-run the tool rather
+than trusting numbers from earlier in a session.
 
 ## Limits
 

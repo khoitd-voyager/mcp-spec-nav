@@ -2,23 +2,23 @@ import { Project, SourceFile, Node, SyntaxKind } from "ts-morph";
 import * as path from "node:path";
 import * as fs from "node:fs";
 
-/** Thư mục gốc các service, đọc từ env hoặc suy ra từ cwd. */
+/** Root the `service` arguments resolve against; from env, else cwd. */
 export const REPO_ROOT = process.env.SPEC_NAV_ROOT
   ? path.resolve(process.env.SPEC_NAV_ROOT)
   : process.cwd();
 
-/** Project ts-morph nạp lười theo từng service, vì repo có nhiều service. */
+/** ts-morph projects, loaded lazily per service — a monorepo has many. */
 const projects = new Map<string, Project>();
 
-/** Tìm tsconfig gần nhất của một service để ts-morph hiểu path alias. */
+/** A service's tsconfig, so ts-morph resolves its path aliases. */
 function findTsConfig(serviceDir: string): string | undefined {
   const candidate = path.join(serviceDir, "tsconfig.json");
   return fs.existsSync(candidate) ? candidate : undefined;
 }
 
 /**
- * Nạp project cho một service. Dùng tsconfig nếu có (để resolve alias),
- * không thì quét *.ts theo glob.
+ * Load a service's project. Uses its tsconfig when present so aliases resolve;
+ * otherwise globs *.ts.
  */
 export function getProject(service: string): Project {
   const cached = projects.get(service);
@@ -27,8 +27,8 @@ export function getProject(service: string): Project {
   const serviceDir = path.resolve(REPO_ROOT, service);
   if (!fs.existsSync(serviceDir)) {
     throw new Error(
-      `Không thấy service "${service}" trong ${REPO_ROOT}. ` +
-        `Kiểm tra SPEC_NAV_ROOT hoặc tên service.`,
+      `No service "${service}" under ${REPO_ROOT}. ` +
+        `Check SPEC_NAV_ROOT or the service name.`,
     );
   }
 
@@ -49,24 +49,24 @@ export function getProject(service: string): Project {
   return project;
 }
 
-/** Đường dẫn tương đối so với REPO_ROOT, để output gọn và copy được vào spec. */
+/** Path relative to REPO_ROOT — keeps output short and quotable. */
 export function relPath(sf: SourceFile): string {
   return path.relative(REPO_ROOT, sf.getFilePath());
 }
 
-/** Dòng 1-indexed của một node. */
+/** A node's 1-indexed line. */
 export function lineOf(node: Node): number {
   return node.getStartLineNumber();
 }
 
 export interface EnclosingInfo {
-  /** Tên hàm/method bao ngoài, hoặc "<top-level>". */
+  /** Enclosing function or method name, or "<top-level>". */
   name: string;
-  /** Dòng khai báo hàm bao ngoài. */
+  /** Line where the enclosing function is declared. */
   line: number;
-  /** Signature rút gọn, để biết có param cần thiết hay không. */
+  /** Condensed signature, to see whether a needed parameter is there. */
   signature: string;
-  /** Tên các tham số của hàm bao ngoài. */
+  /** The enclosing function's parameter names. */
   params: string[];
 }
 
@@ -81,8 +81,8 @@ const FUNCTION_KINDS = new Set([
 ]);
 
 /**
- * Tìm hàm/method bao ngoài một node. Đây là thông tin spec cần nhất ở mỗi
- * call site: sửa chỗ này thì có sẵn biến cần truyền trong scope hay không.
+ * The function or method enclosing a node — the thing you most need per call
+ * site: editing here, is the value you must pass already in scope?
  */
 export function enclosingFunction(node: Node): EnclosingInfo {
   let current: Node | undefined = node.getParent();
@@ -97,7 +97,7 @@ export function enclosingFunction(node: Node): EnclosingInfo {
       if (typeof fn.getName === "function" && fn.getName()) {
         name = fn.getName();
       } else {
-        // arrow/function expression gán vào biến: lấy tên biến
+        // arrow/function expression assigned to a variable: use the variable name
         const decl = current.getFirstAncestorByKind(SyntaxKind.VariableDeclaration);
         if (decl) name = decl.getName();
         else if (current.getKind() === SyntaxKind.Constructor) name = "constructor";

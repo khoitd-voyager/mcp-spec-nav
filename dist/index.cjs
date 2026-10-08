@@ -287396,7 +287396,7 @@ function getProject(service) {
   const serviceDir = path.resolve(REPO_ROOT, service);
   if (!fs.existsSync(serviceDir)) {
     throw new Error(
-      `Kh\xF4ng th\u1EA5y service "${service}" trong ${REPO_ROOT}. Ki\u1EC3m tra SPEC_NAV_ROOT ho\u1EB7c t\xEAn service.`
+      `No service "${service}" under ${REPO_ROOT}. Check SPEC_NAV_ROOT or the service name.`
     );
   }
   const tsConfigFilePath = findTsConfig(serviceDir);
@@ -287482,7 +287482,7 @@ function findCallers(service, symbol) {
 function readOutline(service, filePath) {
   const project = getProject(service);
   const sf = project.getSourceFiles().find((f) => relPath(f) === filePath) ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!sf) throw new Error(`Kh\xF4ng th\u1EA5y file "${filePath}" trong service "${service}".`);
+  if (!sf) throw new Error(`No file "${filePath}" in service "${service}".`);
   const entries = [];
   const push = (kind, name, node, signature) => {
     entries.push({
@@ -287559,7 +287559,7 @@ function getSymbol(service, name) {
 function nextEnumValue(service, filePath, prefix) {
   const project = getProject(service);
   const sf = project.getSourceFiles().find((f) => relPath(f) === filePath) ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!sf) throw new Error(`Kh\xF4ng th\u1EA5y file "${filePath}".`);
+  if (!sf) throw new Error(`No file "${filePath}".`);
   const re = new RegExp(`${prefix}(\\d+)`, "g");
   let maxNum = -1;
   let lastLine = 0;
@@ -287583,7 +287583,7 @@ function nextEnumValue(service, filePath, prefix) {
 function blastRadius(service, filePath) {
   const project = getProject(service);
   const target = project.getSourceFiles().find((f) => relPath(f) === filePath) ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!target) throw new Error(`Kh\xF4ng th\u1EA5y file "${filePath}".`);
+  if (!target) throw new Error(`No file "${filePath}".`);
   const importedBy = [];
   for (const sf of project.getSourceFiles()) {
     if (sf === target || sf.getFilePath().includes("node_modules")) continue;
@@ -287610,18 +287610,18 @@ function ok(payload) {
 }
 function fail(err) {
   const msg = err instanceof Error ? err.message : String(err);
-  return { content: [{ type: "text", text: `L\u1ED6I: ${msg}` }], isError: true };
+  return { content: [{ type: "text", text: `ERROR: ${msg}` }], isError: true };
 }
 var serviceArg = external_exports.string().describe(
-  'Th\u01B0 m\u1EE5c service, t\u01B0\u01A1ng \u0111\u1ED1i so v\u1EDBi SPEC_NAV_ROOT. Vd "services/api", "packages/web", ho\u1EB7c "." n\u1EBFu root ch\xEDnh l\xE0 project.'
+  'Service directory, relative to SPEC_NAV_ROOT. E.g. "services/api", "packages/web", or "." when the root is the project itself.'
 );
 server2.registerTool(
   "spec_nav_callers",
   {
-    description: "M\u1ECDi call site c\u1EE7a m\u1ED9t h\xE0m/method, k\xE8m H\xC0M BAO NGO\xC0I v\xE0 tham s\u1ED1 c\u1EE7a n\xF3. D\xF9ng tr\u01B0\u1EDBc khi \u0111\u1ED5i signature: cho bi\u1EBFt m\u1ED7i ch\u1ED7 s\u1EEDa \u0111\xE3 c\xF3 bi\u1EBFn c\u1EA7n truy\u1EC1n trong scope ch\u01B0a, v\xE0 \u0111ang truy\u1EC1n m\u1EA5y argument. Thay cho grep r\u1ED3i m\u1EDF t\u1EEBng file.",
+    description: "Every call site of a function or method, each with its ENCLOSING function and that function's parameters. Use before changing a signature: tells you which sites already have the value you need in scope, and how many arguments each one passes. Replaces grepping and then opening every file.",
     inputSchema: {
       service: serviceArg,
-      symbol: external_exports.string().describe("T\xEAn h\xE0m/method, vd addCouponUserHistory")
+      symbol: external_exports.string().describe("Function or method name, e.g. recordHistory")
     }
   },
   async ({ service, symbol }) => {
@@ -287635,10 +287635,10 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_outline",
   {
-    description: "C\u1EA5u tr\xFAc m\u1ED9t file: class, method, function, interface, enum \u2014 k\xE8m line range. D\xF9ng thay cho vi\u1EC7c \u0111\u1ECDc c\u1EA3 file v\xE0i ngh\xECn d\xF2ng ch\u1EC9 \u0111\u1EC3 bi\u1EBFt c\xF3 g\xEC \u1EDF \u0111\xE2u. C\xF3 line range r\u1ED3i th\xEC Read \u0111\xFAng \u0111o\u1EA1n c\u1EA7n.",
+    description: "A file's structure: classes, methods, functions, interfaces, enums, each with its line range. Use instead of reading a few thousand lines to learn what is where, then read only the range you need.",
     inputSchema: {
       service: serviceArg,
-      path: external_exports.string().describe("\u0110\u01B0\u1EDDng d\u1EABn file, t\u01B0\u01A1ng \u0111\u1ED1i so v\u1EDBi repo root")
+      path: external_exports.string().describe("File path, relative to the repo root")
     }
   },
   async ({ service, path: path2 }) => {
@@ -287652,10 +287652,10 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_symbol",
   {
-    description: "Signature + v\u1ECB tr\xED (file:line) c\u1EE7a m\u1ED9t symbol, kh\xF4ng tr\u1EA3 n\u1ED9i dung file. D\xF9ng \u0111\u1EC3 d\u1EABn chi\u1EBFu ch\xEDnh x\xE1c v\xE0o spec.",
+    description: "A symbol's full signature and file:line, without returning file contents. Use to cite an exact location.",
     inputSchema: {
       service: serviceArg,
-      name: external_exports.string().describe("T\xEAn function/class/method/interface")
+      name: external_exports.string().describe("Name of a function, class, method or interface")
     }
   },
   async ({ service, name }) => {
@@ -287669,11 +287669,11 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_next_enum",
   {
-    description: 'Gi\xE1 tr\u1ECB enum/const cu\u1ED1i c\xF9ng kh\u1EDBp prefix, c\u1ED9ng gi\xE1 tr\u1ECB k\u1EBF ti\u1EBFp \u0111\u1EC1 xu\u1EA5t. Vd prefix "ERROR2_" trong error.constant.ts \u2192 bi\u1EBFt m\xE3 cu\u1ED1i v\xE0 m\xE3 m\u1EDBi n\xEAn d\xF9ng.',
+    description: 'The highest existing enum/const value matching a prefix, plus the next free one. E.g. prefix "ERROR2_" in a constants file returns the last code in use and the value to add.',
     inputSchema: {
       service: serviceArg,
-      path: external_exports.string().describe("File ch\u1EE9a enum/const"),
-      prefix: external_exports.string().describe('Ti\u1EC1n t\u1ED1, vd "ERROR2_"')
+      path: external_exports.string().describe("File holding the enum or constants"),
+      prefix: external_exports.string().describe('Prefix, e.g. "ERROR2_"')
     }
   },
   async ({ service, path: path2, prefix }) => {
@@ -287687,10 +287687,10 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_blast_radius",
   {
-    description: "File n\xE0o import file n\xE0y v\xE0 import c\xE1i g\xEC \u2014 ph\u1EA1m vi \u1EA3nh h\u01B0\u1EDFng khi \u0111\u1ED5i export. D\xF9ng tr\u01B0\u1EDBc khi \u0111\u1ED5i signature ho\u1EB7c xo\xE1 export.",
+    description: "Which files import this one and what they pull in \u2014 the blast radius of changing or removing an export. Use before a signature change or a deletion.",
     inputSchema: {
       service: serviceArg,
-      path: external_exports.string().describe("File c\u1EA7n ki\u1EC3m tra")
+      path: external_exports.string().describe("File to check")
     }
   },
   async ({ service, path: path2 }) => {
@@ -287704,10 +287704,10 @@ server2.registerTool(
 async function main() {
   const transport = new StdioServerTransport();
   await server2.connect(transport);
-  console.error(`spec-nav MCP \u0111\xE3 ch\u1EA1y, repo root = ${REPO_ROOT}`);
+  console.error(`spec-nav running, repo root = ${REPO_ROOT}`);
 }
 main().catch((err) => {
-  console.error("spec-nav kh\xF4ng kh\u1EDFi \u0111\u1ED9ng \u0111\u01B0\u1EE3c:", err);
+  console.error("spec-nav failed to start:", err);
   process.exit(1);
 });
 /*! Bundled license information:

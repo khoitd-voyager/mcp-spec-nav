@@ -6,19 +6,19 @@ export interface CallSite {
   line: number;
   enclosing: string;
   enclosingLine: number;
-  /** Tham số của hàm bao ngoài — spec cần biết biến cần truyền có sẵn chưa. */
+  /** The enclosing function's parameters — is the value you need already here? */
   enclosingParams: string[];
-  /** Số argument đang truyền tại call site này. */
+  /** How many arguments this call site passes. */
   argCount: number;
-  /** Text của call site, cắt ngắn. */
+  /** The call site's text, truncated. */
   snippet: string;
 }
 
 /**
- * Mọi chỗ gọi `symbol`, kèm hàm bao ngoài và tham số của nó.
+ * Every call to `symbol`, with the enclosing function and its parameters.
  *
- * Đây là thông tin mà spec cần nhất trước khi đổi signature: sửa chỗ này
- * thì biến cần truyền đã có trong scope chưa, và đang truyền mấy argument.
+ * This is what you need before changing a signature: at each site, is the
+ * value already in scope, and how many arguments are being passed?
  */
 export function findCallers(service: string, symbol: string): {
   symbol: string;
@@ -30,7 +30,7 @@ export function findCallers(service: string, symbol: string): {
 
   for (const sf of project.getSourceFiles()) {
     if (sf.getFilePath().includes("node_modules")) continue;
-    // Chỉ quét file có chứa tên symbol — rẻ hơn nhiều so với đi hết AST.
+    // Only walk files whose text contains the name — far cheaper than every AST.
     if (!sf.getFullText().includes(symbol)) continue;
 
     sf.forEachDescendant((node) => {
@@ -68,8 +68,8 @@ export interface OutlineEntry {
 }
 
 /**
- * Cấu trúc một file: class, method, function, export — kèm line range.
- * Thay cho việc đọc cả file vài nghìn dòng chỉ để biết có gì ở đâu.
+ * A file's structure: classes, methods, functions, exports, with line ranges.
+ * Replaces reading a few thousand lines to learn what is where.
  */
 export function readOutline(service: string, filePath: string): {
   file: string;
@@ -79,7 +79,7 @@ export function readOutline(service: string, filePath: string): {
   const project = getProject(service);
   const sf = project.getSourceFiles().find((f) => relPath(f) === filePath)
     ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!sf) throw new Error(`Không thấy file "${filePath}" trong service "${service}".`);
+  if (!sf) throw new Error(`No file "${filePath}" in service "${service}".`);
 
   const entries: OutlineEntry[] = [];
   const push = (kind: string, name: string, node: Node, signature?: string) => {
@@ -112,7 +112,7 @@ export function readOutline(service: string, filePath: string): {
 }
 
 /**
- * Signature + vị trí của một symbol, không trả cả file.
+ * A symbol's signature and location, without returning the whole file.
  */
 export function getSymbol(service: string, name: string): {
   found: number;
@@ -167,9 +167,9 @@ export function getSymbol(service: string, name: string): {
 }
 
 /**
- * Enum/const cuối cùng khớp prefix, cộng giá trị kế tiếp.
- * Dùng khi append vào một danh sách có mã: "ERROR2_124 là mã cuối → mã mới
- * là ERROR2_125", mà không phải đọc cả file constant.
+ * The highest enum/const value matching a prefix, plus the next free one.
+ * For appending to a coded list — "ERROR2_124 is the last, so use ERROR2_125"
+ * — without reading the whole constants file.
  */
 export function nextEnumValue(service: string, filePath: string, prefix: string): {
   file: string;
@@ -179,7 +179,7 @@ export function nextEnumValue(service: string, filePath: string, prefix: string)
   const project = getProject(service);
   const sf = project.getSourceFiles().find((f) => relPath(f) === filePath)
     ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!sf) throw new Error(`Không thấy file "${filePath}".`);
+  if (!sf) throw new Error(`No file "${filePath}".`);
 
   const re = new RegExp(`${prefix}(\\d+)`, "g");
   let maxNum = -1;
@@ -205,7 +205,7 @@ export function nextEnumValue(service: string, filePath: string, prefix: string)
 }
 
 /**
- * File nào import symbol/file này — phạm vi ảnh hưởng khi đổi signature.
+ * Which files import this one — the blast radius of a signature change.
  */
 export function blastRadius(service: string, filePath: string): {
   file: string;
@@ -214,7 +214,7 @@ export function blastRadius(service: string, filePath: string): {
   const project = getProject(service);
   const target = project.getSourceFiles().find((f) => relPath(f) === filePath)
     ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!target) throw new Error(`Không thấy file "${filePath}".`);
+  if (!target) throw new Error(`No file "${filePath}".`);
 
   const importedBy: Array<{ file: string; line: number; what: string }> = [];
   for (const sf of project.getSourceFiles()) {
