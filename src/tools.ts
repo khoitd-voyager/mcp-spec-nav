@@ -409,14 +409,59 @@ export function renderMap(result: Awaited<ReturnType<typeof mapPattern>>): strin
 
   // A broad pattern over a large repo overflows what a reply can carry. Keep
   // every file — knowing a service is involved is the point of the map — but
-  // show only the first few lines of each, which is enough to decide where to
-  // look closely with grep or outline.
+  // show fewer lines of each.
+  //
+  // Stepping down and re-measuring matters: a fixed lines-per-file is not a
+  // budget. A pattern like `toFixed\(` hits 330 files, and six lines each is
+  // still three times over, so the trim has to answer "does it fit now?"
+  // rather than "have I trimmed?".
+  for (const perFile of [TRIMMED_HITS_PER_FILE, 3, 2, 1]) {
+    const text = [
+      ...header(
+        `NOTE: output trimmed to ~${perFile} line${perFile === 1 ? "" : "s"} per file. ` +
+          `Every file is listed; read the ones that matter, or re-run with a ` +
+          `narrower pattern.`,
+      ),
+      ...body(perFile),
+    ].join("\n");
+    if (text.length <= RENDER_CHAR_BUDGET) return text;
+  }
+
+  // Even one line each does not fit, so the pattern is too broad to be a map.
+  // Drop to a file census: which files and how many hits, no source text. That
+  // still answers "what does this touch?", which is the question, and it says
+  // plainly that the pattern needs narrowing.
+  const census = [
+    ...header(
+      `NOTE: too many matches to show any source. Listing files and hit counts ` +
+        `only — narrow the pattern (this one matches too much to be a map).`,
+    ),
+  ];
+  for (const f of result.files) {
+    census.push(`  ${String(f.hits.length).padStart(4)} | ${f.file}`);
+  }
+  const censusText = census.join("\n");
+  if (censusText.length <= RENDER_CHAR_BUDGET) return censusText;
+
+  // Still over: keep the files with the most hits and say how many were cut,
+  // so the number is never silently wrong.
+  const ranked = [...result.files].sort((a, b) => b.hits.length - a.hits.length);
+  const kept: string[] = [];
+  let used = 0;
+  const limit = RENDER_CHAR_BUDGET - 600; // room for the header and the note
+  for (const f of ranked) {
+    const line = `  ${String(f.hits.length).padStart(4)} | ${f.file}`;
+    if (used + line.length > limit) break;
+    kept.push(line);
+    used += line.length + 1;
+  }
   return [
     ...header(
-      `NOTE: output trimmed to ~${TRIMMED_HITS_PER_FILE} lines per file. Every file ` +
-        `is listed; read the ones that matter, or re-run with a narrower pattern.`,
+      `NOTE: ${result.files.length} files matched — too many to list. Showing the ` +
+        `${kept.length} with the most hits, ${result.files.length - kept.length} omitted. ` +
+        `Narrow the pattern.`,
     ),
-    ...body(TRIMMED_HITS_PER_FILE),
+    ...kept,
   ].join("\n");
 }
 

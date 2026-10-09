@@ -288347,11 +288347,40 @@ function renderMap(result) {
   };
   const full = [...header(), ...body()].join("\n");
   if (full.length <= RENDER_CHAR_BUDGET) return full;
+  for (const perFile of [TRIMMED_HITS_PER_FILE, 3, 2, 1]) {
+    const text = [
+      ...header(
+        `NOTE: output trimmed to ~${perFile} line${perFile === 1 ? "" : "s"} per file. Every file is listed; read the ones that matter, or re-run with a narrower pattern.`
+      ),
+      ...body(perFile)
+    ].join("\n");
+    if (text.length <= RENDER_CHAR_BUDGET) return text;
+  }
+  const census = [
+    ...header(
+      `NOTE: too many matches to show any source. Listing files and hit counts only \u2014 narrow the pattern (this one matches too much to be a map).`
+    )
+  ];
+  for (const f of result.files) {
+    census.push(`  ${String(f.hits.length).padStart(4)} | ${f.file}`);
+  }
+  const censusText = census.join("\n");
+  if (censusText.length <= RENDER_CHAR_BUDGET) return censusText;
+  const ranked = [...result.files].sort((a, b) => b.hits.length - a.hits.length);
+  const kept = [];
+  let used = 0;
+  const limit = RENDER_CHAR_BUDGET - 600;
+  for (const f of ranked) {
+    const line = `  ${String(f.hits.length).padStart(4)} | ${f.file}`;
+    if (used + line.length > limit) break;
+    kept.push(line);
+    used += line.length + 1;
+  }
   return [
     ...header(
-      `NOTE: output trimmed to ~${TRIMMED_HITS_PER_FILE} lines per file. Every file is listed; read the ones that matter, or re-run with a narrower pattern.`
+      `NOTE: ${result.files.length} files matched \u2014 too many to list. Showing the ${kept.length} with the most hits, ${result.files.length - kept.length} omitted. Narrow the pattern.`
     ),
-    ...body(TRIMMED_HITS_PER_FILE)
+    ...kept
   ].join("\n");
 }
 function listServices() {
