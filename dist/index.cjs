@@ -287759,21 +287759,37 @@ function mapPattern(pattern, services, opts = {}) {
     files: truncated ? out.slice(0, maxFiles) : out
   };
 }
+var RENDER_CHAR_BUDGET = 3e4;
+var TRIMMED_HITS_PER_FILE = 6;
 function renderMap(result) {
-  const lines = [
+  const header = (note) => [
     `pattern: ${result.pattern}`,
     `scanned: ${result.servicesScanned.join(", ")}`,
-    `${result.totalHits} hits in ${result.totalFiles} files` + (result.truncated ? "  [TRUNCATED]" : ""),
+    `${result.totalHits} hits in ${result.totalFiles} files` + (result.truncated ? "  [FILE LIMIT REACHED]" : ""),
+    ...note ? [note] : [],
     "",
     "Format:  line | enclosing function | source"
   ];
-  for (const f of result.files) {
-    lines.push("", f.file);
-    for (const h of f.hits) {
-      lines.push(`  ${h.line} | ${h.enclosing} | ${h.text}`);
+  const body = (perFile) => {
+    const lines = [];
+    for (const f of result.files) {
+      lines.push("", f.file + (perFile && f.hits.length > perFile ? `  (${f.hits.length} hits)` : ""));
+      const shown = perFile ? f.hits.slice(0, perFile) : f.hits;
+      for (const h of shown) lines.push(`  ${h.line} | ${h.enclosing} | ${h.text}`);
+      if (perFile && f.hits.length > perFile) {
+        lines.push(`  \u2026 ${f.hits.length - perFile} more in this file`);
+      }
     }
-  }
-  return lines.join("\n");
+    return lines;
+  };
+  const full = [...header(), ...body()].join("\n");
+  if (full.length <= RENDER_CHAR_BUDGET) return full;
+  return [
+    ...header(
+      `NOTE: output trimmed to ~${TRIMMED_HITS_PER_FILE} lines per file. Every file is listed; use grep or spec_nav_outline on the ones that matter, or re-run with a narrower pattern.`
+    ),
+    ...body(TRIMMED_HITS_PER_FILE)
+  ].join("\n");
 }
 function listServices() {
   return { root: process.env.SPEC_NAV_ROOT ?? process.cwd(), services: discoverServices() };
