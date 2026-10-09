@@ -61132,7 +61132,7 @@ ${lanes.join("\n")}
           error: error22,
           getRequiresScopeChangeCache,
           setRequiresScopeChangeCache,
-          lookup: getSymbol22,
+          lookup: getSymbol2,
           onPropertyWithInvalidInitializer: checkAndReportErrorForInvalidInitializer,
           onFailedToResolveSymbol,
           onSuccessfullyResolvedSymbol
@@ -62530,7 +62530,7 @@ ${lanes.join("\n")}
           const nodeId = getNodeId(node);
           return nodeLinks[nodeId] || (nodeLinks[nodeId] = new NodeLinks());
         }
-        function getSymbol22(symbols, name, meaning) {
+        function getSymbol2(symbols, name, meaning) {
           if (meaning) {
             const symbol = getMergedSymbol(symbols.get(name));
             if (symbol) {
@@ -62549,13 +62549,13 @@ ${lanes.join("\n")}
         function getSymbolsOfParameterPropertyDeclaration(parameter, parameterName) {
           const constructorDeclaration = parameter.parent;
           const classDeclaration = parameter.parent.parent;
-          const parameterSymbol = getSymbol22(
+          const parameterSymbol = getSymbol2(
             constructorDeclaration.locals,
             parameterName,
             111551
             /* Value */
           );
-          const propertySymbol = getSymbol22(
+          const propertySymbol = getSymbol2(
             getMembersOfSymbol(classDeclaration.symbol),
             parameterName,
             111551
@@ -62810,7 +62810,7 @@ ${lanes.join("\n")}
               const root = getRootDeclaration(associatedDeclarationForContainingInitializerOrBindingName);
               if (candidate === getSymbolOfDeclaration(associatedDeclarationForContainingInitializerOrBindingName)) {
                 error22(errorLocation, Diagnostics.Parameter_0_cannot_reference_itself, declarationNameToString(associatedDeclarationForContainingInitializerOrBindingName.name));
-              } else if (candidate.valueDeclaration && candidate.valueDeclaration.pos > associatedDeclarationForContainingInitializerOrBindingName.pos && root.parent.locals && getSymbol22(root.parent.locals, candidate.escapedName, meaning) === candidate) {
+              } else if (candidate.valueDeclaration && candidate.valueDeclaration.pos > associatedDeclarationForContainingInitializerOrBindingName.pos && root.parent.locals && getSymbol2(root.parent.locals, candidate.escapedName, meaning) === candidate) {
                 error22(errorLocation, Diagnostics.Parameter_0_cannot_reference_identifier_1_declared_after_it, declarationNameToString(associatedDeclarationForContainingInitializerOrBindingName.name), declarationNameToString(errorLocation));
               }
             }
@@ -62831,8 +62831,8 @@ ${lanes.join("\n")}
               }
             }
             if (compilerOptions.isolatedModules && result && isInExternalModule && (meaning & 111551) === 111551) {
-              const isGlobal = getSymbol22(globals, name, meaning) === result;
-              const nonValueSymbol = isGlobal && isSourceFile(lastLocation) && lastLocation.locals && getSymbol22(
+              const isGlobal = getSymbol2(globals, name, meaning) === result;
+              const nonValueSymbol = isGlobal && isSourceFile(lastLocation) && lastLocation.locals && getSymbol2(
                 lastLocation.locals,
                 name,
                 ~111551
@@ -63979,9 +63979,9 @@ ${lanes.join("\n")}
                 }
               }
             }
-            symbol = getMergedSymbol(getSymbol22(getExportsOfSymbol(namespace), right.escapedText, meaning));
+            symbol = getMergedSymbol(getSymbol2(getExportsOfSymbol(namespace), right.escapedText, meaning));
             if (!symbol && namespace.flags & 2097152) {
-              symbol = getMergedSymbol(getSymbol22(getExportsOfSymbol(resolveAlias(namespace)), right.escapedText, meaning));
+              symbol = getMergedSymbol(getSymbol2(getExportsOfSymbol(resolveAlias(namespace)), right.escapedText, meaning));
             }
             if (!symbol) {
               if (!ignoreErrors) {
@@ -64003,7 +64003,7 @@ ${lanes.join("\n")}
                   return void 0;
                 }
                 if (meaning & 1920 && isQualifiedName(name.parent)) {
-                  const exportedTypeSymbol = getMergedSymbol(getSymbol22(
+                  const exportedTypeSymbol = getMergedSymbol(getSymbol2(
                     getExportsOfSymbol(namespace),
                     right.escapedText,
                     788968
@@ -74482,7 +74482,7 @@ ${lanes.join("\n")}
           if (isExternalModuleNameRelative(moduleName)) {
             return void 0;
           }
-          const symbol = getSymbol22(
+          const symbol = getSymbol2(
             globals,
             '"' + moduleName + '"',
             512
@@ -77999,7 +77999,7 @@ ${lanes.join("\n")}
                   /*includeTypeOnlyMembers*/
                   true
                 ) : void 0;
-                const symbolFromModule = node.isTypeOf ? void 0 : getSymbol22(getExportsOfSymbol(mergedResolvedSymbol), current.escapedText, meaning);
+                const symbolFromModule = node.isTypeOf ? void 0 : getSymbol2(getExportsOfSymbol(mergedResolvedSymbol), current.escapedText, meaning);
                 const next = symbolFromModule ?? symbolFromVariable;
                 if (!next) {
                   error22(current, Diagnostics.Namespace_0_has_no_exported_member_1, getFullyQualifiedName(currentNamespace), declarationNameToString(current));
@@ -90129,7 +90129,7 @@ ${lanes.join("\n")}
         function getJsxType(name, location) {
           const namespace = getJsxNamespaceAt(location);
           const exports22 = namespace && getExportsOfSymbol(namespace);
-          const typeSymbol = exports22 && getSymbol22(
+          const typeSymbol = exports22 && getSymbol2(
             exports22,
             name,
             788968
@@ -90212,7 +90212,7 @@ ${lanes.join("\n")}
               );
             }
             if (resolvedNamespace) {
-              const candidate = resolveSymbol(getSymbol22(
+              const candidate = resolveSymbol(getSymbol2(
                 getExportsOfSymbol(resolveSymbol(resolvedNamespace)),
                 JsxNames.JSX,
                 1920
@@ -90241,7 +90241,7 @@ ${lanes.join("\n")}
           return s;
         }
         function getNameFromJsxElementAttributesContainer(nameOfAttribPropContainer, jsxNamespace) {
-          const jsxElementAttribPropInterfaceSym = jsxNamespace && getSymbol22(
+          const jsxElementAttribPropInterfaceSym = jsxNamespace && getSymbol2(
             jsxNamespace.exports,
             nameOfAttribPropContainer,
             788968
@@ -90261,7 +90261,7 @@ ${lanes.join("\n")}
           return void 0;
         }
         function getJsxLibraryManagedAttributes(jsxNamespace) {
-          return jsxNamespace && getSymbol22(
+          return jsxNamespace && getSymbol2(
             jsxNamespace.exports,
             JsxNames.LibraryManagedAttributes,
             788968
@@ -90269,7 +90269,7 @@ ${lanes.join("\n")}
           );
         }
         function getJsxElementTypeSymbol(jsxNamespace) {
-          return jsxNamespace && getSymbol22(
+          return jsxNamespace && getSymbol2(
             jsxNamespace.exports,
             JsxNames.ElementType,
             788968
@@ -91202,7 +91202,7 @@ ${lanes.join("\n")}
           return suggestion && symbolName(suggestion);
         }
         function getSuggestionForSymbolNameLookup(symbols, name, meaning) {
-          const symbol = getSymbol22(symbols, name, meaning);
+          const symbol = getSymbol2(symbols, name, meaning);
           if (symbol) return symbol;
           let candidates;
           if (symbols === globals) {
@@ -93181,7 +93181,7 @@ ${lanes.join("\n")}
         function createSignatureForJSXIntrinsic(node, result) {
           const namespace = getJsxNamespaceAt(node);
           const exports22 = namespace && getExportsOfSymbol(namespace);
-          const typeSymbol = exports22 && getSymbol22(
+          const typeSymbol = exports22 && getSymbol2(
             exports22,
             JsxNames.Element,
             788968
@@ -98729,7 +98729,7 @@ ${lanes.join("\n")}
               return;
             }
             const rootName = promiseConstructorName && getFirstIdentifier(promiseConstructorName);
-            const collidingSymbol = getSymbol22(
+            const collidingSymbol = getSymbol2(
               node.locals,
               rootName.escapedText,
               111551
@@ -103788,7 +103788,7 @@ ${lanes.join("\n")}
               getHostSignatureFromJSDoc(name)
             );
             if (!symbol && isIdentifier(name) && container) {
-              symbol = getMergedSymbol(getSymbol22(getExportsOfSymbol(container), name.escapedText, meaning));
+              symbol = getMergedSymbol(getSymbol2(getExportsOfSymbol(container), name.escapedText, meaning));
             }
             if (symbol) {
               return symbol;
@@ -105257,7 +105257,7 @@ ${lanes.join("\n")}
                   for (let helper = 1; helper <= 16777216; helper <<= 1) {
                     if (uncheckedHelpers & helper) {
                       for (const name of getHelperNames(helper)) {
-                        const symbol = resolveSymbol(getSymbol22(
+                        const symbol = resolveSymbol(getSymbol2(
                           getExportsOfModule(helpersModule),
                           escapeLeadingUnderscores(name),
                           111551
@@ -171290,14 +171290,14 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
         }
         function getMapEntryOrDefault(identifier) {
           const originalNode = getOriginalNode2(identifier);
-          const symbol = getSymbol22(originalNode);
+          const symbol = getSymbol2(originalNode);
           if (!symbol) {
             return createSynthIdentifier(identifier, types);
           }
           const mapEntry = transformer.synthNamesMap.get(getSymbolId(symbol).toString());
           return mapEntry || createSynthIdentifier(identifier, types);
         }
-        function getSymbol22(node) {
+        function getSymbol2(node) {
           var _a;
           return ((_a = tryCast(node, canHaveSymbol)) == null ? void 0 : _a.symbol) ?? transformer.checker.getSymbolAtLocation(node);
         }
@@ -188785,7 +188785,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
         }
         if (isStaticModifier(node) && isClassStaticBlockDeclaration(node.parent)) {
           const classDecl = node.parent.parent;
-          const { symbol: symbol2, failedAliasResolution: failedAliasResolution2 } = getSymbol2(classDecl, typeChecker, stopAtAlias);
+          const { symbol: symbol2, failedAliasResolution: failedAliasResolution2 } = getSymbol(classDecl, typeChecker, stopAtAlias);
           const staticBlocks = filter(classDecl.members, isClassStaticBlockDeclaration);
           const containerName = symbol2 ? typeChecker.symbolToString(symbol2, classDecl) : "";
           const sourceFile2 = node.getSourceFile();
@@ -188805,13 +188805,13 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
             );
           });
         }
-        let { symbol, failedAliasResolution } = getSymbol2(node, typeChecker, stopAtAlias);
+        let { symbol, failedAliasResolution } = getSymbol(node, typeChecker, stopAtAlias);
         let fallbackNode = node;
         if (searchOtherFilesOnly && failedAliasResolution) {
           const importDeclaration = forEach([node, ...(symbol == null ? void 0 : symbol.declarations) || emptyArray], (n) => findAncestor(n, isAnyImportOrBareOrAccessedRequire));
           const moduleSpecifier = importDeclaration && tryGetModuleSpecifierFromDeclaration(importDeclaration);
           if (moduleSpecifier) {
-            ({ symbol, failedAliasResolution } = getSymbol2(moduleSpecifier, typeChecker, stopAtAlias));
+            ({ symbol, failedAliasResolution } = getSymbol(moduleSpecifier, typeChecker, stopAtAlias));
             fallbackNode = moduleSpecifier;
           }
         }
@@ -189027,7 +189027,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
             false
           );
         }
-        const { symbol, failedAliasResolution } = getSymbol2(
+        const { symbol, failedAliasResolution } = getSymbol(
           node,
           typeChecker,
           /*stopAtAlias*/
@@ -189067,7 +189067,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
       function getDefinitionInfoForIndexSignatures(node, checker) {
         return mapDefined(checker.getIndexInfosAtLocation(node), (info) => info.declaration && createDefinitionFromSignatureDeclaration(checker, info.declaration));
       }
-      function getSymbol2(node, checker, stopAtAlias) {
+      function getSymbol(node, checker, stopAtAlias) {
         const symbol = checker.getSymbolAtLocation(node);
         let failedAliasResolution = false;
         if ((symbol == null ? void 0 : symbol.declarations) && symbol.flags & 2097152 && !stopAtAlias && shouldSkipAlias(node, symbol.declarations[0])) {
@@ -287543,129 +287543,6 @@ function findCallers(service, symbol) {
   sites.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
   return { symbol, total: sites.length, sites };
 }
-function readOutline(service, filePath) {
-  const project = getProject(service);
-  const sf = project.getSourceFiles().find((f) => relPath(f) === filePath) ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!sf) throw new Error(`No file "${filePath}" in service "${service}".`);
-  const entries = [];
-  const push = (kind, name, node, signature) => {
-    entries.push({
-      kind,
-      name,
-      line: node.getStartLineNumber(),
-      endLine: node.getEndLineNumber(),
-      signature
-    });
-  };
-  for (const cls of sf.getClasses()) {
-    push("class", cls.getName() ?? "<anonymous>", cls);
-    for (const m of cls.getMethods()) {
-      const params = m.getParameters().map((p) => p.getText()).join(", ");
-      push("method", `${cls.getName()}.${m.getName()}`, m, `${m.getName()}(${params})`);
-    }
-  }
-  for (const fn of sf.getFunctions()) {
-    const params = fn.getParameters().map((p) => p.getText()).join(", ");
-    push("function", fn.getName() ?? "<anonymous>", fn, `${fn.getName()}(${params})`);
-  }
-  for (const iface of sf.getInterfaces()) push("interface", iface.getName(), iface);
-  for (const en of sf.getEnums()) push("enum", en.getName(), en);
-  for (const ta of sf.getTypeAliases()) push("type", ta.getName(), ta);
-  entries.sort((a, b) => a.line - b.line);
-  return { file: relPath(sf), totalLines: sf.getEndLineNumber(), entries };
-}
-function getSymbol(service, name) {
-  const project = getProject(service);
-  const results = [];
-  for (const sf of project.getSourceFiles()) {
-    if (sf.getFilePath().includes("node_modules")) continue;
-    if (!sf.getFullText().includes(name)) continue;
-    for (const fn of sf.getFunctions()) {
-      if (fn.getName() !== name) continue;
-      results.push({
-        file: relPath(sf),
-        line: fn.getStartLineNumber(),
-        kind: "function",
-        signature: `${name}(${fn.getParameters().map((p) => p.getText()).join(", ")})`
-      });
-    }
-    for (const cls of sf.getClasses()) {
-      if (cls.getName() === name) {
-        results.push({
-          file: relPath(sf),
-          line: cls.getStartLineNumber(),
-          kind: "class",
-          signature: `class ${name}`
-        });
-      }
-      for (const m of cls.getMethods()) {
-        if (m.getName() !== name) continue;
-        results.push({
-          file: relPath(sf),
-          line: m.getStartLineNumber(),
-          kind: "method",
-          signature: `${cls.getName()}.${name}(${m.getParameters().map((p) => p.getText()).join(", ")})`
-        });
-      }
-    }
-    for (const iface of sf.getInterfaces()) {
-      if (iface.getName() !== name) continue;
-      results.push({
-        file: relPath(sf),
-        line: iface.getStartLineNumber(),
-        kind: "interface",
-        signature: `interface ${name}`
-      });
-    }
-  }
-  return { found: results.length, results };
-}
-function nextEnumValue(service, filePath, prefix) {
-  const project = getProject(service);
-  const sf = project.getSourceFiles().find((f) => relPath(f) === filePath) ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!sf) throw new Error(`No file "${filePath}".`);
-  const re = new RegExp(`${prefix}(\\d+)`, "g");
-  let maxNum = -1;
-  let lastLine = 0;
-  let lastText = "";
-  sf.getFullText().split("\n").forEach((lineText, idx) => {
-    for (const m of lineText.matchAll(re)) {
-      const n = Number(m[1]);
-      if (n > maxNum) {
-        maxNum = n;
-        lastLine = idx + 1;
-        lastText = lineText.trim().slice(0, 140);
-      }
-    }
-  });
-  return {
-    file: relPath(sf),
-    lastMatch: maxNum >= 0 ? { line: lastLine, text: lastText } : null,
-    suggestedNext: maxNum >= 0 ? `${prefix}${maxNum + 1}` : null
-  };
-}
-function blastRadius(service, filePath) {
-  const project = getProject(service);
-  const target = project.getSourceFiles().find((f) => relPath(f) === filePath) ?? project.getSourceFile((f) => f.getFilePath().endsWith(filePath));
-  if (!target) throw new Error(`No file "${filePath}".`);
-  const importedBy = [];
-  for (const sf of project.getSourceFiles()) {
-    if (sf === target || sf.getFilePath().includes("node_modules")) continue;
-    for (const imp of sf.getImportDeclarations()) {
-      const resolved = imp.getModuleSpecifierSourceFile();
-      if (resolved?.getFilePath() !== target.getFilePath()) continue;
-      const named = imp.getNamedImports().map((n) => n.getName());
-      const def = imp.getDefaultImport()?.getText();
-      importedBy.push({
-        file: relPath(sf),
-        line: imp.getStartLineNumber(),
-        what: [def, ...named].filter(Boolean).join(", ") || "(side-effect)"
-      });
-    }
-  }
-  importedBy.sort((a, b) => a.file.localeCompare(b.file));
-  return { file: relPath(target), importedBy };
-}
 function mapPattern(pattern, services, opts = {}) {
   const targets = services?.length ? services : discoverServices();
   const re = new RegExp(pattern, "i");
@@ -287854,75 +287731,6 @@ server2.registerTool(
   async ({ service, symbol }) => {
     try {
       return ok(findCallers(service, symbol));
-    } catch (err) {
-      return fail(err);
-    }
-  }
-);
-server2.registerTool(
-  "spec_nav_outline",
-  {
-    description: "A file's structure: classes, methods, functions, interfaces, enums, each with its line range. Use instead of reading a few thousand lines to learn what is where, then read only the range you need.",
-    inputSchema: {
-      service: serviceArg,
-      path: external_exports.string().describe("File path, relative to the repo root")
-    }
-  },
-  async ({ service, path: path2 }) => {
-    try {
-      return ok(readOutline(service, path2));
-    } catch (err) {
-      return fail(err);
-    }
-  }
-);
-server2.registerTool(
-  "spec_nav_symbol",
-  {
-    description: "A symbol's full signature and file:line, without returning file contents. Use to cite an exact location.",
-    inputSchema: {
-      service: serviceArg,
-      name: external_exports.string().describe("Name of a function, class, method or interface")
-    }
-  },
-  async ({ service, name }) => {
-    try {
-      return ok(getSymbol(service, name));
-    } catch (err) {
-      return fail(err);
-    }
-  }
-);
-server2.registerTool(
-  "spec_nav_next_enum",
-  {
-    description: 'The highest existing enum/const value matching a prefix, plus the next free one. E.g. prefix "ERROR2_" in a constants file returns the last code in use and the value to add.',
-    inputSchema: {
-      service: serviceArg,
-      path: external_exports.string().describe("File holding the enum or constants"),
-      prefix: external_exports.string().describe('Prefix, e.g. "ERROR2_"')
-    }
-  },
-  async ({ service, path: path2, prefix }) => {
-    try {
-      return ok(nextEnumValue(service, path2, prefix));
-    } catch (err) {
-      return fail(err);
-    }
-  }
-);
-server2.registerTool(
-  "spec_nav_blast_radius",
-  {
-    description: "Which files import this one and what they pull in \u2014 the blast radius of changing or removing an export. Use before a signature change or a deletion.",
-    inputSchema: {
-      service: serviceArg,
-      path: external_exports.string().describe("File to check")
-    }
-  },
-  async ({ service, path: path2 }) => {
-    try {
-      return ok(blastRadius(service, path2));
     } catch (err) {
       return fail(err);
     }

@@ -5,10 +5,6 @@ import { z } from "zod";
 import { REPO_ROOT } from "./project.js";
 import {
   findCallers,
-  readOutline,
-  getSymbol,
-  nextEnumValue,
-  blastRadius,
   mapPattern,
   renderMap,
   listServices,
@@ -102,89 +98,6 @@ server.registerTool(
   async ({ service, symbol }) => {
     try {
       return ok(findCallers(service, symbol));
-    } catch (err) {
-      return fail(err);
-    }
-  },
-);
-
-server.registerTool(
-  "spec_nav_outline",
-  {
-    description:
-      "A file's structure: classes, methods, functions, interfaces, enums, each " +
-      "with its line range. Use instead of reading a few thousand lines to learn " +
-      "what is where, then read only the range you need.",
-    inputSchema: {
-      service: serviceArg,
-      path: z.string().describe("File path, relative to the repo root"),
-    },
-  },
-  async ({ service, path }) => {
-    try {
-      return ok(readOutline(service, path));
-    } catch (err) {
-      return fail(err);
-    }
-  },
-);
-
-server.registerTool(
-  "spec_nav_symbol",
-  {
-    description:
-      "A symbol's full signature and file:line, without returning file contents. " +
-      "Use to cite an exact location.",
-    inputSchema: {
-      service: serviceArg,
-      name: z.string().describe("Name of a function, class, method or interface"),
-    },
-  },
-  async ({ service, name }) => {
-    try {
-      return ok(getSymbol(service, name));
-    } catch (err) {
-      return fail(err);
-    }
-  },
-);
-
-server.registerTool(
-  "spec_nav_next_enum",
-  {
-    description:
-      "The highest existing enum/const value matching a prefix, plus the next free " +
-      'one. E.g. prefix "ERROR2_" in a constants file returns the last code in use ' +
-      "and the value to add.",
-    inputSchema: {
-      service: serviceArg,
-      path: z.string().describe("File holding the enum or constants"),
-      prefix: z.string().describe('Prefix, e.g. "ERROR2_"'),
-    },
-  },
-  async ({ service, path, prefix }) => {
-    try {
-      return ok(nextEnumValue(service, path, prefix));
-    } catch (err) {
-      return fail(err);
-    }
-  },
-);
-
-server.registerTool(
-  "spec_nav_blast_radius",
-  {
-    description:
-      "Which files import this one and what they pull in — the blast radius of " +
-      "changing or removing an export. Use before a signature change or a deletion.",
-    inputSchema: {
-      service: serviceArg,
-      path: z.string().describe("File to check"),
-    },
-  },
-  async ({ service, path }) => {
-    try {
-      return ok(blastRadius(service, path));
     } catch (err) {
       return fail(err);
     }

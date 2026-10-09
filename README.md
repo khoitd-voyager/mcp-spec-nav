@@ -1,34 +1,31 @@
 # mcp-spec-nav
 
-An MCP server that reads TypeScript **structurally** instead of textually, so a
-coding agent stops grepping and opening whole files to answer questions it asks
-on almost every task.
+An MCP server that answers the question a coding agent asks at the start of
+every change: **what does this touch?**
 
-The one that matters most: *"who calls this function, and does each call site
-already have the variable I need to pass?"* `grep` gives you line numbers. It
-does not tell you which function encloses each hit, or what parameters that
-function takes. So the agent opens every file to find out — and on a mature
-service that is tens of thousands of lines of context for a question whose
-answer is a 20-row table.
+In a monorepo the honest answer spans services. An agent searching one service
+at a time finds what it thought to look for, writes a plan around that, and the
+two services it never searched surface later as bugs. `spec_nav_map` scans every
+TypeScript project under the root in a single call and returns every matching
+line, each tagged with the function it sits in.
 
-Measured on a real task in a ~10k-file repo, finding 16 call sites of one method
-plus each enclosing function and its parameters:
+Measured on a fee change across six codebases, against the same change planned
+with ordinary grep:
 
-| | characters | ≈ tokens |
-|---|---|---|
-| `grep` + reading the 5 files it points into | 531,765 | 147,713 |
-| one `spec_nav_callers` call | 6,378 | 1,772 |
+| | calls | tokens | key files found |
+|---|---|---|---|
+| grep, narrowing search by search | 28 | 24,418 | 7/7 |
+| one `spec_nav_map` | **1** | **11,890** | **7/7** |
 
-**98.8% less context, 83x smaller, 1.7s.** And the grep path still hasn't
-answered the question — the enclosing functions and their parameters have to be
-read out of those 14,581 lines by hand.
-
-On that same task, a hand-written analysis had counted 14 call sites. There are
-16.
+Running a full `/discuss → /resolve → /create` flow with it came out **2% over**
+the grep baseline in total tokens and four turns shorter, while the resulting
+spec caught three things the grep-only run had missed — including a `|| 300`
+fallback that sits inside `if (fee)` and can never run, next to a different
+constant in the same file that does need changing.
 
 ## Install
 
-No clone, no build. Point your MCP client at the GitHub repo:
+No clone, no build:
 
 ```json
 {
@@ -42,12 +39,11 @@ No clone, no build. Point your MCP client at the GitHub repo:
 }
 ```
 
-`SPEC_NAV_ROOT` is the directory your `service` arguments resolve against. For a
-monorepo point it at the root; for a single project point it at the project and
-pass `service: "."`.
+`SPEC_NAV_ROOT` is the directory to scan. Point it at a monorepo root; the
+server finds the TypeScript projects underneath on its own.
 
-For Claude Code, that block goes in `.mcp.json` at your project root. Restart to
-pick it up.
+For Claude Code that block goes in `.mcp.json` at your project root. Restart to
+pick it up, then `/mcp` should list `spec-nav`.
 
 ### Local checkout
 
@@ -56,159 +52,80 @@ git clone https://github.com/khoitd-voyager/mcp-spec-nav && cd mcp-spec-nav
 npm install && npm run build
 ```
 
-Then use `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
-
-### Check it loaded
-
-In Claude Code, `/mcp` should list `spec-nav` with 5 tools. If it doesn't, run
-the binary by hand — it prints the root it resolved and exits non-zero on a bad
-path:
-
-```bash
-SPEC_NAV_ROOT=/your/repo npx -y github:khoitd-voyager/mcp-spec-nav
-# spec-nav running, repo root = /your/repo
-```
+Then `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
 
 ## Tools
 
-| Tool | Returns | Replaces |
-|---|---|---|
-| `spec_nav_callers` | every call site, with its enclosing function, that function's line, its parameter list, and the argument count at the site | grep, then opening each file to find the enclosing function |
-| `spec_nav_outline` | classes, methods, functions, interfaces, enums with line ranges | reading a 5,000-line file to learn what's in it |
-| `spec_nav_symbol` | full signature and `file:line`, nothing else | grep plus a windowed read |
-| `spec_nav_next_enum` | highest existing value for a prefix, and the next one | reading a whole constants file |
-| `spec_nav_blast_radius` | which files import this one, and what they import | grepping for import paths |
+| Tool | Returns |
+|---|---|
+| `spec_nav_map` | every line matching a regex, across every project, with the enclosing function |
+| `spec_nav_callers` | every call site of a symbol, with its enclosing function **and that function's parameters** |
+| `spec_nav_services` | the projects found under the root |
 
-Every tool takes `service` — a directory relative to `SPEC_NAV_ROOT`.
-
-### `spec_nav_callers`
-
-The argument count and the enclosing parameter list are the point. Adding a
-parameter to a method means visiting each call site; this tells you in one call
-which sites already have the value in scope and which will need it threaded
-through.
+### `spec_nav_map` — call it once, at the start
 
 ```
-{ "service": "services/api", "symbol": "recordHistory" }
+{ "pattern": "handl(e|ing)_?fee|handling_charge|HANDLING_FEE" }
+```
+
+```
+pattern: handl(e|ing)_?fee|handling_charge|HANDLING_FEE
+scanned: admin, storefront, services/customer, services/order, services/product
+492 hits in 83 files
+
+Format:  line | enclosing function | source
+
+services/order/src/utils/calculate-product-fee.ts
+  1 | - | export const PRODUCT_HANDLING_FEE_JPY = 300;
+  27 | calculateProductFee:17 | total += PRODUCT_HANDLING_FEE_JPY;
+  63 | calculateStoreFee:41 | total += PRODUCT_HANDLING_FEE_JPY;
+```
+
+**Use one broad pattern, once.** Each call returns a map of the whole repo, so
+five narrow calls cost far more than one wide one — more, in practice, than just
+using grep. Treat the result as the map for the whole task and narrow down from
+it with grep and ordinary file reads. Call it a second time only for a genuinely
+different concept the first pattern could not reach.
+
+Past a size budget the output keeps every file but shows only the first few
+lines of each, so a broad pattern on a large repo still fits in one reply.
+
+### `spec_nav_callers` — before changing a signature
+
+```
+{ "service": "services/order", "symbol": "recordHistory" }
 ```
 
 ```json
 {
-  "symbol": "recordHistory",
-  "total": 16,
-  "sites": [
-    {
-      "file": "services/api/src/services/order.ts",
-      "line": 1421,
-      "enclosing": "confirmOrder",
-      "enclosingLine": 1249,
-      "enclosingParams": ["req", "user", "manager"],
-      "argCount": 6,
-      "snippet": "this.historyService.recordHistory(items, orderId, …"
-    }
-  ]
+  "symbol": "recordHistory", "total": 16,
+  "sites": [{
+    "file": "services/order/src/services/order.ts",
+    "line": 1421, "enclosing": "confirmOrder", "enclosingLine": 1249,
+    "enclosingParams": ["req", "user", "manager"], "argCount": 6
+  }]
 }
 ```
 
-### `spec_nav_next_enum`
+`enclosingParams` is the point. Adding a parameter means visiting every call
+site; this says in one call which ones already have the value in scope and which
+need it threaded down from their own caller. `argCount` tells you whether you
+can append or must pass `undefined` in a middle slot.
 
-For appending to a coded list — error codes, event names — without reading the
-file to find where the numbering stopped.
-
-```
-{ "service": "services/api", "path": "src/constants/errors.ts", "prefix": "ERROR2_" }
-→ { "lastMatch": { "line": 66, "text": "code: 'ERROR2_124'," }, "suggestedNext": "ERROR2_125" }
-```
-
-## Using it
-
-The tools are most useful in the stretch before you write any code — working
-out what a change touches. Three patterns cover most of it.
-
-### Adding a parameter to a widely-called function
-
-This is the one the tool was built for. You need to know every call site, and at
-each one whether the value you want to thread through is already in scope.
-
-```
-spec_nav_callers { service: "services/api", symbol: "recordHistory" }
-```
-
-Read `enclosingParams` per site. Sites whose enclosing function already takes
-`user` are a one-argument edit; the rest need the value threaded in from their
-own caller — so run `spec_nav_callers` again on *those* enclosing functions.
-`argCount` tells you whether optional parameters are already being passed, which
-decides whether you can append or have to pass `undefined` in a middle slot.
-
-Edit from the bottom of each file upward, since every insertion shifts the line
-numbers below it.
-
-### Finding where to insert into a coded list
-
-```
-spec_nav_next_enum { service: "services/api", path: "src/constants/errors.ts", prefix: "ERROR2_" }
-```
-
-Gives you the highest code in use, the line it's on, and the next free value —
-without reading several hundred lines of constants.
-
-### Before changing or removing an export
-
-```
-spec_nav_blast_radius { service: "services/api", path: "src/utils/phone.ts" }
-```
-
-`importedBy` lists each importing file with what it pulls in, so you can tell a
-type-only import from a real call path. Follow up with `spec_nav_callers` on the
-symbols that matter for proof.
-
-### Reading a large file
-
-Don't open it. Outline first, then read the range you actually need:
-
-```
-spec_nav_outline { service: "services/api", path: "src/services/order.ts" }
-→ method OrderService.confirmOrder :1249-1502
-```
-
-Then a normal file read with `offset: 1249, limit: 253`.
-
-### Agent instructions
-
-If you keep a `CLAUDE.md` or equivalent, a few lines go a long way, because the
-habit being replaced (grep, then open the file) is a strong one:
-
-```markdown
-Before editing a function's signature, call `spec_nav_callers` to get every
-call site with its enclosing function and parameters. Don't grep and open
-files to work this out.
-
-For files over ~200 lines, call `spec_nav_outline` first and read only the
-line range you need.
-```
-
-### What it won't tell you
-
-The tools report structure, not intent. They say a call site exists and what's
-in scope around it; they don't say whether passing the value there is correct,
-or whether a guard belongs before or after an existing check. Read the code at
-the line numbers they hand you for that.
-
-Line numbers also go stale the moment you start editing. Re-run the tool rather
-than trusting numbers from earlier in a session.
+Edit each file bottom-up — every insertion shifts the lines below it.
 
 ## Limits
 
-- **TypeScript and TSX only.** Plain `.js` files are not analysed.
-- **Reads the current checkout.** Line numbers follow whatever branch is checked
-  out; switch branches before asking if you need another one's numbers.
-- **`spec_nav_callers` matches by name, not by resolved type.** Two methods
-  called `save` on different classes come back in one list. Read the `file` and
-  `enclosing` fields rather than trusting `total` blindly.
-- **First call per service costs 1–3 seconds** while the project loads. Later
-  calls are fast.
-- Uses the service's `tsconfig.json` when present, so path aliases resolve.
-  Without one it globs `src/**/*.ts`.
+- **TypeScript and TSX only.** Plain `.js`, `.mdx`, SQL and config files are not
+  scanned; use grep for those.
+- **Reads the current checkout.** Line numbers follow the branch you are on.
+- **`spec_nav_callers` matches by name, not resolved type.** Two methods called
+  `save` on different classes come back in one list; read `file` and `enclosing`
+  rather than trusting `total`.
+- **Structure, not intent.** These tools say where something is and what
+  surrounds it. Whether the change belongs there is still yours to decide.
+- Line numbers go stale as soon as you start editing — re-run rather than
+  trusting numbers from earlier in a session.
 
 ## License
 
