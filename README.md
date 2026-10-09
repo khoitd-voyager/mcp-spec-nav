@@ -1,27 +1,36 @@
 # mcp-spec-nav
 
 An MCP server that answers the question a coding agent asks at the start of
-every change: **what does this touch?**
+every change: **what does this actually touch?**
 
-In a monorepo the honest answer spans services. An agent searching one service
-at a time finds what it thought to look for, writes a plan around that, and the
-two services it never searched surface later as bugs. `spec_nav_map` scans every
-TypeScript project under the root in a single call and returns every matching
-line, each tagged with the function it sits in.
+In a repo of any size the honest answer usually spans more than one place. An
+agent that searches where it expects the code to be finds what it expected,
+plans around that, and the parts it never searched turn up later as bugs — a
+constant left at the old value in another service, a caller it did not know
+about, a screen nobody mentioned.
 
-Measured on a fee change across six codebases, against the same change planned
-with ordinary grep:
+`spec_nav_map` scans every TypeScript project under the root in a single call
+and returns **every** matching line, each tagged with the function it sits in.
+Not a sample, not the first twenty — the whole picture, so the plan is built on
+what is there rather than on what the agent thought to look for.
 
-| | calls | tokens | key files found |
-|---|---|---|---|
-| grep, narrowing search by search | 28 | 24,418 | 7/7 |
-| one `spec_nav_map` | **1** | **11,890** | **7/7** |
+## What it changes in practice
 
-Running a full `/discuss → /resolve → /create` flow with it came out **2% over**
-the grep baseline in total tokens and four turns shorter, while the resulting
-spec caught three things the grep-only run had missed — including a `|| 300`
-fallback that sits inside `if (fee)` and can never run, next to a different
-constant in the same file that does need changing.
+On a change that moved a fee constant across six codebases, the same work
+planned with ordinary searching versus with the map:
+
+- the map found all seven files that mattered in one call; the search-by-search
+  approach found them too, but only after twenty-eight separate searches, each
+  one a guess about where to look next
+- the resulting plan caught three things the search-only plan missed: a
+  constant used in a mail template nobody had listed, a hardcoded value in an
+  admin screen, and — the one that would have caused a bug — a `|| 300`
+  fallback sitting inside `if (fee)` that can never run, two lines away from a
+  different constant in the same file that genuinely did need changing
+
+The last one is the kind of thing that separates a plan you can hand to someone
+from a plan that looks complete. Telling those two apart needs both of them on
+screen at once.
 
 ## Install
 
@@ -39,11 +48,12 @@ No clone, no build:
 }
 ```
 
-`SPEC_NAV_ROOT` is the directory to scan. Point it at a monorepo root; the
-server finds the TypeScript projects underneath on its own.
+`SPEC_NAV_ROOT` is the directory to scan. Point it at a monorepo root and the
+server finds the TypeScript projects underneath on its own; point it at a single
+project and that is what it scans.
 
-For Claude Code that block goes in `.mcp.json` at your project root. Restart to
-pick it up, then `/mcp` should list `spec-nav`.
+For Claude Code that block goes in `.mcp.json` at your project root. Restart,
+then `/mcp` should list `spec-nav`.
 
 ### Local checkout
 
@@ -54,6 +64,39 @@ npm install && npm run build
 
 Then `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
 
+## Telling your agent to use it
+
+Having the tool available is not enough — an agent reaches for the search it has
+always used unless something tells it otherwise. Put this in `CLAUDE.md`,
+`AGENTS.md`, a cursorrule, or whatever your client reads:
+
+```markdown
+## Surveying a change
+
+Before planning any change that might span more than one file, call
+`spec_nav_map` **once** with the broadest regex that describes it — fold every
+spelling into one pattern:
+
+    spec_nav_map("handl(e|ing)_?fee|handling_charge|HANDLING_FEE")
+
+It scans every project at once, so what gets found no longer depends on
+guessing which service to look in. Keep that result as the map for the task.
+
+Do not call it like grep. Each call returns a map of the whole repo, so five
+narrow calls cost far more than one wide one. Call it again only for a
+genuinely different concept the first pattern could not reach — not to filter
+something already in the map.
+
+Then narrow down with ordinary search and file reads.
+
+Before changing a function's signature, call `spec_nav_callers` to get every
+call site with its enclosing function and that function's parameters.
+```
+
+That wording matters more than it looks. Without the "once" the agent treats the
+map as a search engine and calls it ten times; with it, one call per phase is
+the norm.
+
 ## Tools
 
 | Tool | Returns |
@@ -62,7 +105,7 @@ Then `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
 | `spec_nav_callers` | every call site of a symbol, with its enclosing function **and that function's parameters** |
 | `spec_nav_services` | the projects found under the root |
 
-### `spec_nav_map` — call it once, at the start
+### `spec_nav_map`
 
 ```
 { "pattern": "handl(e|ing)_?fee|handling_charge|HANDLING_FEE" }
@@ -81,16 +124,15 @@ services/order/src/utils/calculate-product-fee.ts
   63 | calculateStoreFee:41 | total += PRODUCT_HANDLING_FEE_JPY;
 ```
 
-**Use one broad pattern, once.** Each call returns a map of the whole repo, so
-five narrow calls cost far more than one wide one — more, in practice, than just
-using grep. Treat the result as the map for the whole task and narrow down from
-it with grep and ordinary file reads. Call it a second time only for a genuinely
-different concept the first pattern could not reach.
+The enclosing function is what makes this more than a search result. A line
+number tells you where something is; the function name tells you what it is part
+of, which is what decides whether it matters.
 
 Past a size budget the output keeps every file but shows only the first few
-lines of each, so a broad pattern on a large repo still fits in one reply.
+lines of each — knowing which services are involved is the point, and the detail
+can come from reading the files that turn out to matter.
 
-### `spec_nav_callers` — before changing a signature
+### `spec_nav_callers`
 
 ```
 { "service": "services/order", "symbol": "recordHistory" }
@@ -108,17 +150,18 @@ lines of each, so a broad pattern on a large repo still fits in one reply.
 ```
 
 `enclosingParams` is the point. Adding a parameter means visiting every call
-site; this says in one call which ones already have the value in scope and which
-need it threaded down from their own caller. `argCount` tells you whether you
-can append or must pass `undefined` in a middle slot.
+site, and this says which ones already have the value in scope and which need it
+threaded down from their own caller. `argCount` tells you whether you can append
+or must pass `undefined` in a middle slot.
 
 Edit each file bottom-up — every insertion shifts the lines below it.
 
 ## Limits
 
 - **TypeScript and TSX only.** Plain `.js`, `.mdx`, SQL and config files are not
-  scanned; use grep for those.
-- **Reads the current checkout.** Line numbers follow the branch you are on.
+  scanned; use ordinary search for those.
+- **Reads the current checkout.** Line numbers follow the branch you are on, so
+  switch branches before asking about another one.
 - **`spec_nav_callers` matches by name, not resolved type.** Two methods called
   `save` on different classes come back in one list; read `file` and `enclosing`
   rather than trusting `total`.
