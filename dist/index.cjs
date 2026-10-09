@@ -15986,7 +15986,7 @@ ${lanes.join("\n")}
             },
             getFileSize(path2) {
               try {
-                const stat = statSync(path2);
+                const stat = statSync2(path2);
                 if (stat == null ? void 0 : stat.isFile()) {
                   return stat.size;
                 }
@@ -16032,7 +16032,7 @@ ${lanes.join("\n")}
             }
           };
           return nodeSystem;
-          function statSync(path2) {
+          function statSync2(path2) {
             return _fs.statSync(path2, { throwIfNoEntry: false });
           }
           function enableCPUProfiler(path2, cb) {
@@ -16088,7 +16088,7 @@ ${lanes.join("\n")}
                 var _a;
                 if (!err) {
                   try {
-                    if ((_a = statSync(profilePath)) == null ? void 0 : _a.isDirectory()) {
+                    if ((_a = statSync2(profilePath)) == null ? void 0 : _a.isDirectory()) {
                       profilePath = _path.join(profilePath, `${(/* @__PURE__ */ new Date()).toISOString().replace(/:/g, "-")}+P${process.pid}.cpuprofile`);
                     }
                   } catch {
@@ -16211,7 +16211,7 @@ ${lanes.join("\n")}
                 if (typeof dirent === "string" || dirent.isSymbolicLink()) {
                   const name = combinePaths(path2, entry);
                   try {
-                    stat = statSync(name);
+                    stat = statSync2(name);
                     if (!stat) {
                       continue;
                     }
@@ -16241,7 +16241,7 @@ ${lanes.join("\n")}
             const originalStackTraceLimit = Error.stackTraceLimit;
             Error.stackTraceLimit = 0;
             try {
-              const stat = statSync(path2);
+              const stat = statSync2(path2);
               if (!stat) {
                 return false;
               }
@@ -16291,7 +16291,7 @@ ${lanes.join("\n")}
             const originalStackTraceLimit = Error.stackTraceLimit;
             Error.stackTraceLimit = 0;
             try {
-              return (_a = statSync(path2)) == null ? void 0 : _a.mtime;
+              return (_a = statSync2(path2)) == null ? void 0 : _a.mtime;
             } catch {
               return void 0;
             } finally {
@@ -287704,6 +287704,14 @@ var PROJECT_MARKERS = /* @__PURE__ */ new Set([
 ]);
 var PROJECT_MARKER_EXTENSIONS = [".csproj", ".sln", ".fsproj", ".gemspec"];
 function discoverServices(maxDepth = 2) {
+  if (!fs.existsSync(REPO_ROOT)) {
+    throw new Error(
+      `SPEC_NAV_ROOT points at "${REPO_ROOT}", which does not exist. Set it to the absolute path of the repo to scan.`
+    );
+  }
+  if (!fs.statSync(REPO_ROOT).isDirectory()) {
+    throw new Error(`SPEC_NAV_ROOT points at "${REPO_ROOT}", which is not a directory.`);
+  }
   const found = [];
   const walk = (dir, rel, depth) => {
     let entries;
@@ -288303,6 +288311,16 @@ async function mapPattern(pattern, services, opts = {}) {
 var RENDER_CHAR_BUDGET = 3e4;
 var TRIMMED_HITS_PER_FILE = 6;
 function renderMap(result) {
+  if (!result.servicesScanned.length) {
+    return [
+      `pattern: ${result.pattern}`,
+      `scanned: NOTHING \u2014 no project under the root held a file in a supported language.`,
+      ``,
+      `This is not "the pattern is absent": nothing was searched. Check that`,
+      `SPEC_NAV_ROOT is the right repo, and that it contains source in one of the`,
+      `supported languages (spec_nav_services lists what was found).`
+    ].join("\n");
+  }
   const header = (note) => [
     `pattern: ${result.pattern}`,
     `scanned: ${result.servicesScanned.join(", ")}`,

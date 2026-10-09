@@ -102,6 +102,21 @@ const PROJECT_MARKER_EXTENSIONS = [".csproj", ".sln", ".fsproj", ".gemspec"];
  * sharing a constant is exactly the change a per-language tool loses track of.
  */
 export function discoverServices(maxDepth = 2): string[] {
+  // An unreadable root is a configuration mistake, not an empty repo. Left to
+  // the walker below it would return no services, and the caller would report
+  // "0 hits" — indistinguishable from having searched the whole repo and found
+  // nothing, which is the worst possible answer to be wrong about. The usual
+  // cause is SPEC_NAV_ROOT still holding the README's placeholder path.
+  if (!fs.existsSync(REPO_ROOT)) {
+    throw new Error(
+      `SPEC_NAV_ROOT points at "${REPO_ROOT}", which does not exist. ` +
+        `Set it to the absolute path of the repo to scan.`,
+    );
+  }
+  if (!fs.statSync(REPO_ROOT).isDirectory()) {
+    throw new Error(`SPEC_NAV_ROOT points at "${REPO_ROOT}", which is not a directory.`);
+  }
+
   const found: string[] = [];
 
   const walk = (dir: string, rel: string, depth: number) => {

@@ -364,6 +364,19 @@ const RENDER_CHAR_BUDGET = 30_000;
 const TRIMMED_HITS_PER_FILE = 6;
 
 export function renderMap(result: Awaited<ReturnType<typeof mapPattern>>): string {
+  // Nothing scanned is not the same as nothing found, and the two look alike
+  // once the output says "0 hits". Say which one it was.
+  if (!result.servicesScanned.length) {
+    return [
+      `pattern: ${result.pattern}`,
+      `scanned: NOTHING — no project under the root held a file in a supported language.`,
+      ``,
+      `This is not "the pattern is absent": nothing was searched. Check that`,
+      `SPEC_NAV_ROOT is the right repo, and that it contains source in one of the`,
+      `supported languages (spec_nav_services lists what was found).`,
+    ].join("\n");
+  }
+
   const header = (note?: string) => [
     `pattern: ${result.pattern}`,
     `scanned: ${result.servicesScanned.join(", ")}`,

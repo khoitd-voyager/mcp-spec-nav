@@ -47,20 +47,27 @@ No clone, no build:
     "spec-nav": {
       "command": "npx",
       "args": ["-y", "github:khoitd-voyager/mcp-spec-nav"],
-      "env": { "SPEC_NAV_ROOT": "/absolute/path/to/your/repo" }
+      "env": { "SPEC_NAV_ROOT": "/Users/you/code/your-repo" }
     }
   }
 }
 ```
 
-`SPEC_NAV_ROOT` is the directory to scan. Point it at a monorepo root and the
-server finds the projects underneath on its own — anything with a `package.json`,
-`pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`,
-a `.csproj` or just a `src/`. Point it at a single project and that is what it
-scans.
+**Replace `SPEC_NAV_ROOT` with your own absolute path before starting.** It is
+the directory to scan, and the one thing here that cannot be guessed — leave a
+placeholder in and the server has nothing to look at. It now refuses to start a
+scan against a path that does not exist, rather than reporting zero matches,
+which reads exactly like a repo where the pattern is genuinely absent.
+
+Point it at a monorepo root and the server finds the projects underneath on its
+own — anything with a `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`,
+`pom.xml`, `Gemfile`, `composer.json`, a `.csproj` or just a `src/`. Point it at
+a single project and that is what it scans.
 
 For Claude Code that block goes in `.mcp.json` at your project root. Restart,
-then `/mcp` should list `spec-nav`.
+then `/mcp` should list `spec-nav`. Check it with `spec_nav_services`: it prints
+the root it resolved and the projects it found, so a wrong path shows up there
+before it costs you a plan built on an empty result.
 
 ### Local checkout
 
@@ -70,6 +77,25 @@ npm install && npm run build
 ```
 
 Then `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
+
+Use this form while developing the server: `npx github:` installs the committed
+`dist/`, so changes you have not pushed are not what runs.
+
+### When a scan comes back empty
+
+`0 hits` and `scanned:` with nothing after it mean no project was searched —
+which is not the same as the pattern being absent, and is the one failure worth
+recognising on sight. In order of likelihood:
+
+1. **`SPEC_NAV_ROOT` is wrong or still a placeholder.** The server now errors
+   out on a path that does not exist; run `spec_nav_services` to see the root it
+   actually resolved.
+2. **More than one `.mcp.json`.** A config at the directory you opened and
+   another at the repo root are different files; the one being read may not be
+   the one you edited.
+3. **The code is in a language that is not supported.** The `languages:` line
+   lists what was read. A `.js`, SQL or template file holding the pattern never
+   appears in the map.
 
 ## Telling your agent to use it
 
