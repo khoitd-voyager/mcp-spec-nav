@@ -32,12 +32,13 @@ server.registerTool(
   "spec_nav_map",
   {
     description:
-      "START HERE when surveying a change. Scans EVERY TypeScript project under " +
-      "the root in one call and returns every matching line, each tagged with the " +
-      "function it sits in. Use this before grep: a change that spans several " +
-      "services is how files in the ones you did not think to search get missed. " +
-      "Nothing is truncated — see it all once instead of narrowing over a dozen " +
-      "searches. Pass a regex, e.g. \"handl(e|ing)_?fee|HANDLING_FEE\".",
+      "START HERE when surveying a change. Scans EVERY project under the root in " +
+      "one call — TypeScript, Python, Go, Java, Ruby, Rust, PHP and C# — and " +
+      "returns every matching line, each tagged with the function or method it " +
+      "sits in. Use this before grep: a change that spans several services, or " +
+      "several languages, is how files in the ones you did not think to search " +
+      "get missed. Nothing is truncated — see it all once instead of narrowing " +
+      "over a dozen searches. Pass a regex, e.g. \"handl(e|ing)_?fee|HANDLING_FEE\".",
     inputSchema: {
       pattern: z
         .string()
@@ -57,7 +58,7 @@ server.registerTool(
   },
   async ({ pattern, services, includeComments }) => {
     try {
-      const result = mapPattern(pattern, services, { includeComments });
+      const result = await mapPattern(pattern, services, { includeComments });
       return { content: [{ type: "text" as const, text: renderMap(result) }] };
     } catch (err) {
       return fail(err);
@@ -69,8 +70,8 @@ server.registerTool(
   "spec_nav_services",
   {
     description:
-      "The TypeScript projects under the root, as `service` values the other tools " +
-      "accept. Call when unsure what to pass as `service`.",
+      "The projects under the root, as `service` values the other tools accept. " +
+      "Call when unsure what to pass as `service`.",
     inputSchema: {},
   },
   async () => {

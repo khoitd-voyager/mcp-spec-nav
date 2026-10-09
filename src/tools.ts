@@ -1,27 +1,33 @@
-import { Node, SyntaxKind, Project } from "ts-morph";
+import { SyntaxKind, Project } from "ts-morph";
 import { readFileSync, readdirSync } from "node:fs";
-import { resolve as pathResolve, join as pathJoin } from "node:path";
+import { resolve as pathResolve, join as pathJoin, extname, relative } from "node:path";
 import {
   getProject,
   relPath,
   enclosingFunction,
   discoverServices,
   REPO_ROOT,
+  SKIP_DIRS,
   EnclosingInfo,
 } from "./project.js";
+import { languageForExt, PARSEABLE_EXTENSIONS } from "./languages.js";
+import { parseFile, functionRanges, enclosingRange, loadFailures } from "./treesitter.js";
 
-const SCAN_SKIP = new Set([
-  "node_modules",
-  "dist",
-  "build",
-  ".next",
-  ".git",
-  "coverage",
-  ".turbo",
-]);
+/**
+ * Shared with the project walker on purpose. Two lists that have to agree is a
+ * list that eventually does not: a directory added to one and not the other
+ * shows up as files appearing in a scan but their project never being listed.
+ */
+const SCAN_SKIP = SKIP_DIRS;
 
-/** Absolute paths of the .ts/.tsx files under a directory. */
-function listTsFiles(dir: string): string[] {
+/** TypeScript, which goes through ts-morph rather than tree-sitter. */
+const TS_EXTENSIONS = new Set([".ts", ".tsx", ".mts", ".cts"]);
+
+/** Every extension we can attach a function name to. */
+const SCANNABLE = new Set<string>([...TS_EXTENSIONS, ...PARSEABLE_EXTENSIONS]);
+
+/** Absolute paths of the source files under a directory, by extension. */
+function listSourceFiles(dir: string): string[] {
   const out: string[] = [];
   const walk = (d: string) => {
     let entries;
@@ -34,14 +40,18 @@ function listTsFiles(dir: string): string[] {
       if (e.isDirectory()) {
         if (SCAN_SKIP.has(e.name) || e.name.startsWith(".")) continue;
         walk(pathJoin(d, e.name));
-      } else if (e.isFile() && /\.tsx?$/.test(e.name) && !e.name.endsWith(".d.ts")) {
-        out.push(pathJoin(d, e.name));
+      } else if (e.isFile()) {
+        // A .d.ts is generated declarations; a hit there is the type of the
+        // thing, never the thing itself.
+        if (e.name.endsWith(".d.ts")) continue;
+        if (SCANNABLE.has(extname(e.name).toLowerCase())) out.push(pathJoin(d, e.name));
       }
     }
   };
   walk(dir);
   return out;
 }
+
 
 export interface CallSite {
   file: string;
@@ -117,6 +127,92 @@ export interface MapFile {
   hits: MapHit[];
 }
 
+interface LineRange {
+  start: number;
+  end: number;
+  name: string;
+  line: number;
+}
+
+/** Lines matching the pattern, before anything knows what function they are in. */
+function matchingLines(
+  text: string,
+  re: RegExp,
+  noise: RegExp,
+  includeComments: boolean,
+): Array<{ idx: number; text: string }> {
+  const matched: Array<{ idx: number; text: string }> = [];
+  text.split("\n").forEach((lineText, idx) => {
+    if (!re.test(lineText)) return;
+    if (!includeComments && noise.test(lineText)) return;
+    matched.push({ idx, text: lineText.trim().slice(0, 160) });
+  });
+  return matched;
+}
+
+/** TypeScript function ranges, via ts-morph. */
+function tsFunctionRanges(sf: import("ts-morph").SourceFile): LineRange[] {
+  const ranges: LineRange[] = [];
+  sf.forEachDescendant((node) => {
+    const k = node.getKind();
+    if (
+      k !== SyntaxKind.FunctionDeclaration &&
+      k !== SyntaxKind.MethodDeclaration &&
+      k !== SyntaxKind.ArrowFunction &&
+      k !== SyntaxKind.FunctionExpression &&
+      k !== SyntaxKind.Constructor
+    ) {
+      return;
+    }
+    let name: string | undefined = (node as any).getName?.();
+    if (!name) {
+      // An arrow or function expression carries no name of its own; the
+      // one people use is on the variable or property it is assigned to.
+      const varDecl = node.getFirstAncestorByKind(SyntaxKind.VariableDeclaration);
+      const propAssign = node.getFirstAncestorByKind(SyntaxKind.PropertyAssignment);
+      name = varDecl?.getName() ?? propAssign?.getName();
+    }
+    if (!name && node.getKind() === SyntaxKind.Constructor) name = "constructor";
+    ranges.push({
+      start: node.getStartLineNumber(),
+      end: node.getEndLineNumber(),
+      name: name || "<anonymous>",
+      line: node.getStartLineNumber(),
+    });
+  });
+  return ranges;
+}
+
+/** Attach an enclosing-function label to each matching line. */
+function labelHits(
+  matched: Array<{ idx: number; text: string }>,
+  ranges: LineRange[],
+): MapHit[] {
+  return matched.map(({ idx, text: lineText }) => {
+    const lineNo = idx + 1;
+    // Narrowest first, but a name the reader can act on beats precision:
+    // a line inside a `.forEach(item => …)` belongs, for their purposes,
+    // to the named function that contains the loop.
+    let named: LineRange | undefined;
+    let anon: LineRange | undefined;
+    for (const r of ranges) {
+      if (r.start > lineNo || lineNo > r.end) continue;
+      const span = r.end - r.start;
+      if (r.name === "<anonymous>") {
+        if (!anon || span < anon.end - anon.start) anon = r;
+      } else if (!named || span < named.end - named.start) {
+        named = r;
+      }
+    }
+    const best = named ?? anon;
+    return {
+      line: lineNo,
+      enclosing: best ? `${best.name}:${best.line}` : "-",
+      text: lineText,
+    };
+  });
+}
+
 /**
  * Every line matching `pattern` across the whole repo — or the services named
  * — each tagged with the function it sits in.
@@ -125,35 +221,43 @@ export interface MapFile {
  * spans six codebases ends up missing two of them, so the default is to scan
  * them all. Nothing is truncated: the point is to see everything once rather
  * than discover it over twenty narrowing searches.
+ *
+ * TypeScript goes through ts-morph and everything else through tree-sitter.
+ * Both produce the same thing — a line, its text, and the function around it
+ * — so a polyglot repo reads as one list rather than one per language.
  */
-export function mapPattern(
+export async function mapPattern(
   pattern: string,
   services?: string[],
   opts: { includeComments?: boolean; maxFiles?: number } = {},
-): {
+): Promise<{
   pattern: string;
   servicesScanned: string[];
+  languages: string[];
+  unparsed: string[];
   totalFiles: number;
   totalHits: number;
   truncated: boolean;
   files: MapFile[];
-} {
+}> {
   const targets = services?.length ? services : discoverServices();
   const re = new RegExp(pattern, "i");
   // Comments and imports mention a symbol without using it; they pad the
   // output and send the reader to the wrong line.
-  const noise = /^\s*(\/\/|\*|\/\*|import\s|export\s*\{)/;
+  const tsNoise = /^\s*(\/\/|\*|\/\*|import\s|export\s*\{)/;
+  const includeComments = opts.includeComments ?? false;
 
   const out: MapFile[] = [];
   const scanned: string[] = [];
+  const languagesSeen = new Set<string>();
   let totalHits = 0;
   const maxFiles = opts.maxFiles ?? 400;
 
   for (const service of targets) {
-    // Find candidate files by reading text off disk. Asking ts-morph for the
-    // source files parses every one of them into an AST — thousands of files
-    // for a handful of hits, and that parse is nearly all of the runtime.
-    const candidates = listTsFiles(pathResolve(REPO_ROOT, service));
+    // Find candidate files by reading text off disk. Parsing every file first
+    // — whether into a ts-morph AST or a tree-sitter tree — costs thousands of
+    // parses for a handful of hits, and that parse is nearly all the runtime.
+    const candidates = listSourceFiles(pathResolve(REPO_ROOT, service));
     if (!candidates.length) continue;
     scanned.push(service);
 
@@ -166,89 +270,69 @@ export function mapPattern(
     });
     if (!withHits.length) continue;
 
-    // Only now is a project worth building, and only these files go into it.
-    const project = new Project({ skipFileDependencyResolution: true, useInMemoryFileSystem: false });
-    for (const abs of withHits) {
-      try {
-        project.addSourceFileAtPath(abs);
-      } catch {
-        /* unreadable or not valid TS; skip */
+    const tsHits = withHits.filter((f) => TS_EXTENSIONS.has(extname(f).toLowerCase()));
+    const otherHits = withHits.filter((f) => !TS_EXTENSIONS.has(extname(f).toLowerCase()));
+
+    // --- TypeScript, through ts-morph ---
+    if (tsHits.length) {
+      languagesSeen.add("typescript");
+      // Only now is a project worth building, and only these files go into it.
+      const project = new Project({
+        skipFileDependencyResolution: true,
+        useInMemoryFileSystem: false,
+      });
+      for (const abs of tsHits) {
+        try {
+          project.addSourceFileAtPath(abs);
+        } catch {
+          /* unreadable or not valid TS; skip */
+        }
+      }
+
+      for (const sf of project.getSourceFiles()) {
+        const matched = matchingLines(sf.getFullText(), re, tsNoise, includeComments);
+        if (!matched.length) continue;
+        const hits = labelHits(matched, tsFunctionRanges(sf));
+        if (hits.length) {
+          out.push({ file: relPath(sf), hits });
+          totalHits += hits.length;
+        }
       }
     }
 
-    for (const sf of project.getSourceFiles()) {
-      const text = sf.getFullText();
+    // --- Everything else, through tree-sitter ---
+    for (const abs of otherHits) {
+      const lang = languageForExt(extname(abs));
+      if (!lang) continue;
 
-      // Collect matching lines first; only then walk the AST, once, to label
-      // them. Resolving each line on its own re-descends the tree every time
-      // and dominates the runtime on a large repo.
-      const matched: Array<{ idx: number; text: string }> = [];
-      text.split("\n").forEach((lineText, idx) => {
-        if (!re.test(lineText)) return;
-        if (!opts.includeComments && noise.test(lineText)) return;
-        matched.push({ idx, text: lineText.trim().slice(0, 160) });
-      });
+      let text: string;
+      try {
+        text = readFileSync(abs, "utf8");
+      } catch {
+        continue;
+      }
+
+      const matched = matchingLines(text, re, lang.noise, includeComments);
       if (!matched.length) continue;
 
-      // One pass over the file's functions gives every hit its enclosing name,
-      // instead of a tree descent per hit.
-      const ranges: Array<{ start: number; end: number; name: string; line: number }> = [];
-      sf.forEachDescendant((node) => {
-        const k = node.getKind();
-        if (
-          k !== SyntaxKind.FunctionDeclaration &&
-          k !== SyntaxKind.MethodDeclaration &&
-          k !== SyntaxKind.ArrowFunction &&
-          k !== SyntaxKind.FunctionExpression &&
-          k !== SyntaxKind.Constructor
-        ) {
-          return;
-        }
-        let name: string | undefined = (node as any).getName?.();
-        if (!name) {
-          // An arrow or function expression carries no name of its own; the
-          // one people use is on the variable or property it is assigned to.
-          const varDecl = node.getFirstAncestorByKind(SyntaxKind.VariableDeclaration);
-          const propAssign = node.getFirstAncestorByKind(SyntaxKind.PropertyAssignment);
-          name = varDecl?.getName() ?? propAssign?.getName();
-        }
-        if (!name && node.getKind() === SyntaxKind.Constructor) name = "constructor";
-        ranges.push({
-          start: node.getStartLineNumber(),
-          end: node.getEndLineNumber(),
-          name: name || "<anonymous>",
-          line: node.getStartLineNumber(),
-        });
-      });
+      const root = await parseFile(text, lang);
+      // No grammar means no function names, but the lines themselves are
+      // still the answer to "where is this?" — report them with "-" rather
+      // than dropping the file and implying the pattern is not there.
+      const ranges = root ? functionRanges(root, lang) : [];
+      languagesSeen.add(lang.id);
 
       const hits: MapHit[] = matched.map(({ idx, text: lineText }) => {
-        const lineNo = idx + 1;
-        // Narrowest first, but a name the reader can act on beats precision:
-        // a line inside a `.forEach(item => …)` belongs, for their purposes,
-        // to the named function that contains the loop.
-        let named: (typeof ranges)[number] | undefined;
-        let anon: (typeof ranges)[number] | undefined;
-        for (const r of ranges) {
-          if (r.start > lineNo || lineNo > r.end) continue;
-          const span = r.end - r.start;
-          if (r.name === "<anonymous>") {
-            if (!anon || span < anon.end - anon.start) anon = r;
-          } else if (!named || span < named.end - named.start) {
-            named = r;
-          }
-        }
-        const best = named ?? anon;
+        const found = enclosingRange(ranges, idx + 1);
         return {
-          line: lineNo,
-          enclosing: best ? `${best.name}:${best.line}` : "-",
+          line: idx + 1,
+          enclosing: found ? `${found.name}:${found.line}` : "-",
           text: lineText,
         };
       });
 
-      if (hits.length) {
-        out.push({ file: relPath(sf), hits });
-        totalHits += hits.length;
-      }
+      out.push({ file: relative(REPO_ROOT, abs), hits });
+      totalHits += hits.length;
     }
   }
 
@@ -257,6 +341,10 @@ export function mapPattern(
   return {
     pattern,
     servicesScanned: scanned,
+    languages: [...languagesSeen].sort(),
+    // A grammar that would not load is reported, not hidden: silently
+    // unlabelled output looks the same as code with no functions in it.
+    unparsed: loadFailures().map((f) => `${f.id} (${f.reason})`),
     totalFiles: out.length,
     totalHits,
     truncated,
@@ -275,10 +363,14 @@ const RENDER_CHAR_BUDGET = 30_000;
 /** Lines kept per file once the budget forces a trim. */
 const TRIMMED_HITS_PER_FILE = 6;
 
-export function renderMap(result: ReturnType<typeof mapPattern>): string {
+export function renderMap(result: Awaited<ReturnType<typeof mapPattern>>): string {
   const header = (note?: string) => [
     `pattern: ${result.pattern}`,
     `scanned: ${result.servicesScanned.join(", ")}`,
+    // Which languages were read is worth a line: it is how you notice that
+    // the Go service you expected in the results was never parsed.
+    ...(result.languages.length ? [`languages: ${result.languages.join(", ")}`] : []),
+    ...(result.unparsed.length ? [`NOT PARSED: ${result.unparsed.join("; ")}`] : []),
     `${result.totalHits} hits in ${result.totalFiles} files` +
       (result.truncated ? "  [FILE LIMIT REACHED]" : ""),
     ...(note ? [note] : []),
@@ -309,8 +401,7 @@ export function renderMap(result: ReturnType<typeof mapPattern>): string {
   return [
     ...header(
       `NOTE: output trimmed to ~${TRIMMED_HITS_PER_FILE} lines per file. Every file ` +
-        `is listed; use grep or spec_nav_outline on the ones that matter, or ` +
-        `re-run with a narrower pattern.`,
+        `is listed; read the ones that matter, or re-run with a narrower pattern.`,
     ),
     ...body(TRIMMED_HITS_PER_FILE),
   ].join("\n");

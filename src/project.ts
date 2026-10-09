@@ -16,23 +16,90 @@ function findTsConfig(serviceDir: string): string | undefined {
   return fs.existsSync(candidate) ? candidate : undefined;
 }
 
-const SKIP_DIRS = new Set([
+/**
+ * Directories that hold dependencies or build output. Each language brings its
+ * own: a hit in `vendor/` or `site-packages/` is somebody else's code, and
+ * reporting it buries the handful of lines that are actually yours.
+ */
+export const SKIP_DIRS = new Set([
+  // JS/TS
   "node_modules",
   "dist",
   "build",
   ".next",
+  ".turbo",
+  // Python
+  "__pycache__",
+  "site-packages",
+  "venv",
+  ".venv",
+  "env",
+  ".tox",
+  ".mypy_cache",
+  ".pytest_cache",
+  "eggs",
+  // Go, PHP, Ruby
+  "vendor",
+  // Rust
+  "target",
+  // JVM
+  ".gradle",
+  // C#
+  "bin",
+  "obj",
+  "packages",
+  // General
   ".git",
   "coverage",
-  ".turbo",
 ]);
 
 /**
- * Every directory under the root that looks like a TypeScript project — one
- * holding a tsconfig.json or a src/ directory. Searched two levels deep, which
- * covers both `packages/web` and a monorepo's `be/some-service`.
+ * Files that mark a directory as the root of a project, across the languages
+ * we can read. A project boundary matters more than it sounds: it is where
+ * descent stops, so a monorepo comes back as a list of services rather than
+ * one undifferentiated tree.
+ */
+const PROJECT_MARKERS = new Set([
+  // TypeScript / JavaScript
+  "tsconfig.json",
+  "package.json",
+  // Python
+  "pyproject.toml",
+  "setup.py",
+  "setup.cfg",
+  "requirements.txt",
+  "Pipfile",
+  // Go
+  "go.mod",
+  // Java / Kotlin / JVM
+  "pom.xml",
+  "build.gradle",
+  "build.gradle.kts",
+  // Ruby
+  "Gemfile",
+  "Rakefile",
+  ".gemspec",
+  // Rust
+  "Cargo.toml",
+  // PHP
+  "composer.json",
+  // C#
+  "Directory.Build.props",
+]);
+
+/** A .csproj/.sln has a variable name, so it is matched by extension. */
+const PROJECT_MARKER_EXTENSIONS = [".csproj", ".sln", ".fsproj", ".gemspec"];
+
+/**
+ * Every directory under the root that looks like a project — one holding a
+ * manifest for any language we can read, or a plain `src/`. Searched two
+ * levels deep, which covers both `packages/web` and a monorepo's
+ * `be/some-service`.
  *
  * This is what lets one call span a whole repo: a change rarely stops at one
- * service, and asking service by service is how things get missed.
+ * service, and asking service by service is how things get missed. A polyglot
+ * repo is the case where that matters most — a Go backend and a Python worker
+ * sharing a constant is exactly the change a per-language tool loses track of.
  */
 export function discoverServices(maxDepth = 2): string[] {
   const found: string[] = [];
@@ -45,7 +112,12 @@ export function discoverServices(maxDepth = 2): string[] {
       return;
     }
     const names = new Set(entries.filter((e) => e.isDirectory() || e.isFile()).map((e) => e.name));
-    if (rel && (names.has("tsconfig.json") || names.has("src"))) {
+    const hasMarker =
+      names.has("src") ||
+      [...names].some(
+        (n) => PROJECT_MARKERS.has(n) || PROJECT_MARKER_EXTENSIONS.some((ext) => n.endsWith(ext)),
+      );
+    if (rel && hasMarker) {
       found.push(rel);
       return; // don't descend into a project we already took
     }
@@ -57,6 +129,9 @@ export function discoverServices(maxDepth = 2): string[] {
   };
 
   walk(REPO_ROOT, "", 0);
+  // The root itself may be a single project with no sub-services; scanning
+  // nothing is worse than scanning one directory.
+  if (!found.length) found.push(".");
   return found.sort();
 }
 

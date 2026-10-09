@@ -9,10 +9,15 @@ plans around that, and the parts it never searched turn up later as bugs — a
 constant left at the old value in another service, a caller it did not know
 about, a screen nobody mentioned.
 
-`spec_nav_map` scans every TypeScript project under the root in a single call
-and returns **every** matching line, each tagged with the function it sits in.
-Not a sample, not the first twenty — the whole picture, so the plan is built on
-what is there rather than on what the agent thought to look for.
+`spec_nav_map` scans every project under the root in a single call and returns
+**every** matching line, each tagged with the function it sits in. Not a
+sample, not the first twenty — the whole picture, so the plan is built on what
+is there rather than on what the agent thought to look for.
+
+It reads thirteen languages, and a repo that mixes them comes back as one list
+rather than one search per language. That is the case where searching goes
+wrong quietest: the Go service and the Python worker that share a constant are
+exactly the two places a per-language habit stops looking.
 
 ## What it changes in practice
 
@@ -49,8 +54,10 @@ No clone, no build:
 ```
 
 `SPEC_NAV_ROOT` is the directory to scan. Point it at a monorepo root and the
-server finds the TypeScript projects underneath on its own; point it at a single
-project and that is what it scans.
+server finds the projects underneath on its own — anything with a `package.json`,
+`pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`,
+a `.csproj` or just a `src/`. Point it at a single project and that is what it
+scans.
 
 For Claude Code that block goes in `.mcp.json` at your project root. Restart,
 then `/mcp` should list `spec-nav`.
@@ -97,12 +104,40 @@ That wording matters more than it looks. Without the "once" the agent treats the
 map as a search engine and calls it ten times; with it, one call per phase is
 the norm.
 
+## Languages
+
+| Language | Extensions | Names you get |
+|---|---|---|
+| TypeScript | `.ts` `.tsx` `.mts` `.cts` | `computeTotal`, and arrow functions by the variable they are assigned to |
+| Python | `.py` `.pyi` | `OrderCalculator.compute_total` |
+| Go | `.go` | `Order.Total` — the receiver type, not a bare `Total` |
+| Java | `.java` | `FeeService.total`, constructors included |
+| C# | `.cs` | `FeeAdmin.Total`, properties included |
+| Ruby | `.rb` `.rake` | `Invoice.total`, including `self.` methods |
+| Rust | `.rs` | `Order.total` from the surrounding `impl` |
+| PHP | `.php` | `Cart.total` |
+| C | `.c` `.h` | `total`, including pointer-returning declarations |
+| C++ | `.cpp` `.cc` `.hpp` … | `Order.total` |
+| Scala | `.scala` `.sc` | `Fees.total` from the object or class |
+| Elixir | `.ex` `.exs` | `Billing.total`, `def` and `defp` |
+| Bash | `.sh` `.bash` `.zsh` | `total`, both declaration forms |
+
+TypeScript goes through ts-morph, which reads `tsconfig.json` and resolves path
+aliases. The rest go through tree-sitter, using the grammar's own parse tree —
+so a method keeps the name its language gives it rather than one guessed from
+indentation. Grammars are read from disk the first time a file needs them: a
+TypeScript-only repo loads none of them.
+
+A nested function reads as the chain that contains it (`outer.middle.inner`),
+and a line inside a callback is attributed to the named function around it,
+which is the answer you actually want when deciding whether a hit matters.
+
 ## Tools
 
 | Tool | Returns |
 |---|---|
-| `spec_nav_map` | every line matching a regex, across every project, with the enclosing function |
-| `spec_nav_callers` | every call site of a symbol, with its enclosing function **and that function's parameters** |
+| `spec_nav_map` | every line matching a regex, across every project and every language, with the enclosing function |
+| `spec_nav_callers` | every call site of a symbol, with its enclosing function **and that function's parameters** (TypeScript) |
 | `spec_nav_services` | the projects found under the root |
 
 ### `spec_nav_map`
@@ -113,7 +148,8 @@ the norm.
 
 ```
 pattern: handl(e|ing)_?fee|handling_charge|HANDLING_FEE
-scanned: admin, storefront, services/customer, services/order, services/product
+scanned: admin, storefront, services/customer, services/order, worker
+languages: go, python, typescript
 492 hits in 83 files
 
 Format:  line | enclosing function | source
@@ -122,6 +158,10 @@ services/order/src/utils/calculate-product-fee.ts
   1 | - | export const PRODUCT_HANDLING_FEE_JPY = 300;
   27 | calculateProductFee:17 | total += PRODUCT_HANDLING_FEE_JPY;
   63 | calculateStoreFee:41 | total += PRODUCT_HANDLING_FEE_JPY;
+
+worker/billing.go
+  3 | - | const HandlingFee = 300
+  6 | Order.Total:5 | return o.Subtotal + HandlingFee
 ```
 
 The enclosing function is what makes this more than a search result. A line
@@ -158,8 +198,14 @@ Edit each file bottom-up — every insertion shifts the lines below it.
 
 ## Limits
 
-- **TypeScript and TSX only.** Plain `.js`, `.mdx`, SQL and config files are not
-  scanned; use ordinary search for those.
+- **Only the languages in the table above.** Swift, Kotlin and Lua are missing
+  because they ship no prebuilt grammar; `.js`, `.mdx`, SQL, HTML and config
+  files are not scanned at all. A file in an unsupported language does not
+  appear in the map even when it contains the pattern, so use ordinary search
+  when a change reaches into one. The `languages:` line in the output says what
+  was actually read — worth a glance when a service you expected is absent.
+- **`spec_nav_callers` is TypeScript only.** It resolves call sites through the
+  TypeScript project; the other languages get `spec_nav_map`.
 - **Reads the current checkout.** Line numbers follow the branch you are on, so
   switch branches before asking about another one.
 - **`spec_nav_callers` matches by name, not resolved type.** Two methods called
