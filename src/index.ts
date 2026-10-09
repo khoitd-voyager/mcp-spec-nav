@@ -9,6 +9,9 @@ import {
   getSymbol,
   nextEnumValue,
   blastRadius,
+  mapPattern,
+  renderMap,
+  listServices,
 } from "./tools.js";
 
 const server = new McpServer({ name: "spec-nav", version: "0.1.0" });
@@ -28,6 +31,60 @@ const serviceArg = z
     'Service directory, relative to SPEC_NAV_ROOT. E.g. "services/api", ' +
       '"packages/web", or "." when the root is the project itself.',
   );
+
+server.registerTool(
+  "spec_nav_map",
+  {
+    description:
+      "START HERE when surveying a change. Scans EVERY TypeScript project under " +
+      "the root in one call and returns every matching line, each tagged with the " +
+      "function it sits in. Use this before grep: a change that spans several " +
+      "services is how files in the ones you did not think to search get missed. " +
+      "Nothing is truncated — see it all once instead of narrowing over a dozen " +
+      "searches. Pass a regex, e.g. \"handl(e|ing)_?fee|HANDLING_FEE\".",
+    inputSchema: {
+      pattern: z
+        .string()
+        .describe('Regex, case-insensitive. E.g. "handl(e|ing)_?fee|handling_charge"'),
+      services: z
+        .array(z.string())
+        .optional()
+        .describe(
+          "Limit to these services. Omit to scan every project found — the default, " +
+            "and usually what you want.",
+        ),
+      includeComments: z
+        .boolean()
+        .optional()
+        .describe("Include comment and import lines (skipped by default as noise)"),
+    },
+  },
+  async ({ pattern, services, includeComments }) => {
+    try {
+      const result = mapPattern(pattern, services, { includeComments });
+      return { content: [{ type: "text" as const, text: renderMap(result) }] };
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  "spec_nav_services",
+  {
+    description:
+      "The TypeScript projects under the root, as `service` values the other tools " +
+      "accept. Call when unsure what to pass as `service`.",
+    inputSchema: {},
+  },
+  async () => {
+    try {
+      return ok(listServices());
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
 
 server.registerTool(
   "spec_nav_callers",

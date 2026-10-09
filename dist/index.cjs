@@ -201293,7 +201293,7 @@ ${options.prefix}` : "\n" : options.prefix
         LogLevel: () => LogLevel2,
         Msg: () => Msg,
         OpenFileInfoTelemetryEvent: () => OpenFileInfoTelemetryEvent,
-        Project: () => Project2,
+        Project: () => Project22,
         ProjectInfoTelemetryEvent: () => ProjectInfoTelemetryEvent,
         ProjectKind: () => ProjectKind,
         ProjectLanguageServiceStateEvent: () => ProjectLanguageServiceStateEvent,
@@ -202736,7 +202736,7 @@ ${options.prefix}` : "\n" : options.prefix
         }
         return !arrayIsEqualTo(imports1, imports2);
       }
-      var Project2 = class _Project {
+      var Project22 = class _Project {
         /** @internal */
         constructor(projectName, projectKind, projectService, documentRegistry, hasExplicitListOfFiles, lastFileExceededProgramSize, compilerOptions, compileOnSaveEnabled, watchOptions, directoryStructureHost, currentDirectory) {
           this.projectKind = projectKind;
@@ -204405,7 +204405,7 @@ ${options.prefix}` : "\n" : options.prefix
           return unresolvedImports || emptyArray2;
         });
       }
-      var InferredProject2 = class extends Project2 {
+      var InferredProject2 = class extends Project22 {
         /** @internal */
         constructor(projectService, documentRegistry, compilerOptions, watchOptions, projectRootPath, currentDirectory, typeAcquisition) {
           super(
@@ -204499,7 +204499,7 @@ ${options.prefix}` : "\n" : options.prefix
           };
         }
       };
-      var AuxiliaryProject = class extends Project2 {
+      var AuxiliaryProject = class extends Project22 {
         constructor(projectService, documentRegistry, compilerOptions, currentDirectory) {
           super(
             projectService.newAuxiliaryProjectName(),
@@ -204526,7 +204526,7 @@ ${options.prefix}` : "\n" : options.prefix
           return;
         }
       };
-      var _AutoImportProviderProject = class _AutoImportProviderProject2 extends Project2 {
+      var _AutoImportProviderProject = class _AutoImportProviderProject2 extends Project22 {
         /** @internal */
         constructor(hostProject, initialRootNames, documentRegistry, compilerOptions) {
           super(
@@ -204796,7 +204796,7 @@ ${options.prefix}` : "\n" : options.prefix
         noLib: true
       };
       var AutoImportProviderProject = _AutoImportProviderProject;
-      var ConfiguredProject2 = class extends Project2 {
+      var ConfiguredProject2 = class extends Project22 {
         /** @internal */
         constructor(configFileName, canonicalConfigFilePath, projectService, documentRegistry, cachedDirectoryStructureHost, pendingUpdateReason) {
           super(
@@ -204997,7 +204997,7 @@ ${options.prefix}` : "\n" : options.prefix
           updateErrorForNoInputFiles(fileNames, this.getConfigFilePath(), this.getCompilerOptions().configFile.configFileSpecs, this.projectErrors, this.canConfigFileJsonReportNoInputFiles);
         }
       };
-      var ExternalProject = class extends Project2 {
+      var ExternalProject = class extends Project22 {
         /** @internal */
         constructor(externalProjectName, projectService, documentRegistry, compilerOptions, lastFileExceededProgramSize, compileOnSaveEnabled, projectFilePath, watchOptions) {
           super(
@@ -208486,7 +208486,7 @@ Dynamic files must always be opened with service's current directory or service 
             return;
           }
           if (this.host.importPlugin) {
-            const importPromise = Project2.importServicePluginAsync(
+            const importPromise = Project22.importServicePluginAsync(
               pluginConfigEntry,
               searchPaths,
               this.host,
@@ -208500,7 +208500,7 @@ Dynamic files must always be opened with service's current directory or service 
           }
           this.endEnablePlugin(
             project,
-            Project2.importServicePluginSync(
+            Project22.importServicePluginSync(
               pluginConfigEntry,
               searchPaths,
               this.host,
@@ -213630,7 +213630,7 @@ ${e.message}`;
         LogLevel: () => LogLevel2,
         Msg: () => Msg,
         OpenFileInfoTelemetryEvent: () => OpenFileInfoTelemetryEvent,
-        Project: () => Project2,
+        Project: () => Project22,
         ProjectInfoTelemetryEvent: () => ProjectInfoTelemetryEvent,
         ProjectKind: () => ProjectKind,
         ProjectLanguageServiceStateEvent: () => ProjectLanguageServiceStateEvent,
@@ -272023,7 +272023,7 @@ Node text: ${this.#forgottenText}`;
     __decorate([
       common.Memoize
     ], ProjectContext.prototype, "getModuleResolutionHost", null);
-    var Project2 = class {
+    var Project3 = class {
       _context;
       constructor(options = {}) {
         verifyOptions();
@@ -272940,7 +272940,7 @@ Node text: ${this.#forgottenText}`;
     exports2.PrivateIdentifier = PrivateIdentifier;
     exports2.PrivateIdentifierBase = PrivateIdentifierBase;
     exports2.Program = Program;
-    exports2.Project = Project2;
+    exports2.Project = Project3;
     exports2.PropertyAccessExpression = PropertyAccessExpression;
     exports2.PropertyAccessExpressionBase = PropertyAccessExpressionBase;
     exports2.PropertyAssignment = PropertyAssignment;
@@ -287390,6 +287390,38 @@ function findTsConfig(serviceDir) {
   const candidate = path.join(serviceDir, "tsconfig.json");
   return fs.existsSync(candidate) ? candidate : void 0;
 }
+var SKIP_DIRS = /* @__PURE__ */ new Set([
+  "node_modules",
+  "dist",
+  "build",
+  ".next",
+  ".git",
+  "coverage",
+  ".turbo"
+]);
+function discoverServices(maxDepth = 2) {
+  const found = [];
+  const walk = (dir, rel, depth) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    const names = new Set(entries.filter((e) => e.isDirectory() || e.isFile()).map((e) => e.name));
+    if (rel && (names.has("tsconfig.json") || names.has("src"))) {
+      found.push(rel);
+      return;
+    }
+    if (depth >= maxDepth) return;
+    for (const e of entries) {
+      if (!e.isDirectory() || SKIP_DIRS.has(e.name) || e.name.startsWith(".")) continue;
+      walk(path.join(dir, e.name), rel ? `${rel}/${e.name}` : e.name, depth + 1);
+    }
+  };
+  walk(REPO_ROOT, "", 0);
+  return found.sort();
+}
 function getProject(service) {
   const cached2 = projects.get(service);
   if (cached2) return cached2;
@@ -287452,6 +287484,38 @@ function enclosingFunction(node) {
 
 // src/tools.ts
 var import_ts_morph2 = __toESM(require_ts_morph(), 1);
+var import_node_fs = require("node:fs");
+var import_node_path = require("node:path");
+var SCAN_SKIP = /* @__PURE__ */ new Set([
+  "node_modules",
+  "dist",
+  "build",
+  ".next",
+  ".git",
+  "coverage",
+  ".turbo"
+]);
+function listTsFiles(dir) {
+  const out = [];
+  const walk = (d) => {
+    let entries;
+    try {
+      entries = (0, import_node_fs.readdirSync)(d, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      if (e.isDirectory()) {
+        if (SCAN_SKIP.has(e.name) || e.name.startsWith(".")) continue;
+        walk((0, import_node_path.join)(d, e.name));
+      } else if (e.isFile() && /\.tsx?$/.test(e.name) && !e.name.endsWith(".d.ts")) {
+        out.push((0, import_node_path.join)(d, e.name));
+      }
+    }
+  };
+  walk(dir);
+  return out;
+}
 function findCallers(service, symbol) {
   const project = getProject(service);
   const sites = [];
@@ -287602,6 +287666,118 @@ function blastRadius(service, filePath) {
   importedBy.sort((a, b) => a.file.localeCompare(b.file));
   return { file: relPath(target), importedBy };
 }
+function mapPattern(pattern, services, opts = {}) {
+  const targets = services?.length ? services : discoverServices();
+  const re = new RegExp(pattern, "i");
+  const noise = /^\s*(\/\/|\*|\/\*|import\s|export\s*\{)/;
+  const out = [];
+  const scanned = [];
+  let totalHits = 0;
+  const maxFiles = opts.maxFiles ?? 400;
+  for (const service of targets) {
+    const candidates = listTsFiles((0, import_node_path.resolve)(REPO_ROOT, service));
+    if (!candidates.length) continue;
+    scanned.push(service);
+    const withHits = candidates.filter((abs) => {
+      try {
+        return re.test((0, import_node_fs.readFileSync)(abs, "utf8"));
+      } catch {
+        return false;
+      }
+    });
+    if (!withHits.length) continue;
+    const project = new import_ts_morph2.Project({ skipFileDependencyResolution: true, useInMemoryFileSystem: false });
+    for (const abs of withHits) {
+      try {
+        project.addSourceFileAtPath(abs);
+      } catch {
+      }
+    }
+    for (const sf of project.getSourceFiles()) {
+      const text = sf.getFullText();
+      const matched = [];
+      text.split("\n").forEach((lineText, idx) => {
+        if (!re.test(lineText)) return;
+        if (!opts.includeComments && noise.test(lineText)) return;
+        matched.push({ idx, text: lineText.trim().slice(0, 160) });
+      });
+      if (!matched.length) continue;
+      const ranges = [];
+      sf.forEachDescendant((node) => {
+        const k = node.getKind();
+        if (k !== import_ts_morph2.SyntaxKind.FunctionDeclaration && k !== import_ts_morph2.SyntaxKind.MethodDeclaration && k !== import_ts_morph2.SyntaxKind.ArrowFunction && k !== import_ts_morph2.SyntaxKind.FunctionExpression && k !== import_ts_morph2.SyntaxKind.Constructor) {
+          return;
+        }
+        let name = node.getName?.();
+        if (!name) {
+          const varDecl = node.getFirstAncestorByKind(import_ts_morph2.SyntaxKind.VariableDeclaration);
+          const propAssign = node.getFirstAncestorByKind(import_ts_morph2.SyntaxKind.PropertyAssignment);
+          name = varDecl?.getName() ?? propAssign?.getName();
+        }
+        if (!name && node.getKind() === import_ts_morph2.SyntaxKind.Constructor) name = "constructor";
+        ranges.push({
+          start: node.getStartLineNumber(),
+          end: node.getEndLineNumber(),
+          name: name || "<anonymous>",
+          line: node.getStartLineNumber()
+        });
+      });
+      const hits = matched.map(({ idx, text: lineText }) => {
+        const lineNo = idx + 1;
+        let named;
+        let anon;
+        for (const r of ranges) {
+          if (r.start > lineNo || lineNo > r.end) continue;
+          const span = r.end - r.start;
+          if (r.name === "<anonymous>") {
+            if (!anon || span < anon.end - anon.start) anon = r;
+          } else if (!named || span < named.end - named.start) {
+            named = r;
+          }
+        }
+        const best = named ?? anon;
+        return {
+          line: lineNo,
+          enclosing: best ? `${best.name}:${best.line}` : "-",
+          text: lineText
+        };
+      });
+      if (hits.length) {
+        out.push({ file: relPath(sf), hits });
+        totalHits += hits.length;
+      }
+    }
+  }
+  out.sort((a, b) => a.file.localeCompare(b.file));
+  const truncated = out.length > maxFiles;
+  return {
+    pattern,
+    servicesScanned: scanned,
+    totalFiles: out.length,
+    totalHits,
+    truncated,
+    files: truncated ? out.slice(0, maxFiles) : out
+  };
+}
+function renderMap(result) {
+  const lines = [
+    `pattern: ${result.pattern}`,
+    `scanned: ${result.servicesScanned.join(", ")}`,
+    `${result.totalHits} hits in ${result.totalFiles} files` + (result.truncated ? "  [TRUNCATED]" : ""),
+    "",
+    "Format:  line | enclosing function | source"
+  ];
+  for (const f of result.files) {
+    lines.push("", f.file);
+    for (const h of f.hits) {
+      lines.push(`  ${h.line} | ${h.enclosing} | ${h.text}`);
+    }
+  }
+  return lines.join("\n");
+}
+function listServices() {
+  return { root: process.env.SPEC_NAV_ROOT ?? process.cwd(), services: discoverServices() };
+}
 
 // src/index.ts
 var server2 = new McpServer({ name: "spec-nav", version: "0.1.0" });
@@ -287614,6 +287790,41 @@ function fail(err) {
 }
 var serviceArg = external_exports.string().describe(
   'Service directory, relative to SPEC_NAV_ROOT. E.g. "services/api", "packages/web", or "." when the root is the project itself.'
+);
+server2.registerTool(
+  "spec_nav_map",
+  {
+    description: 'START HERE when surveying a change. Scans EVERY TypeScript project under the root in one call and returns every matching line, each tagged with the function it sits in. Use this before grep: a change that spans several services is how files in the ones you did not think to search get missed. Nothing is truncated \u2014 see it all once instead of narrowing over a dozen searches. Pass a regex, e.g. "handl(e|ing)_?fee|HANDLING_FEE".',
+    inputSchema: {
+      pattern: external_exports.string().describe('Regex, case-insensitive. E.g. "handl(e|ing)_?fee|handling_charge"'),
+      services: external_exports.array(external_exports.string()).optional().describe(
+        "Limit to these services. Omit to scan every project found \u2014 the default, and usually what you want."
+      ),
+      includeComments: external_exports.boolean().optional().describe("Include comment and import lines (skipped by default as noise)")
+    }
+  },
+  async ({ pattern, services, includeComments }) => {
+    try {
+      const result = mapPattern(pattern, services, { includeComments });
+      return { content: [{ type: "text", text: renderMap(result) }] };
+    } catch (err) {
+      return fail(err);
+    }
+  }
+);
+server2.registerTool(
+  "spec_nav_services",
+  {
+    description: "The TypeScript projects under the root, as `service` values the other tools accept. Call when unsure what to pass as `service`.",
+    inputSchema: {}
+  },
+  async () => {
+    try {
+      return ok(listServices());
+    } catch (err) {
+      return fail(err);
+    }
+  }
 );
 server2.registerTool(
   "spec_nav_callers",
