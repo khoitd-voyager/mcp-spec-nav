@@ -9,7 +9,11 @@ import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const DIST = resolve(dirname(fileURLToPath(import.meta.url)), "../dist/index.cjs");
+// SPEC_NAV_DIST runs the same tests against another copy of the bundle, such as
+// the one unpacked from the .mcpb, where only the packed node_modules exist.
+export const DIST = process.env.SPEC_NAV_DIST
+  ? resolve(process.env.SPEC_NAV_DIST)
+  : resolve(dirname(fileURLToPath(import.meta.url)), "../dist/index.cjs");
 
 /** Write a tree of files into a fresh temp directory and return its path. */
 export function makeRepo(files) {

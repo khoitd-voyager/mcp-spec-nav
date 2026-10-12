@@ -1,50 +1,62 @@
 # mcp-spec-nav
 
-An MCP server for the two questions a coding agent should ask before it writes
-or changes code in a repo with more than one service:
+Help your coding agent find existing functions before writing new code, and check what a change affects across your repository.
 
-1. **Does this already exist somewhere?** An agent that searches where it
-   expects the code to be finds what it expected. The fee calculation that
-   already lives in `packages/shared`, or in the billing service under a
-   different name, never comes up, so it gets written again, slightly
-   differently.
-2. **What does this change actually touch?** The callers in other services,
-   the constant left at its old value, the screen nobody mentioned.
+Giúp AI tìm hàm có sẵn trước khi viết code mới và kiểm tra các phần liên quan khi sửa code trong repo.
 
-For the first, the server keeps a **catalog of the repo's functions** — every
-form listed under [Languages](#languages), with what it does not read listed
-under [Limits](#limits) — taken from each file's syntax tree, across every
-project and fourteen languages. An agent can search it by what the code does, read any candidate in
-full, and check its callers before reusing or changing it. For the second,
-`spec_nav_map` returns **every** line matching a pattern, each tagged with the
-function it sits in, and `spec_nav_callers` resolves call sites through the
-TypeScript type checker.
+**[English](#english) · [Tiếng Việt](#tiếng-việt)**
 
-The catalog is paged and never cut, and each listing reports which files it
-could not read. Searches are ranked and lexical, and the output always says
-which of the two you are looking at. No tool claims to
-have covered the whole repo unless it did.
+### How it helps your coding agent
 
-## What the map changes in practice
+| Scenario | Value of the MCP |
+|---|---|
+| Logic is spread across multiple services | High: searches broadly and helps reduce missed code. |
+| You want to reuse functions instead of rewriting them | High, when the query finds the right candidates. |
+| You change function parameters and need to find callers | Useful. |
+| You make a simple edit within one file | Limited benefit; may add tool calls. |
 
-On a change that moved a fee constant across six codebases, the same work
-planned with ordinary searching versus with `spec_nav_map`:
+### MCP giúp ích gì khi AI code?
 
-- the map found all seven files that mattered in one call; the search-by-search
-  approach found them too, but only after twenty-eight separate searches, each
-  one a guess about where to look next
-- the resulting plan caught three things the search-only plan missed: a
-  constant used in a mail template nobody had listed, a hardcoded value in an
-  admin screen, and — the one that would have caused a bug — a `|| 300`
-  fallback sitting inside `if (fee)` that can never run, two lines away from a
-  different constant in the same file that genuinely did need changing
+| Trường hợp | Giá trị của MCP |
+|---|---|
+| Logic nằm rải ở nhiều service | Cao: giúp tìm rộng, giảm bỏ sót |
+| Muốn tái sử dụng hàm thay vì viết lại | Cao, nếu truy vấn tìm đúng ứng viên. |
+| Sửa tham số hàm, cần tìm callers | Hữu ích. |
+| Sửa đơn giản trong một file | Lợi ích ít, có thể thêm lượt gọi tool. |
 
-That comparison predates the function catalog. The catalog, search and read
-tools have not yet been measured the same way.
+## English
 
-## Install
+### What does it do?
 
-No clone, no build:
+`mcp-spec-nav` is a local MCP server for coding agents such as Claude Code. It reads source code in the repository you choose and provides tools to:
+
+- Find existing functions across services and shared packages.
+- Read a function's source, signature, documentation and relevant imports.
+- Find TypeScript/JavaScript callers before changing a function.
+- Search a pattern across supported source files, with the enclosing function for each match.
+
+**Example:** You ask Claude to add an order fee calculation. Instead of immediately writing another implementation, Claude can look for existing fee functions in the billing service and shared packages, read them, and decide whether one fits.
+
+The MCP reads code. Your coding agent decides what to reuse and makes the edits. It does not guarantee that every related function will be found.
+
+### Choose how to install
+
+| | Option 1: `.mcp.json` | Option 2: Claude Desktop extension (`.mcpb`) |
+|---|---|---|
+| Client | Claude Code (and other clients that read `.mcp.json`) | Claude Desktop |
+| You need | Node.js 18+, npm/npx, Git | Only Claude Desktop — it runs the extension with its built-in Node.js |
+| Repository to scan | `SPEC_NAV_ROOT` in the config file | Folder picker in the extension settings |
+| Best for | Coding: Claude reads, plans and edits code in the repo | Asking about code: find, read and check functions in chat |
+
+Both options run the same server and the same tools. You can use both at once.
+
+### Option 1: Quick start with Claude Code
+
+**Requirements:** Node.js 18 or newer, npm/npx, Git, and a local checkout of the repository you want to scan. The first installation needs network access.
+
+#### 1. Add the MCP configuration
+
+Create `.mcp.json` at the root of your target repository:
 
 ```json
 {
@@ -52,439 +64,523 @@ No clone, no build:
     "spec-nav": {
       "command": "npx",
       "args": ["-y", "github:khoitd-voyager/mcp-spec-nav"],
-      "env": { "SPEC_NAV_ROOT": "/Users/you/code/your-repo" }
+      "env": {
+        "SPEC_NAV_ROOT": "/Users/you/code/your-repo"
+      }
     }
   }
 }
 ```
 
-**Replace `SPEC_NAV_ROOT` with your own absolute path before starting.** It is
-the directory to scan, and the one thing here that cannot be guessed. The
-server refuses to scan a path that does not exist rather than reporting zero
-matches, which would read exactly like a repo where the pattern is absent.
+**Replace `/Users/you/code/your-repo` with the absolute path to the code you want scanned.** Use the monorepo root to cover multiple services. This is the target repository, not the installation directory of `mcp-spec-nav`.
 
-For Claude Code that block goes in `.mcp.json` at your project root. Restart,
-then `/mcp` should list `spec-nav`. Check it with `spec_nav_services`: it prints
-the root it resolved, the projects it found and how many files and functions
-each holds, so a wrong path shows up before it costs you a plan built on an
-empty result.
+If `.mcp.json` already exists, add the `spec-nav` entry inside its existing `mcpServers` object. Keep your other MCP configurations.
 
-### Local checkout
+#### 2. Check the connection
+
+Open Claude Code in that repository, restart the session, and run:
+
+```text
+/mcp
+```
+
+Check that `spec-nav` is connected. Complete any configuration approval requested by your client.
+
+Then send Claude:
+
+```text
+Use spec-nav to list the services in this repository.
+Show the resolved repository root and any files it could not scan.
+```
+
+Check that the root and services match your project before continuing.
+
+#### 3. Try it on a real task
+
+Copy one of these messages into Claude Code:
+
+**Find reusable code**
+
+```text
+Before implementing order fee calculation, use spec-nav to search all services
+for existing functions. Read the most relevant candidates and explain whether
+any can be reused. Check dependencies and service boundaries before importing.
+```
+
+**Check callers before editing**
+
+```text
+I want to add a parameter to calculateFee. Use spec-nav to find its declaration,
+read the implementation and check its callers before planning the change.
+Report any callers you could not resolve.
+```
+
+**Survey a change across services**
+
+```text
+I want to change the handling fee. Use spec-nav to map the related constants,
+functions and usages across the repository. Include alternative spellings.
+Check incomplete coverage and remaining pages before claiming the survey is complete.
+```
+
+### Option 2: Install as a Claude Desktop extension
+
+**Requirements:** Claude Desktop and a local checkout of the repository you want to scan. Node.js is not required.
+
+#### 1. Get the `.mcpb` file
+
+Download `mcp-spec-nav-<version>.mcpb` from the [Releases](https://github.com/khoitd-voyager/mcp-spec-nav/releases) page, or build it yourself:
 
 ```bash
-git clone https://github.com/khoitd-voyager/mcp-spec-nav && cd mcp-spec-nav
-npm install && npm run build
+git clone https://github.com/khoitd-voyager/mcp-spec-nav.git
+cd mcp-spec-nav
+npm install
+npm run pack:mcpb
 ```
 
-Then `"command": "node", "args": ["/path/to/mcp-spec-nav/dist/index.cjs"]`.
+The file is written to `build/mcp-spec-nav-<version>.mcpb`.
 
-Use this form while developing the server: `npx github:` installs the committed
-`dist/`, so changes you have not pushed are not what runs.
+#### 2. Install it
 
-### When a scan comes back empty
+Double-click the `.mcpb` file, or open Claude Desktop → **Settings → Extensions → Advanced settings → Install Extension…** and select it. Review the extension and click **Install**.
 
-`scanned: NOTHING` means no project was searched, which is not the same as the
-pattern being absent. In order of likelihood:
+#### 3. Choose the repository
 
-1. **`SPEC_NAV_ROOT` is wrong.** Run `spec_nav_services` to see the root it
-   actually resolved.
-2. **More than one `.mcp.json`.** A config at the directory you opened and
-   another at the repo root are different files; the one being read may not be
-   the one you edited.
-3. **The code is in a language that is not supported.** Every listing has a
-   `coverage:` line that counts source files in unsupported languages
-   (`.vue`, `.kt`, `.sql`, …). Those files are never searched.
+In the extension settings, set **Repository to scan** to the root of the code you want scanned (the monorepo root to cover every service), then enable the extension.
 
-## Telling your agent to use it
+To scan a different repository later, open **Settings → Extensions → Spec Nav → Configure** and choose another folder. The extension scans one repository at a time.
 
-Having the tools available is not enough. An agent reaches for the search it
-has always used unless something tells it otherwise. Put this in `CLAUDE.md`,
-`AGENTS.md`, a cursor rule, or whatever your client reads:
+#### 4. Check it
+
+Start a new chat and send:
+
+```text
+Use spec-nav to list the services in this repository.
+Show the resolved repository root and any files it could not scan.
+```
+
+The prompts under [Try it on a real task](#3-try-it-on-a-real-task) also work in Claude Desktop. Claude Desktop reads and explains the code; to have the changes made in the repository, use Claude Code.
+
+### Make Claude use it during normal coding
+
+Installing an MCP makes its tools available; it does not ensure the agent will use them. Add this section to your project's `CLAUDE.md`:
 
 ```markdown
-## Before writing or changing logic
+## Use existing code before writing new logic
 
-Scale this to the change. A typo, a rename inside one function or a config
-tweak needs none of it. New logic, or a change to a function other code
-depends on, does.
+For new logic or changes that affect other functions:
 
-1. **Look for what already exists.** Before writing a new function, call
-   `spec_nav_find_functions` with what it should do, in words:
-   `spec_nav_find_functions({ query: "calculate order fee" })`. It searches
-   every service. Results are ranked by matching words, not by meaning, so if
-   nothing fits, try one or two other wordings before concluding it does not
-   exist.
-2. **Read the likely candidates, not everything.** `spec_nav_read_function`
-   with a candidate's `id` returns its full source, doc comment and the
-   imports it uses. Read the two or three that look right. Do not page
-   through the whole catalog or read every match.
-3. **Decide whether it can be reused.** A function in another service is not
-   automatically importable. Check that the calling service already depends
-   on (or may depend on) the owning package, that it is exported, and that it
-   handles your case in every branch. If it almost fits, prefer extending it
-   (and its callers) over writing a near-copy.
-4. **Survey what the change touches.** Before changing a signature or
-   behaviour, `spec_nav_callers` lists the call sites (TS/JS), each with its
-   enclosing function and parameters. For a constant, string or concept that
-   spans services or languages, call `spec_nav_map` **once** with a wide regex
-   that folds every spelling into one pattern:
-   `spec_nav_map({ pattern: "handl(e|ing)_?fee|HANDLING_FEE" })`.
-   If a result says MORE, fetch the next page with its `cursor` before
-   concluding you have seen everything. If `exhaustive` is false or coverage
-   says PARTIAL, check the listed gaps by other means.
-5. **Make the change, then verify.** Re-run the callers or map query for what
-   you changed, and run the project's tests. Line numbers and ids from before
-   your edit are stale; ask again rather than reusing them.
+1. Use spec_nav_find_functions to look for existing implementations across services.
+   Use English keywords for English-named code; try another wording if needed.
+2. Read the most relevant candidates with spec_nav_read_function.
+   Avoid loading the entire catalog or every function body into context.
+3. Check behavior, exports, dependencies and service boundaries before reusing code.
+   Another service's function is not automatically safe to import.
+4. Use spec_nav_callers before changing a TS/JS function's signature or behavior.
+   Use spec_nav_map with one broad regex for concepts spanning files or services.
+5. Inspect coverage and unresolved results. Follow cursors when you need the complete
+   result set; use ordinary search/file reads for unsupported or missing areas.
+6. After editing, refresh relevant queries and run the project's appropriate checks.
+
+Scale this workflow to the task. Small, isolated edits do not require every tool.
+Search results are candidates, not proof that no other implementation exists.
 ```
 
-The wording is deliberate. Without "once", agents treat the map as a search
-engine and call it ten times. Without "not everything", they read whole
-catalogs. And without the reuse check, a search hit gets imported across a
-service boundary it should not cross.
+For other agents, adapt this section to their project instruction file, such as `AGENTS.md`.
 
-## Tools
+### Tool reference
 
-| Tool | Returns |
+These are MCP tool arguments, not terminal commands. Your agent calls them for you.
+
+| Tool | Use it when you want to… |
 |---|---|
-| `spec_nav_find_functions` | ranked functions whose name, export alias, class, signature, doc, path or body match the words of a query, across all services, with why each matched; body-only matches marked and ranked last |
-| `spec_nav_read_function` | one function in full: signature, doc, imports it uses, its exact source (column to column) with line numbers. Long ones come in parts, continued by cursor |
-| `spec_nav_functions` | the function catalog, filterable and paged, with a coverage report |
-| `spec_nav_callers` | TS/JS call sites resolved by the type checker, each with its enclosing function and parameters; plus unresolved calls, interface calls and uses as a value |
-| `spec_nav_map` | every line matching a regex, across every project and language, with the enclosing function; paged |
-| `spec_nav_services` | the projects found under the root, with file and function counts |
+| `spec_nav_services` | Check the scan root, discovered projects, counts and coverage. |
+| `spec_nav_find_functions` | Find ranked candidates for existing logic across services. |
+| `spec_nav_read_function` | Read one candidate's exact source and context. |
+| `spec_nav_functions` | Browse the function catalog with filters and pagination. |
+| `spec_nav_callers` | Inspect TS/JS calls, references and unresolved usages. |
+| `spec_nav_map` | Find regex matches with the enclosing function. |
 
-Every listing tool accepts `services` (a project or any directory under the
-root; `"."` is the root's own files) and returns pages. The new tools also take
-`format: "json"` for structured output.
-
-### `spec_nav_find_functions`
+**Search for functions**
 
 ```json
-{ "query": "calculate order fees" }
+{ "query": "calculate order fees", "limit": 20 }
 ```
 
-Output on the fixture repo used by the tests (abridged):
+Pass this to `spec_nav_find_functions`. Results include function IDs and reasons for matching. Names, export aliases, signatures, documentation, paths and, by default, bodies are searched.
 
-```
-query: "calculate order fees" → words: calculate, order, fees
-RANKED LEXICAL CANDIDATES, not a complete answer: 4 of 14 catalogued functions matched at least half the words (by name, class/module, signature, doc, path, body). …
-Functions matching only in their body need every word, are marked [body only] and ranked after the rest.
-services with candidates: services/billing, packages/shared, services/api
-showing 1-4 — no further candidates
-coverage: 12 files read (typescript 9, python 1, javascript 2). Every supported file in scope was parsed without errors.
-Reading a candidate does not make it safe to import: check that the calling service may depend on the one that owns it before reusing it.
-
-#1  score 14.7  services/billing/src/order.ts:9:1-9:85  (service services/billing, typescript)
-    [function, exported] computeOrderFee
-    sig: function computeOrderFee(order: Order): number
-    id:  services/billing/src/order.ts::computeOrderFee@99639d47
-    why: calculate→name(synonym:compute)  order→name  fees→name(stem:fee)
-    doc: Fee charged on each order.
-#2  score 9.6  packages/shared/src/fees.ts:2:1-2:76  (service packages/shared, typescript)
-    [function, exported] calculateShippingFees
-    sig: function calculateShippingFees(weight: number)
-    id:  packages/shared/src/fees.ts::calculateShippingFees@53c1f6b8
-    why: calculate→name  fees→name
-…
-```
-
-Identifiers are split on camelCase and snake_case. Words match exactly, by
-stem (`fees`/`fee`), by prefix of four or more letters (`calc`/`calculate`),
-or through a short fixed list of verbs code uses interchangeably
-(`calculate`/`compute`, `get`/`fetch`/`load`, `delete`/`remove`, …). A
-candidate must match at least half the query's words. The names a function is
-exported under (`module.exports.giveBack`) count as names.
-
-**Body-only matches.** With `searchBodies` (the default), a function whose
-only matches are in its body — `const shippingFee = …` inside `process()` — is
-returned too, but it must match *every* query word, exactly or by stem, none of
-them syntax like `return`/`const`. It is marked `bodyOnly` (`[body only]` in
-text) and ranked after every candidate matched by name, signature or doc. If
-body-only matches exceed 25 and 10% of the functions searched, they are
-withheld as noise and the output gives the count (`bodyOnlyWithheld`).
-`searchBodies: false` drops them.
-
-**Unicode and Vietnamese.** Words are split by Unicode letter class, so
-"tính phí vận chuyển" is tính, phí, vận, chuyển, and `tinhPhiVanChuyen` splits
-the same way. Diacritics are optional when matching (`phí` = `phi`, `đơn` =
-`don`). English stemming, prefixes and synonyms apply only to words written in
-ASCII, so `thuế` is not stemmed into `thu`. **Nothing is translated**: a
-Vietnamese query finds code, names and comments that use those words, not
-`calculateShippingFee`. The output says so whenever a query has non-English
-words; to find English-named code, run a separate query in English.
-
-Nothing is sent to an external service and no API key is needed. It does not
-understand meaning: a function that does the job under unrelated words
-(`applySurcharge` for "add fee") only shows up if one of those listed
-equivalences or its doc comment bridges the gap.
-
-### `spec_nav_read_function`
+**Read a function**
 
 ```json
-{ "id": "services/billing/src/order.ts::computeOrderFee@3be01c2a" }
-{ "file": "services/billing/src/order.ts", "name": "Order.total" }
-{ "file": "src/dup.ts", "name": "run", "line": 42 }
+{ "file": "services/billing/src/fees.ts", "name": "calculateFee" }
 ```
 
-Returns the signature, the whole doc comment, the imports the function uses
-(for TS/JS, the import declarations whose names appear in the body; for other
-languages, best-effort), and the source with line numbers. The source is the
-function's exact extent from the syntax tree, start column to end column:
-in `function first() {…} function second() {…}` on one line, reading `first`
-returns only `first`. When only indentation precedes the start, it is kept so
-the lines below still line up. `name` may also be a name the function is
-exported under.
+Pass this to `spec_nav_read_function`, using a real path/name from your results. Alternatively, pass `{ "id": "<id returned by the tool>" }`. For long functions, continue with the returned `nextCursor` as `cursor`.
 
-A function longer than one part (400 lines or ~26k characters by default) ends
-with `MORE: call again with the same id and fromLine=N, or with cursor="…"`.
-Prefer the cursor: it records the position *within the function* and its
-hash, so if lines are added above the function between parts the next part
-still continues at the right place (with a note that it moved), and if the
-function itself changed the read is refused as `STALE` instead of joining parts
-of two versions. Nothing is cut silently.
-
-An id is `file::QualifiedName@hash`, where the hash is of the function's exact
-text. Editing elsewhere in the file — including a neighbour on the same line —
-keeps the id valid (it is read at its new position). Editing the function
-itself, or deleting it, makes the id stale, and the read answers `STALE ID`
-with the current id rather than showing you different code from what you were
-looking at.
-
-### `spec_nav_functions`
+**Browse a service's functions**
 
 ```json
-{ "services": ["services/api"], "name": "fee", "kind": "method", "limit": 200 }
+{ "services": ["services/api"], "name": "fee", "limit": 100 }
 ```
 
-Illustrative output:
+Pass this to `spec_nav_functions`. Omit `services` to cover all discovered projects. `services: ["."]` selects the root project's own files. Filters include `file`, `name`, `kind`, `language` and `exportedOnly`.
 
-```
-functions: 37 match the filters — this page 1-37 — COMPLETE (no further pages)
-coverage: 812 files read (typescript 500, javascript 12, python 300). PARTIAL: 1 file(s) with syntax errors (their function lists may be incomplete); 14 source file(s) in unsupported languages not read (.vue 10, .sql 4). 41 dependency/build/virtualenv directories excluded by design. 950 inline anonymous function(s) (callbacks) have no name and are not listed.
-  syntax error: services/api/src/broken.ts:12 — '}' expected.
-
-services/api/src/fees.ts  (service services/api, typescript)
-  12-40 [method, exported] OrderService.calculateFee
-      sig: calculateFee(order: Order, rate?: number): number
-      id:  services/api/src/fees.ts::OrderService.calculateFee@1a2b3c4d
-      doc: Calculates the handling fee for one order.
-```
-
-Filters: `file` (substring, or a glob with `*`), `name` (substring of the
-qualified name, or `/regex/`), `kind`, `language`, `exportedOnly`. Each entry
-has a qualified name (`Class.method`, `module.fn`, `outer.inner`), kind
-(function, nested function, method, constructor, getter, setter, property,
-arrow function, function expression), signature, parameters, return type when
-the source states one, export/visibility when the language makes it
-knowable, line range plus `startColumn`/`endColumn` (text shows `line:column`
-when a function shares a line), and doc comment (cut at 240 characters and
-marked when cut).
-
-`exportedAs` lists the other names a function is exported under —
-`module.exports`, `module.exports.giveBack`, `exports.x`, `default`, an
-`export { a as b }` alias. Aliases never create extra entries: one function is
-one entry however many ways it is exported, and `exportedOnly` includes
-CommonJS exports.
-
-When one variable or property is assigned several functions
-(`if (x) format = a; else format = b;`), each is listed under the same name
-with its own id (`format`, `format~2`), and `alternatives` lists the others'
-ids. Which one a call reaches is decided at runtime; the catalog does not
-guess.
-
-Pages use a cursor that resumes after the last item returned, so a page is
-never repeated or skipped. A cursor only works with the arguments that
-produced it. If files change between pages, the next page says so.
-
-### `spec_nav_callers`
+**Check callers**
 
 ```json
-{ "symbol": "Order.total" }
-{ "symbol": "total", "className": "Cart" }
-{ "symbol": "computeFee", "file": "packages/shared/src/fees.ts" }
+{ "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }
 ```
 
-Output on the test fixture (abridged):
+Pass this to `spec_nav_callers`. Use a qualified name such as `OrderService.calculateFee`, or a declaration file, to disambiguate targets. `service` narrows the declaration; `searchServices` narrows where callers are searched.
 
-```json
-{
-  "symbol": "Order.total", "total": 2, "exhaustive": false,
-  "totals": { "resolved": 2, "viaInterfaceOrBase": 1, "references": 0, "unresolved": 1, "otherSymbolsSameName": 1 },
-  "targets": [{ "name": "Order.total", "file": "services/billing/src/order.ts", "line": 3, "kind": "method" }],
-  "sites": [{
-    "file": "services/api/src/checkout.ts", "line": 5,
-    "enclosing": "checkout", "enclosingLine": 4, "enclosingParams": ["o", "c"],
-    "snippet": "o.total()", "argCount": 0, "resolution": "resolved", "target": "Order.total"
-  }, …],
-  "viaInterfaceOrBase": [{ "file": "services/api/src/checkout.ts", "line": 8, "snippet": "t.total()", "reason": "bound to Totaler.total (interface)", … }],
-  "unresolved": [{ "file": "services/web/src/legacy.js", "line": 1, "snippet": "order.total()", "reason": "receiver type unknown (untyped JS, `any`, or unresolved import)", … }],
-  "otherSymbolsSameName": { "Cart.total (services/billing/src/order.ts:6)": 1 },
-  "notAnalyzedOtherLanguages": { "count": 1, "files": ["services/py/totals.py"] },
-  "notes": ["…", "Not counted anywhere: dynamic calls (obj[name]()), calls in unsupported file types, and code outside the repo. So this is NOT a complete list of call sites."]
-}
-```
-
-Every call by the target's name (or an alias of it) is resolved to the
-declaration it binds to. That covers `import { x as y }`, re-exports under
-another name, namespace imports, default imports, workspace packages imported
-by name (resolved to their source, not their build), and each file's own
-`tsconfig.json`/`jsconfig.json` `paths`. Calls that bind to a different
-declaration (another class's `total`) are excluded and counted. Calls the
-checker cannot resolve are listed as `unresolved`, not counted as callers.
-`exhaustive` is true only when nothing was left unresolved and no file in
-another language mentions the name.
-
-`enclosingParams` is what you need when adding a parameter: which sites
-already have the value in scope, and which need it threaded down from their
-own caller. `argCount` tells you whether you can append or must pass
-`undefined` in a middle slot. Edit each file bottom-up, since every insertion
-shifts the lines below it.
-
-`service` narrows which declaration is meant. Call sites are searched
-repo-wide (narrow with `searchServices`). If the symbol is not declared in
-that `service`, the declarations elsewhere are used and a note says so.
-
-### `spec_nav_map`
+**Map a concept**
 
 ```json
 { "pattern": "handl(e|ing)_?fee|handling_charge|HANDLING_FEE" }
 ```
 
-Illustrative output:
+Pass this to `spec_nav_map`. Matching is case-insensitive. Comment/import lines are skipped by default; set `includeComments: true` to include them.
 
-```
-pattern: handl(e|ing)_?fee|handling_charge|HANDLING_FEE
-scanned: 2140 files in 6 project(s): ., admin, services/customer, services/order, storefront, worker
-languages with hits: go, python, typescript
-492 hits in 83 files — this page: hits 1-310 — MORE: call again with the same pattern and cursor="…"
+### Understand the results
 
-All files with hits (count | file):
-    12 | services/order/src/utils/calculate-product-fee.ts
-     …
+- **Pagination:** `MORE` or `nextCursor` means more results are available. Repeat the same query with that cursor. Completion of pagination is separate from completeness of source coverage.
+- **Coverage:** `PARTIAL` means some source files were unsupported, unreadable, skipped or had parse errors. Inspect those gaps with other tools.
+- **Search:** Results are ranked lexical matches, not semantic understanding. Body-only matches are marked and ranked lower. Broad body-only matches can be withheld as noise; the output reports that count.
+- **Callers:** Review unresolved calls, interface/base usages and references. Even `exhaustive: true` does not cover every runtime call, dynamic dispatch or external repository.
+- **Freshness:** Added, edited and deleted source files are reflected on subsequent calls. Function IDs depend on their source text; look up a changed function again if a read reports `STALE ID`.
 
-Format:  line | enclosing function:its line | source
+### Troubleshooting
 
-services/order/src/utils/calculate-product-fee.ts  (12 hits)
-  1 | - | export const PRODUCT_HANDLING_FEE_JPY = 300;
-  27 | calculateProductFee:17 | total += PRODUCT_HANDLING_FEE_JPY;
-```
+| Problem | What to check |
+|---|---|
+| `spec-nav` does not connect | Node.js/npm/Git are available to the client; configuration is valid; installation can access GitHub. |
+| Wrong projects or no source files | Ask for `spec_nav_services`; check `SPEC_NAV_ROOT` and the `.mcp.json` used by the session. |
+| A function is missing | Check supported languages, coverage, catalog filters and the limits below. |
+| Search returns no useful candidates | Try alternate English keywords, browse the catalog or use ordinary search. |
+| `STALE ID` | Find the function again and read its current ID. |
+| Local changes to this MCP do not appear | `npx github:` uses the committed package. Use the local checkout configuration below while developing. |
+| Claude Desktop extension does not start | Check that **Repository to scan** is set and the extension is enabled. See **Settings → Extensions** and the MCP logs under **Settings → Developer**. |
+| Claude Desktop scans the wrong repository | Change **Repository to scan** in the extension settings and start a new chat. |
 
-The enclosing function is what makes this more than a search result: a line
-number tells you where something is, the function name tells you what it is
-part of. Pages are cut at about 30k characters (or `pageSize` hits). When there
-is more than one page, the first lists every file with its hit count (if that
-list fits), so which services are involved is visible at once. Source lines
-longer than 160 characters are shortened and end with `…`.
+## Tiếng Việt
 
-## How the repo is read
+### MCP này làm gì?
 
-- **Projects at any depth.** A directory is a project when it holds a
-  manifest for a supported language (`package.json`, `tsconfig.json`,
-  `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`,
-  `composer.json`, a `.csproj`, …) or a `src/`. The walk has no depth limit
-  and continues into projects, so a project nested inside another is its own
-  service.
-- **Each file belongs to exactly one service:** the innermost project holding
-  it. Files at the root outside every sub-project (a root `src/` next to
-  `services/`) belong to `"."`. No file is listed twice.
-- **Excluded:** `node_modules`, `dist`, `build`, `.next`, `vendor`, `target`,
-  `coverage`, hidden directories, Python virtualenvs (recognised by
-  `pyvenv.cfg`, not by name), `bin/`/`obj/` only next to a .NET project file,
-  and `packages/` only when it is a NuGet folder (`.nupkg` or
-  `repositories.config`). A JS monorepo's `packages/` is read. Minified `.js`
-  and files over 1.5 MB are skipped and listed in coverage.
-- **Always current.** Every call re-walks the tree and checks each file's
-  modification stamp; changed files are re-parsed, deleted ones forgotten. A
-  file added, edited or removed while the server runs is reflected on the next
-  call, in the catalog, the map and the callers alike.
+`mcp-spec-nav` là MCP server chạy local, giúp coding agent như Claude Code đọc code trong repo bạn chọn để:
 
-## Languages
+- Tìm các hàm có sẵn ở nhiều service và package dùng chung.
+- Đọc thân hàm, signature, tài liệu và import liên quan.
+- Tìm các nơi gọi hàm TypeScript/JavaScript trước khi sửa.
+- Tìm theo regex trong các file nguồn được hỗ trợ, kèm tên hàm chứa mỗi kết quả.
 
-| Language | Extensions | Names you get |
+**Ví dụ:** Bạn yêu cầu Claude thêm chức năng tính phí đơn hàng. Claude có thể tìm các hàm tính phí trong service billing và package dùng chung, đọc implementation rồi quyết định có tái sử dụng được không.
+
+MCP đọc và cung cấp thông tin về code. AI đánh giá, chọn cách sửa và thực hiện thay đổi. MCP không bảo đảm tìm được mọi hàm liên quan.
+
+### Chọn cách cài
+
+| | Cách 1: `.mcp.json` | Cách 2: Extension cho Claude Desktop (`.mcpb`) |
 |---|---|---|
-| TypeScript | `.ts` `.tsx` `.mts` `.cts` | `OrderService.calculateFee`, arrow functions by the variable or property they are assigned to |
-| JavaScript | `.js` `.jsx` `.mjs` `.cjs` | same as TypeScript, plus CommonJS: `module.exports = function calculateFee…` (named `calculateFee`; an anonymous one is named `module.exports`), `module.exports.x =`, `exports.x =`, `module.exports = { a, b: c }` and `module.exports = fn` (marking the declared function exported) |
+| Client | Claude Code (và các client đọc `.mcp.json`) | Claude Desktop |
+| Cần có | Node.js 18+, npm/npx, Git | Chỉ cần Claude Desktop — extension chạy bằng Node.js có sẵn trong app |
+| Chọn repo cần quét | `SPEC_NAV_ROOT` trong file cấu hình | Chọn thư mục trong phần cài đặt extension |
+| Phù hợp khi | Code: Claude đọc, lên kế hoạch và sửa code trong repo | Hỏi về code: tìm, đọc và kiểm tra hàm trong khung chat |
 
-In both, a function stored by assignment is catalogued under the variable or
-property it is stored in: `let f; f = () => …` (qualified by the scope that
-*declares* `f`, resolved with the TypeScript binder, so a same-named variable
-in another function is a different entry), `obj.k = …`, `obj["k"] = …`,
-`Foo.prototype.k = …`, `this.k = …` (under the class or constructor function),
-and `??=`/`||=`/`&&=`.
-| Python | `.py` `.pyi` | `OrderCalculator.compute_total`, docstrings included |
-| Go | `.go` | `Order.Total` — the receiver type, not a bare `Total` |
-| Java | `.java` | `FeeService.total`, constructors included |
-| C# | `.cs` | `FeeAdmin.Total`, properties included |
-| Ruby | `.rb` `.rake` | `Invoice.total`, including `self.` methods |
-| Rust | `.rs` | `Order.total` from the surrounding `impl` |
-| PHP | `.php` | `Cart.total` |
-| C | `.c` `.h` | `total`, including pointer-returning declarations |
-| C++ | `.cpp` `.cc` `.hpp` … | `Order.total` |
-| Scala | `.scala` `.sc` | `Fees.total` from the object or class |
-| Elixir | `.ex` `.exs` | `Billing.total`, `def` and `defp` |
-| Bash | `.sh` `.bash` `.zsh` | `total`, both declaration forms |
+Hai cách chạy cùng một server và cùng bộ tool. Có thể dùng cả hai cùng lúc.
 
-TypeScript and JavaScript are parsed with the TypeScript compiler's own parser
-(and type-checked with ts-morph for `spec_nav_callers`). The rest use
-tree-sitter grammars, loaded from disk the first time a file needs them, so a
-method keeps the name its language gives it rather than one guessed from
-indentation.
+### Cách 1: Cài và dùng thử với Claude Code
 
-## Limits
+**Cần có:** Node.js từ phiên bản 18, npm/npx, Git và repo cần quét đã nằm trên máy. Lần cài đầu cần kết nối mạng.
 
-- **Search is lexical.** `spec_nav_find_functions` matches words, stems,
-  prefixes and a short synonym list, not meaning. An empty or thin result is
-  not proof that nothing reusable exists. Try other wordings, filter
-  `spec_nav_functions` by file or name, or use `spec_nav_map`.
-- **Reusability is not checked.** Nothing here decides whether service A may
-  import from service B. Dependencies, package boundaries and ownership are
-  yours to check.
-- **`spec_nav_callers` resolves TypeScript and JavaScript only.** Other
-  languages are reported as files mentioning the name, not analysed. Plain JS
-  with untyped receivers (`order.total()` where `order` is a parameter) cannot
-  be resolved and comes back as `unresolved`. Dynamic calls (`obj[name]()`)
-  are not found at all.
-- **Anonymous functions are not catalogued.** An inline callback has no name to
-  reuse. They are counted in coverage, and a line inside one is attributed to
-  the named function around it.
-- **Function forms not catalogued.** In JS/TS: functions reached only through
-  destructuring (`[a, b] = [() => 1, () => 2]`), `Object.assign(module.exports,
-  {…})`, `Object.defineProperty`, computed keys that are not literals
-  (`obj[name] = …`), the outer target of a chain (`a = b = () => …` is listed as
-  `b` only), functions returned from factories, and re-exports such as
-  `module.exports = require("./x")` (the function is listed in its own file).
-  In the tree-sitter languages, only declarations: a lambda or closure assigned
-  to a variable (Python `f = lambda …`, Go `f := func…`, Rust `let f = |x| …`)
-  has no name in the syntax tree and is neither listed nor counted in
-  coverage's anonymous total (that count is JS/TS only).
-- **Search does not translate.** Vietnamese (or any non-English) queries match
-  the same words in the code; they do not find English names. Unaccented
-  Vietnamese is indistinguishable from English, so English stemming may still
-  apply to it (`thue` → `thu`). Single-letter words are not indexed.
-- **Unsupported languages** (Vue/Svelte single-file components, Kotlin, Swift,
-  SQL, templates, …) are not read. They are counted in coverage so their
-  absence is visible.
-- **Return types** are reported only when the source states them. Nothing is
-  inferred.
-- **Cost on large repos.** On a synthetic repo of 5,000 files and about 80,000
-  functions, the first catalog call took about 1.5 s and later ones about
-  0.05 s, a search about 0.6 s, and the server held about 400 MB. The first
-  `spec_nav_callers` call builds a type-checked project of every TS/JS file:
-  about 3 s there, about 1.2 s afterwards, and about 1.2 GB resident.
-- **Reads the current checkout.** Switch branches before asking about another
-  one. Ids and line numbers go stale as soon as you edit, so ask again rather
-  than reusing them.
+#### 1. Thêm cấu hình MCP
 
-## Development
+Tạo file `.mcp.json` ở thư mục gốc của repo cần quét:
+
+```json
+{
+  "mcpServers": {
+    "spec-nav": {
+      "command": "npx",
+      "args": ["-y", "github:khoitd-voyager/mcp-spec-nav"],
+      "env": {
+        "SPEC_NAV_ROOT": "/Users/you/code/your-repo"
+      }
+    }
+  }
+}
+```
+
+**Thay `/Users/you/code/your-repo` bằng đường dẫn tuyệt đối tới repo cần quét.** Muốn quét nhiều service thì trỏ tới gốc monorepo. Đây là đường dẫn repo dự án của bạn, không phải thư mục cài `mcp-spec-nav`.
+
+Nếu đã có `.mcp.json`, thêm `spec-nav` vào `mcpServers` hiện có và giữ các MCP khác.
+
+#### 2. Kiểm tra kết nối
+
+Mở Claude Code trong repo đó, khởi động lại session và chạy:
+
+```text
+/mcp
+```
+
+Kiểm tra `spec-nav` đã kết nối. Nếu client yêu cầu duyệt cấu hình, hoàn tất bước đó.
+
+Sau đó gửi Claude:
+
+```text
+Dùng spec-nav liệt kê các service trong repo này.
+Cho tôi biết đường dẫn repo đang quét và những phần chưa quét được.
+```
+
+Kiểm tra đường dẫn và danh sách service đúng với dự án trước khi dùng tiếp.
+
+#### 3. Dùng thử ngay
+
+Bạn không cần tự gọi tool. Copy một câu dưới đây vào Claude Code:
+
+**Tìm hàm có sẵn trước khi viết code mới**
+
+```text
+Tôi cần thêm chức năng tính phí đơn hàng. Trước khi viết code, dùng spec-nav
+để tìm các hàm có sẵn trên toàn repo, gồm các service và package dùng chung.
+Đọc các hàm phù hợp và đánh giá khả năng tái sử dụng. Dùng thêm từ khóa tiếng Anh
+như calculate order fees. Kiểm tra dependency và ranh giới service trước khi import.
+```
+
+**Kiểm tra trước khi sửa hàm**
+
+```text
+Tôi muốn thêm tham số vào calculateFee. Dùng spec-nav tìm declaration,
+đọc implementation và kiểm tra các nơi gọi hàm trước khi lên kế hoạch sửa.
+Báo rõ những lời gọi chưa resolve được.
+```
+
+**Tìm các nơi liên quan trong nhiều service**
+
+```text
+Tôi muốn thay đổi handling fee. Dùng spec-nav tìm các constant, hàm và nơi sử dụng
+liên quan trên toàn repo, gồm các cách viết tên khác nhau. Kiểm tra coverage
+và các trang kết quả còn lại trước khi kết luận đã khảo sát đầy đủ.
+```
+
+### Cách 2: Cài thành extension cho Claude Desktop
+
+**Cần có:** Claude Desktop và repo cần quét đã nằm trên máy. Không cần cài Node.js.
+
+#### 1. Lấy file `.mcpb`
+
+Tải `mcp-spec-nav-<version>.mcpb` ở trang [Releases](https://github.com/khoitd-voyager/mcp-spec-nav/releases), hoặc tự đóng gói:
+
+```bash
+git clone https://github.com/khoitd-voyager/mcp-spec-nav.git
+cd mcp-spec-nav
+npm install
+npm run pack:mcpb
+```
+
+File được tạo ở `build/mcp-spec-nav-<version>.mcpb`.
+
+#### 2. Cài extension
+
+Bấm đúp vào file `.mcpb`, hoặc mở Claude Desktop → **Settings → Extensions → Advanced settings → Install Extension…** rồi chọn file. Xem thông tin extension và bấm **Install**.
+
+#### 3. Chọn repo cần quét
+
+Trong phần cài đặt extension, đặt **Repository to scan** là thư mục gốc của code cần quét (trỏ tới gốc monorepo để quét mọi service), rồi bật extension.
+
+Muốn quét repo khác thì mở **Settings → Extensions → Spec Nav → Configure** và chọn thư mục khác. Mỗi lần extension chỉ quét một repo.
+
+#### 4. Kiểm tra
+
+Mở chat mới và gửi:
+
+```text
+Dùng spec-nav liệt kê các service trong repo này.
+Cho tôi biết đường dẫn repo đang quét và những phần chưa quét được.
+```
+
+Các câu mẫu ở [Dùng thử ngay](#3-dùng-thử-ngay) cũng dùng được trong Claude Desktop. Claude Desktop đọc và giải thích code; muốn Claude sửa trực tiếp trong repo thì dùng Claude Code.
+
+### Hướng dẫn Claude dùng khi code bình thường
+
+Cài MCP chỉ làm cho tool có sẵn. Thêm đoạn sau vào `CLAUDE.md` của dự án để hướng dẫn Claude sử dụng:
+
+```markdown
+## Tìm code có sẵn trước khi viết logic mới
+
+Với logic mới hoặc thay đổi ảnh hưởng tới các hàm khác:
+
+1. Dùng spec_nav_find_functions tìm implementation có sẵn trên các service.
+   Dùng từ khóa tiếng Anh nếu code đặt tên bằng tiếng Anh; thử cách diễn đạt khác khi cần.
+2. Dùng spec_nav_read_function đọc các ứng viên phù hợp.
+   Tránh nạp toàn bộ danh mục hoặc mọi thân hàm vào context.
+3. Kiểm tra hành vi, export, dependency và ranh giới service trước khi tái sử dụng.
+   Hàm ở service khác không mặc nhiên có thể import trực tiếp.
+4. Dùng spec_nav_callers trước khi đổi signature hoặc hành vi của hàm TS/JS.
+   Dùng spec_nav_map với một regex đủ rộng khi thay đổi liên quan nhiều file/service.
+5. Đọc coverage và kết quả unresolved. Lấy trang tiếp theo nếu cần đủ kết quả;
+   dùng tìm kiếm và đọc file thông thường cho phần không hỗ trợ hoặc còn thiếu.
+6. Sau khi sửa, cập nhật các truy vấn liên quan và chạy kiểm tra phù hợp của dự án.
+
+Áp dụng theo mức độ thay đổi. Sửa nhỏ, độc lập không cần gọi tất cả tool.
+Không tìm thấy ứng viên không có nghĩa là repo chắc chắn chưa có implementation.
+```
+
+Với agent khác, chuyển hướng dẫn này sang file phù hợp, chẳng hạn `AGENTS.md`.
+
+### Các tool dùng để làm gì?
+
+| Tool | Mục đích |
+|---|---|
+| `spec_nav_services` | Kiểm tra đường dẫn quét, các project, số lượng file/hàm và coverage. |
+| `spec_nav_find_functions` | Tìm các hàm có thể đáp ứng yêu cầu, xếp hạng và giải thích vì sao khớp. |
+| `spec_nav_read_function` | Đọc code chính xác của một hàm, kèm signature, tài liệu và import liên quan. |
+| `spec_nav_functions` | Xem danh mục hàm, lọc và lấy từng trang. |
+| `spec_nav_callers` | Kiểm tra lời gọi TS/JS, references và những trường hợp chưa resolve được. |
+| `spec_nav_map` | Tìm dòng khớp regex, kèm tên hàm chứa dòng đó. |
+
+Ví dụ tham số cho agent gọi tool — không phải lệnh terminal:
+
+| Tool | Tham số ví dụ |
+|---|---|
+| `spec_nav_services` | `{}` |
+| `spec_nav_find_functions` | `{ "query": "calculate order fees", "limit": 20 }` |
+| `spec_nav_read_function` | `{ "file": "services/billing/src/fees.ts", "name": "calculateFee" }` |
+| `spec_nav_functions` | `{ "services": ["services/api"], "name": "fee", "limit": 100 }` |
+| `spec_nav_callers` | `{ "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }` |
+| `spec_nav_map` | `{ "pattern": "handling_fee|handlingFee|HANDLING_FEE" }` |
+
+Thay đường dẫn và tên hàm ví dụ bằng kết quả thực tế từ repo của bạn. Đọc hàm cũng có thể dùng `id` do tool trả về.
+
+### Cách đọc kết quả
+
+- **MORE / nextCursor:** Còn trang kết quả. Gọi lại với cùng truy vấn và truyền cursor. Lấy hết trang không đồng nghĩa mọi loại file trong repo đều đã được hỗ trợ.
+- **PARTIAL / coverage:** Có phần chưa đọc được, chẳng hạn ngôn ngữ không hỗ trợ, file lỗi parse hoặc file bị bỏ qua. Cần kiểm tra thêm bằng công cụ khác.
+- **bodyOnly:** Ứng viên chỉ khớp trong thân hàm, được xếp sau các ứng viên khớp ở tên/signature/tài liệu. Kết quả quá rộng có thể bị giữ lại để giảm nhiễu; tool báo số lượng.
+- **unresolved:** Chưa xác định được hàm mà lời gọi trỏ tới. Không coi đây là callers đã xác nhận.
+- **STALE ID:** Hàm đã thay đổi hoặc không còn ở vị trí định danh cũ. Tìm lại rồi đọc bằng ID hiện tại.
+
+`services: ["."]` chỉ chọn file của project gốc. Bỏ `services` để khảo sát toàn repo. File thêm/sửa/xóa được cập nhật ở các lần gọi tiếp theo.
+
+### Khi gặp lỗi
+
+| Hiện tượng | Cách kiểm tra |
+|---|---|
+| MCP không kết nối | Kiểm tra Node.js/npm/Git, cấu hình và khả năng truy cập GitHub lúc cài. |
+| Sai service hoặc không thấy source | Nhờ Claude gọi `spec_nav_services`, kiểm tra `SPEC_NAV_ROOT` và file cấu hình session đang dùng. |
+| Thiếu hàm | Kiểm tra bộ lọc, coverage, ngôn ngữ và dạng function được hỗ trợ. |
+| Tìm không ra hàm phù hợp | Thử từ khóa tiếng Anh khác, xem danh mục hoặc dùng tìm kiếm thông thường. |
+| Đọc hàm báo stale | Tìm lại hàm và dùng ID hiện tại. |
+| Sửa source MCP nhưng kết quả không đổi | `npx github:` dùng bản package đã commit; dùng cấu hình local bên dưới khi phát triển. |
+| Extension trên Claude Desktop không chạy | Kiểm tra đã chọn **Repository to scan** và đã bật extension trong **Settings → Extensions**; xem log MCP ở **Settings → Developer**. |
+| Claude Desktop quét sai repo | Đổi **Repository to scan** trong cài đặt extension rồi mở chat mới. |
+
+## Supported languages / Ngôn ngữ hỗ trợ
+
+| Language / Ngôn ngữ | Extensions / Đuôi file |
+|---|---|
+| TypeScript | `.ts`, `.tsx`, `.mts`, `.cts` |
+| JavaScript | `.js`, `.jsx`, `.mjs`, `.cjs` |
+| Python | `.py`, `.pyi` |
+| Go | `.go` |
+| Java | `.java` |
+| C# | `.cs` |
+| Ruby | `.rb`, `.rake` |
+| Rust | `.rs` |
+| PHP | `.php` |
+| C | `.c`, `.h` |
+| C++ | `.cpp`, `.cc`, `.cxx`, `.hpp`, `.hh`, `.hxx` |
+| Scala | `.scala`, `.sc` |
+| Elixir | `.ex`, `.exs` |
+| Bash | `.sh`, `.bash`, `.zsh` |
+
+TS/JS support named declarations, methods, accessors, arrows/function expressions stored in variables or properties, supported assignments and CommonJS exports. Other languages use tree-sitter to extract supported declarations. Caller resolution is **TS/JS only**.
+
+TS/JS hỗ trợ declaration có tên, method, accessor, arrow/function expression lưu trong biến/property, các dạng assignment được hỗ trợ và CommonJS export. Các ngôn ngữ khác dùng tree-sitter để lấy declaration được hỗ trợ. Resolve callers **chỉ áp dụng TS/JS**.
+
+## Limits / Giới hạn
+
+| Area / Phần | English | Tiếng Việt |
+|---|---|---|
+| Search | Lexical matching, not semantic understanding. Similar behavior under unrelated names can be missed. | Tìm theo từ khóa, chưa hiểu ý nghĩa; có thể bỏ sót logic tương đương nhưng tên khác. |
+| Translation | Unicode/Vietnamese words and accent folding are supported. Queries are not translated into English. | Hỗ trợ từ Unicode/tiếng Việt và khớp có dấu/không dấu; không tự dịch sang tên hàm tiếng Anh. |
+| Reuse | Check exports, behavior and package/service dependencies yourself. | Cần kiểm tra export, hành vi và dependency trước khi tái sử dụng. |
+| Callers | Dynamic calls, untyped receivers, unsupported files and external repositories can be missed or unresolved. | Lời gọi động, receiver thiếu kiểu, file không hỗ trợ và repo bên ngoài có thể không xác định được. |
+| Anonymous callbacks | Inline anonymous callbacks are not individually catalogued; JS/TS counts them in coverage. | Callback anonymous không có mục riêng; coverage đếm chúng trong JS/TS. |
+| Function forms | JS/TS destructuring assignments, dynamic property assignments, factory-created functions, `Object.assign`/`Object.defineProperty` and some chained assignments are not fully covered. Other-language assigned lambdas/closures are not catalogued. | Chưa bao phủ đầy đủ assignment qua destructuring/property động, hàm từ factory, `Object.assign`/`Object.defineProperty` và một số gán nối. Lambda/closure gán biến ở ngôn ngữ khác chưa có trong danh mục. |
+| Unsupported files | Vue/Svelte components, Kotlin, Swift, SQL and other unsupported source types are not parsed. | Không parse Vue/Svelte component, Kotlin, Swift, SQL và các loại nguồn chưa hỗ trợ. |
+| Exclusions | Dependency/build directories, hidden directories, virtualenvs, declaration files, minified JS and supported files over 1.5 MB are excluded. | Bỏ qua dependency/build, thư mục ẩn, virtualenv, file declaration, JS minified và file hỗ trợ lớn hơn 1,5 MB. |
+| Types | Return types are reported when explicitly written; they are not inferred by the catalog. | Danh mục lấy kiểu trả về được khai báo, không suy luận kiểu. |
+| Large repos | Initial parsing and TS/JS caller analysis can take more time and memory. | Parse lần đầu và phân tích callers TS/JS có thể tốn thời gian/RAM trên repo lớn. |
+
+The server reads the current local checkout. No search API key is required, and its search does not send code to an external search service. Results are returned to your connected coding agent; that client's model/data handling settings still apply.
+
+Server đọc checkout local hiện tại. Không cần API key tìm kiếm và phần tìm kiếm không gửi code tới dịch vụ search bên ngoài. Kết quả được trả cho coding agent đã kết nối; cách client/model xử lý dữ liệu vẫn theo cấu hình của bạn.
+
+## Local installation / Cài từ source
+
+Use this when developing the MCP or testing changes before pushing them.
+
+Dùng cách này khi phát triển MCP hoặc thử thay đổi chưa push.
+
+```bash
+git clone https://github.com/khoitd-voyager/mcp-spec-nav.git
+cd mcp-spec-nav
+npm install
+npm run build
+```
+
+Configure `.mcp.json` with absolute paths / Cấu hình `.mcp.json` bằng đường dẫn tuyệt đối:
+
+```json
+{
+  "mcpServers": {
+    "spec-nav": {
+      "command": "node",
+      "args": ["/absolute/path/to/mcp-spec-nav/dist/index.cjs"],
+      "env": {
+        "SPEC_NAV_ROOT": "/absolute/path/to/your-project"
+      }
+    }
+  }
+}
+```
+
+`args` points to the MCP installation; `SPEC_NAV_ROOT` points to the code being scanned. After changing MCP source, rebuild and restart the client session.
+
+`args` trỏ tới bản cài MCP; `SPEC_NAV_ROOT` trỏ tới code cần quét. Sau khi sửa source MCP, build lại và khởi động lại session client.
+
+## Development / Phát triển
 
 ```bash
 npm run typecheck
-npm test        # builds dist/, then runs every test against it over MCP stdio
+npm test
 ```
 
-The tests start the built `dist/index.cjs` as a real MCP server over stdio and
-call it the way a client does, on fixture repos generated per test.
+`npm test` builds the bundle and tests it through MCP stdio on fixture repositories.
 
-## License
+`npm test` build bundle rồi kiểm thử qua MCP stdio trên các repo mẫu.
 
-MIT
+### Package the Claude Desktop extension / Đóng gói extension cho Claude Desktop
+
+```bash
+npm run pack:mcpb
+```
+
+This builds `dist/index.cjs`, stages it under `build/mcpb/` with `manifest.json`, `web-tree-sitter` and only the grammar `.wasm` files, validates the manifest and writes `build/mcp-spec-nav-<version>.mcpb`. The manifest is generated by [scripts/pack-mcpb.mjs](scripts/pack-mcpb.mjs); its version comes from `package.json`. To publish, attach the `.mcpb` file to a GitHub release.
+
+Lệnh này build `dist/index.cjs`, gom vào `build/mcpb/` cùng `manifest.json`, `web-tree-sitter` và chỉ các file `.wasm` của grammar, kiểm tra manifest rồi tạo `build/mcp-spec-nav-<version>.mcpb`. Manifest được sinh từ [scripts/pack-mcpb.mjs](scripts/pack-mcpb.mjs), version lấy từ `package.json`. Muốn phát hành thì đính kèm file `.mcpb` vào GitHub release.
+
+To run the tests against the packed extension instead of `dist/` / Chạy test trên bản extension đã đóng gói thay vì `dist/`:
+
+```bash
+unzip -q build/mcp-spec-nav-<version>.mcpb -d /tmp/spec-nav-mcpb
+SPEC_NAV_DIST=/tmp/spec-nav-mcpb/dist/index.cjs node --test test/*.test.mjs
+```
+
+These checks validate the tested scenarios. They do not establish that an agent will produce better code on every task. Compare real tasks with and without the MCP to evaluate missed usages, code reuse, correctness, time and token cost.
+
+Các kiểm tra xác nhận tình huống đã test, không chứng minh AI sẽ code tốt hơn trong mọi task. Hãy so sánh task thật có/không MCP theo số nơi bỏ sót, mức tái sử dụng code, độ đúng, thời gian và token.
+
+## License / Giấy phép
+
+MIT. See [LICENSE](LICENSE).
