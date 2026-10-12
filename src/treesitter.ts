@@ -204,10 +204,27 @@ export interface RawFunction {
   /** 1-indexed, inclusive; decorators and attributes are included. */
   start: number;
   end: number;
+  /**
+   * The exact extent, as offsets into the file text (UTF-16 code units, the
+   * unit of JavaScript strings; end exclusive). Lines alone cannot tell two
+   * functions on one line apart.
+   */
+  startOffset: number;
+  endOffset: number;
   signature: string;
   params: string[];
   returnType?: string;
   exported?: boolean;
+  /** Names it is exported under besides its own: `default`, `module.exports.x`, an `as` alias. */
+  exportedAs?: string[];
+  /**
+   * Identity of the variable or property the function is stored in, when
+   * that is how it gets its name; functions sharing one are alternative
+   * values of the same variable.
+   */
+  bindingKey?: string;
+  /** The variable or property as written: `calculateTax`, `api.loadUser`. */
+  assignedTo?: string;
   visibility?: string;
   isStatic?: boolean;
   isAsync?: boolean;
@@ -466,6 +483,9 @@ function walkFunctions(root: TSNode, lang: LangSpec, text: string): RawFunction[
       kind,
       start,
       end,
+      // tree-sitter's indices are UTF-16 code units here, as JS strings are.
+      startOffset: outer.startIndex,
+      endOffset: node.endIndex,
       signature: signatureOf(node, body),
       params,
       returnType,

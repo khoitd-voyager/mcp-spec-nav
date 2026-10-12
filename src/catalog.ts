@@ -47,12 +47,25 @@ export interface FnRecord {
   visibility?: string;
   isAsync?: boolean;
   isStatic?: boolean;
+  /** Lines, 1-indexed and inclusive. */
   start: number;
   end: number;
+  /** Columns on the start and end lines, 1-indexed and inclusive: where exactly it begins and ends. */
+  startColumn: number;
+  endColumn: number;
+  /** Other names it is exported under: `module.exports`, `module.exports.x`, `default`, an alias. */
+  exportedAs?: string[];
+  /** The variable or property it was assigned to, when that is where its name comes from. */
+  assignedTo?: string;
+  /**
+   * Ids of other functions assigned to the same variable or property. Which
+   * one is in effect is decided at runtime; all are listed, none preferred.
+   */
+  alternatives?: string[];
   /** Doc comment, cut to DOC_LIMIT characters in listings. */
   doc?: string;
   docTruncated?: boolean;
-  /** Content hash of the function's own lines. */
+  /** Content hash of the function's exact source text (start to end column). */
   hash: string;
 }
 
@@ -60,6 +73,9 @@ interface Indexed {
   rec: FnRecord;
   fullDoc?: string;
   search: SearchDoc;
+  /** Exact extent in the file text, UTF-16 offsets, end exclusive. */
+  startOffset: number;
+  endOffset: number;
 }
 
 export interface FileCatalog {
@@ -78,21 +94,36 @@ const DOC_LIMIT = 240;
 
 const cache = new Map<string, FileCatalog>();
 
-function hashLines(lines: string[], start: number, end: number): string {
-  return createHash("sha1").update(lines.slice(start - 1, end).join("\n")).digest("hex").slice(0, 8);
+function hashText(code: string): string {
+  return createHash("sha1").update(code).digest("hex").slice(0, 8);
 }
 
-function toIndexed(entry: SourceEntry, raws: RawFunction[], lines: string[]): Indexed[] {
+/** 1-indexed column of the character at `offset`. */
+function columnAt(text: string, offset: number): number {
+  return offset - (text.lastIndexOf("\n", offset - 1) + 1) + 1;
+}
+
+/** The words an export alias adds: `module.exports.giveBack` → give, back. */
+function aliasWords(exportedAs: string[] | undefined): string {
+  return (exportedAs ?? [])
+    .map((a) => a.replace(/^(module\.exports|exports)\.?/, "").replace(/^default$/, ""))
+    .join(" ");
+}
+
+function toIndexed(entry: SourceEntry, raws: RawFunction[], text: string): Indexed[] {
   const seen = new Map<string, number>();
   const pathWords = uniqueTokens(entry.rel);
-  return raws.map((r) => {
+  const out = raws.map((r) => {
     const name = [...r.qualifier, r.name].join(".");
     const n = (seen.get(name) ?? 0) + 1;
     seen.set(name, n);
     // Two functions with the same qualified name in one file (overloads in
     // some languages, two branches defining the same helper) get ~2, ~3.
     const idName = n > 1 ? `${name}~${n}` : name;
-    const hash = hashLines(lines, r.start, r.end);
+    const code = text.slice(r.startOffset, r.endOffset);
+    // Hash the function's own text only, so editing a neighbour on the same
+    // line leaves this id valid.
+    const hash = hashText(code);
     const fullDoc = r.doc;
     const docTruncated = !!fullDoc && fullDoc.length > DOC_LIMIT;
     const rec: FnRecord = {
@@ -112,24 +143,49 @@ function toIndexed(entry: SourceEntry, raws: RawFunction[], lines: string[]): In
       isStatic: r.isStatic,
       start: r.start,
       end: r.end,
+      startColumn: columnAt(text, r.startOffset),
+      endColumn: columnAt(text, Math.max(r.startOffset, r.endOffset - 1)),
+      exportedAs: r.exportedAs?.length ? r.exportedAs : undefined,
+      // Said when it differs from the name; alternatives below always say it.
+      assignedTo: r.assignedTo && r.assignedTo !== r.name ? r.assignedTo : undefined,
       doc: fullDoc ? (docTruncated ? fullDoc.slice(0, DOC_LIMIT - 1) + "…" : fullDoc) : undefined,
       docTruncated: docTruncated || undefined,
       hash,
     };
-    const body = uniqueTokens(lines.slice(r.start - 1, r.end).join("\n"));
     return {
       rec,
       fullDoc,
+      startOffset: r.startOffset,
+      endOffset: r.endOffset,
       search: {
-        name: uniqueTokens(r.name),
+        // The names it is exported under are names a caller knows it by.
+        name: uniqueTokens(`${r.name} ${aliasWords(r.exportedAs)}`),
         qualifier: uniqueTokens(r.qualifier.join(" ")),
         signature: uniqueTokens([...r.params, r.returnType ?? ""].join(" ")),
         doc: fullDoc ? uniqueTokens(fullDoc) : [],
         path: pathWords,
-        body,
+        body: uniqueTokens(code),
       },
     };
   });
+
+  // Several functions stored in one variable (`x = a` here, `x = b` there):
+  // each is listed with the others' ids, since only runtime decides which
+  // one a call reaches.
+  const byBinding = new Map<string, number[]>();
+  raws.forEach((r, i) => {
+    if (r.bindingKey) byBinding.set(r.bindingKey, [...(byBinding.get(r.bindingKey) ?? []), i]);
+  });
+  for (const group of byBinding.values()) {
+    for (const i of group) {
+      const rec = out[i].rec;
+      if (group.length > 1) {
+        rec.alternatives = group.filter((j) => j !== i).map((j) => out[j].rec.id);
+        rec.assignedTo = raws[i].assignedTo;
+      }
+    }
+  }
+  return out;
 }
 
 export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
@@ -151,7 +207,6 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
     cache.set(entry.abs, fc);
     return fc;
   }
-  const lines = text.split("\n");
   let fc: FileCatalog;
   if (entry.language === "typescript" || entry.language === "javascript") {
     try {
@@ -159,7 +214,7 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
       fc = {
         stamp: entry.stamp,
         entry,
-        functions: toIndexed(entry, r.functions, lines),
+        functions: toIndexed(entry, r.functions, text),
         anonymous: r.anonymous,
         errorLine: r.errorLine,
         errorMessage: r.errorMessage,
@@ -177,7 +232,7 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
       fc = {
         stamp: entry.stamp,
         entry,
-        functions: toIndexed(entry, r.functions, lines),
+        functions: toIndexed(entry, r.functions, text),
         anonymous: [],
         errorLine: r.errorLine,
         errorMessage: r.errorLine ? "syntax error" : undefined,
@@ -372,12 +427,29 @@ function flags(r: FnRecord): string {
   ].filter(Boolean).join(", ");
 }
 
+/** `12-40`, or `3:39-3:76` when columns matter (more than one function on a line). */
+function span(r: FnRecord): string {
+  return r.startColumn > 1 || r.start === r.end
+    ? `${r.start}:${r.startColumn}-${r.end}:${r.endColumn}`
+    : `${r.start}-${r.end}`;
+}
+
+/** "1 of 2 functions assigned to `format`", when a variable holds several. */
+function alternativesNote(r: FnRecord): string | undefined {
+  if (!r.alternatives?.length) return undefined;
+  return `1 of ${r.alternatives.length + 1} functions assigned to \`${r.assignedTo ?? r.shortName}\` — ` +
+    `which one runs is decided at runtime; others: ${r.alternatives.join(", ")}`;
+}
+
 function renderFn(r: FnRecord, indent: string): string {
   const lines = [
-    `${indent}${r.start}-${r.end} [${flags(r)}] ${r.name}`,
+    `${indent}${span(r)} [${flags(r)}] ${r.name}`,
     `${indent}    sig: ${r.signature}${r.returnType && !r.signature.includes(r.returnType) ? ` -> ${r.returnType}` : ""}`,
     `${indent}    id:  ${r.id}`,
   ];
+  if (r.exportedAs) lines.push(`${indent}    exported as: ${r.exportedAs.join(", ")}`);
+  const alt = alternativesNote(r);
+  if (alt) lines.push(`${indent}    note: ${alt}`);
   if (r.doc) lines.push(`${indent}    doc: ${r.doc.replace(/\s+/g, " ")}${r.docTruncated ? " [doc truncated — spec_nav_read_function shows all]" : ""}`);
   return lines.join("\n");
 }
@@ -445,7 +517,8 @@ export async function listFunctions(args: ListArgs): Promise<string> {
       (complete ? " — COMPLETE (no further pages)" : ` — MORE: call again with cursor="${nextCursor}"`),
     ...renderCoverage(coverage),
     ...(cur.changedSinceFirstPage ? [CHANGED_WARNING] : []),
-    "Each entry: lines [kind, export/visibility] qualified name; sig; id (for spec_nav_read_function); doc.",
+    "Each entry: lines (line:column when it shares a line) [kind, export/visibility] qualified name; sig; " +
+      "id (for spec_nav_read_function); export aliases; doc.",
   ];
   return [...head, ...page.rendered].join("\n");
 }
@@ -464,6 +537,20 @@ export interface FindArgs {
   format?: "text" | "json";
 }
 
+/**
+ * Body-only matches beyond this many — and beyond this share of the functions
+ * searched — are withheld as noise.
+ */
+const BODY_ONLY_MIN_CAP = 25;
+const BODY_ONLY_SHARE = 0.1;
+
+const NOT_TRANSLATED =
+  "NOTE: non-English words are matched as written (diacritics optional: phí = phi), NOT translated. " +
+  "A Vietnamese query finds code, names and comments that use those words; it will not find " +
+  "`calculateShippingFee` from \"tính phí vận chuyển\". To find English-named code, add English keywords " +
+  "as a separate query (e.g. \"shipping fee\") — mixing both languages in one query makes each half " +
+  "count against the other.";
+
 export async function findFunctions(args: FindArgs): Promise<string> {
   const q = queryTokens(args.query);
   if (!q.length) throw new Error(`The query "${args.query}" has no searchable words. Use words from the behaviour you need, e.g. "calculate order fee".`);
@@ -472,7 +559,8 @@ export async function findFunctions(args: FindArgs): Promise<string> {
   const useBody = args.searchBodies ?? true;
 
   let considered = 0;
-  const hits: Array<{ rec: FnRecord; score: number; matched: number; reasons: string[] }> = [];
+  type Hit = { rec: FnRecord; score: number; matched: number; reasons: string[]; bodyOnly?: boolean };
+  let hits: Hit[] = [];
   for (const fc of snap.files) {
     if (!fileOk(fc.entry.rel)) continue;
     if (args.language && fc.entry.language !== args.language.toLowerCase()) continue;
@@ -482,7 +570,16 @@ export async function findFunctions(args: FindArgs): Promise<string> {
       if (s) hits.push({ rec: f.rec, ...s });
     }
   }
-  hits.sort((a, b) => b.score - a.score || (sortKey(a.rec) < sortKey(b.rec) ? -1 : 1));
+  // Words found in the bodies of a large share of functions are local-variable
+  // vocabulary, not a description of any one of them: withhold those matches
+  // and say so, rather than burying the real candidates.
+  const bodyOnlyCount = hits.filter((h) => h.bodyOnly).length;
+  const bodyOnlyWithheld = bodyOnlyCount > Math.max(BODY_ONLY_MIN_CAP, considered * BODY_ONLY_SHARE) ? bodyOnlyCount : 0;
+  if (bodyOnlyWithheld) hits = hits.filter((h) => !h.bodyOnly);
+  // A match by name, signature or doc outranks any match found only in a body.
+  hits.sort((a, b) =>
+    Number(!!a.bodyOnly) - Number(!!b.bodyOnly) || b.score - a.score || (sortKey(a.rec) < sortKey(b.rec) ? -1 : 1));
+  const nonEnglish = q.filter((w) => /[^\x00-\x7f]/.test(w));
 
   const qHash = paramsHash({ ...args, cursor: undefined, format: undefined, limit: undefined });
   const cur = decodeCursor(args.cursor, "find", qHash, snap.fingerprint);
@@ -490,12 +587,15 @@ export async function findFunctions(args: FindArgs): Promise<string> {
   const limit = Math.min(Math.max(args.limit ?? 20, 1), 100);
   const page = takePage(hits, start, limit, CHAR_BUDGET - 3000, (h, i) => {
     const r = h.rec;
+    const alt = alternativesNote(r);
     return [
-      `#${i + 1}  score ${h.score}  ${r.file}:${r.start}-${r.end}  (service ${r.service}, ${r.language})`,
+      `#${i + 1}  score ${h.score}${h.bodyOnly ? " [body only]" : ""}  ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
       `    [${flags(r)}] ${r.name}`,
       `    sig: ${r.signature}`,
       `    id:  ${r.id}`,
+      ...(r.exportedAs ? [`    exported as: ${r.exportedAs.join(", ")}`] : []),
       `    why: ${h.reasons.join("  ")}`,
+      ...(alt ? [`    note: ${alt}`] : []),
       ...(r.doc ? [`    doc: ${r.doc.replace(/\s+/g, " ")}${r.docTruncated ? " [truncated]" : ""}`] : []),
     ].join("\n");
   });
@@ -516,8 +616,17 @@ export async function findFunctions(args: FindArgs): Promise<string> {
       nextCursor,
       changedSinceFirstPage: cur.changedSinceFirstPage || undefined,
       servicesWithCandidates: services,
+      bodyOnlyCandidates: hits.filter((h) => h.bodyOnly).length,
+      bodyOnlyWithheld: bodyOnlyWithheld || undefined,
+      notTranslated: nonEnglish.length ? NOT_TRANSLATED : undefined,
       coverage,
-      candidates: hits.slice(start, page.end).map((h) => ({ ...h.rec, score: h.score, matchedWords: h.matched, why: h.reasons })),
+      candidates: hits.slice(start, page.end).map((h) => ({
+        ...h.rec,
+        score: h.score,
+        matchedWords: h.matched,
+        why: h.reasons,
+        ...(h.bodyOnly ? { bodyOnly: true } : {}),
+      })),
     });
   }
   return [
@@ -526,6 +635,14 @@ export async function findFunctions(args: FindArgs): Promise<string> {
       `at least half the words (by name, class/module, signature, doc, path${useBody ? ", body" : ""}). ` +
       `Matching is by words, stems, prefixes and a few common verb synonyms — a function doing the same ` +
       `job under different words will not appear. Try other wording, or browse spec_nav_functions.`,
+    ...(useBody
+      ? [`Functions matching only in their body need every word, are marked [body only] and ranked after the rest.` +
+          (bodyOnlyWithheld
+            ? ` ${bodyOnlyWithheld} body-only matches withheld: those words occur in too many function bodies to ` +
+              `tell anything apart — add a more specific word.`
+            : "")]
+      : []),
+    ...(nonEnglish.length ? [NOT_TRANSLATED] : []),
     ...(services.length ? [`services with candidates: ${services.join(", ")}`] : []),
     hits.length
       ? `showing ${start + 1}-${page.end}` +
@@ -550,7 +667,35 @@ export interface ReadArgs {
   line?: number;
   fromLine?: number;
   maxLines?: number;
+  /** From a previous part's `nextCursor`: continues there, relative to the function. */
+  cursor?: string;
   format?: "text" | "json";
+}
+
+/**
+ * Where to continue a long function: the function's id, its content hash,
+ * and the line *within the function* to resume at. Relative, so a function
+ * that moved (lines added above it) is still continued at the right place;
+ * the hash, so one that changed is refused instead of read in mismatched parts.
+ */
+interface ReadCursor {
+  t: "read";
+  id: string;
+  h: string;
+  /** 0-based line offset within the function. */
+  r: number;
+  /** The function's start line when the cursor was issued. */
+  s: number;
+}
+
+function decodeReadCursor(cursor: string): ReadCursor {
+  try {
+    const c = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
+    if (c.t === "read" && typeof c.id === "string" && typeof c.r === "number") return c;
+  } catch {
+    // fall through
+  }
+  throw new Error("Invalid cursor. Pass the `nextCursor` from the previous part of spec_nav_read_function exactly as given.");
 }
 
 function parseId(id: string): { file: string; name: string; hash: string } {
@@ -601,6 +746,10 @@ async function resolveFunction(args: ReadArgs): Promise<{ fc: FileCatalog; ix: I
   const want = args.name;
   let matches = fc.functions.filter((f) => f.rec.name === want || idName(f) === want);
   if (!matches.length) matches = fc.functions.filter((f) => f.rec.shortName === want || f.rec.name.endsWith("." + want));
+  // The name it is exported under: `giveBack` for `module.exports = { giveBack: computeRefund }`.
+  if (!matches.length) {
+    matches = fc.functions.filter((f) => f.rec.exportedAs?.some((a) => a === want || a.endsWith("." + want)));
+  }
   if (args.line !== undefined) {
     const line = args.line;
     const containing = matches.filter((f) => f.rec.start <= line && line <= f.rec.end);
@@ -670,18 +819,31 @@ function genericImports(fc: FileCatalog, lines: string[], bodyText: string): { i
 }
 
 export async function readFunction(args: ReadArgs): Promise<{ text: string; isError?: boolean }> {
+  const cursor = args.cursor ? decodeReadCursor(args.cursor) : undefined;
   let resolved: { fc: FileCatalog; ix: Indexed };
   try {
-    resolved = await resolveFunction(args);
+    // A cursor names the function itself, so later parts need nothing else.
+    resolved = await resolveFunction(cursor ? { ...args, id: cursor.id } : args);
   } catch (err) {
-    if (err instanceof StaleIdError) return { text: err.message, isError: true };
-    throw err;
+    if (!(err instanceof StaleIdError)) throw err;
+    return {
+      text: cursor
+        ? `STALE: the function changed between parts of this read, so the parts would not fit together. ` +
+          `Read it again from the start. ${err.message}`
+        : err.message,
+      isError: true,
+    };
   }
   const { fc, ix } = resolved;
   const r = ix.rec;
   const text = readFileSync(fc.entry.abs, "utf8");
+  const bodyText = text.slice(ix.startOffset, ix.endOffset);
+  // The catalog and this read are two file reads; a write between them would
+  // show code the id does not describe.
+  if (hashText(bodyText) !== r.hash) {
+    return { text: `STALE: ${r.file} changed while it was being read. Look the function up again.`, isError: true };
+  }
   const lines = text.split("\n");
-  const bodyText = lines.slice(r.start - 1, r.end).join("\n");
 
   let imports: string[];
   let importsNote: string;
@@ -696,11 +858,29 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
       : "all file-level imports (this language's imports name namespaces, not identifiers, so they are not narrowed)";
   }
 
-  const from = Math.min(Math.max(args.fromLine ?? r.start, r.start), r.end);
+  // The function's own text, start column to end column — nothing of a
+  // neighbour sharing its first or last line. When only indentation precedes
+  // it, that indentation is kept so the lines below still line up.
+  const lineStart = text.lastIndexOf("\n", ix.startOffset - 1) + 1;
+  const lead = text.slice(lineStart, ix.startOffset);
+  const fnLines = ((/^[ \t]*$/.test(lead) ? lead : "") + bodyText).split("\n");
+
+  const notes: string[] = [];
+  let from: number;
+  if (cursor) {
+    from = r.start + cursor.r;
+    if (r.start !== cursor.s) {
+      notes.push(`The function moved from line ${cursor.s} to ${r.start} since the previous part (its code is ` +
+        `unchanged); continuing at the same place in it.`);
+    }
+  } else {
+    from = args.fromLine ?? r.start;
+  }
+  from = Math.min(Math.max(from, r.start), r.end);
   const maxLines = Math.min(Math.max(args.maxLines ?? 400, 1), 2000);
   const width = String(r.end).length;
   const page = takePage(
-    lines.slice(from - 1, r.end),
+    fnLines.slice(from - r.start),
     0,
     maxLines,
     CHAR_BUDGET - 4000,
@@ -709,6 +889,12 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
   const lastShown = from + page.end - 1;
   const complete = lastShown >= r.end;
   const shownAll = from === r.start && complete;
+  const nextCursor = complete
+    ? undefined
+    : Buffer.from(JSON.stringify({ t: "read", id: r.id, h: r.hash, r: lastShown + 1 - r.start, s: r.start } satisfies ReadCursor))
+        .toString("base64url");
+  const alt = alternativesNote(r);
+  if (alt) notes.push(alt);
 
   if (args.format === "json") {
     return {
@@ -718,10 +904,12 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
         docTruncated: undefined,
         imports,
         importsNote,
-        source: lines.slice(from - 1, lastShown).join("\n"),
+        source: fnLines.slice(from - r.start, lastShown - r.start + 1).join("\n"),
         shown: { from, to: lastShown },
         complete,
+        nextCursor,
         nextFromLine: complete ? undefined : lastShown + 1,
+        notes,
       }),
     };
   }
@@ -729,8 +917,10 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
     text: [
       `${r.name}  [${flags(r)}]`,
       `id:   ${r.id}`,
-      `file: ${r.file}:${r.start}-${r.end}  (service ${r.service}, ${r.language})`,
+      `file: ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
       `sig:  ${r.signature}${r.returnType && !r.signature.includes(r.returnType) ? ` -> ${r.returnType}` : ""}`,
+      ...(r.exportedAs ? [`exported as: ${r.exportedAs.join(", ")}`] : []),
+      ...notes.map((n) => `note: ${n}`),
       ...(ix.fullDoc ? ["doc:", ...ix.fullDoc.split("\n").map((l) => `  ${l}`)] : []),
       `imports (${importsNote}):`,
       ...(imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"]),
@@ -738,9 +928,15 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
       shownAll
         ? `source: lines ${r.start}-${r.end} (complete)`
         : `source: lines ${from}-${lastShown} of ${r.start}-${r.end}` +
-          (complete ? " (end of function)" : ` — MORE: call again with the same id and fromLine=${lastShown + 1}`),
+          (complete
+            ? " (end of function)"
+            : ` — MORE: call again with the same id and fromLine=${lastShown + 1}, or with cursor="${nextCursor}"`),
       ...page.rendered,
-      ...(complete ? [] : [`… function continues at line ${lastShown + 1} (to ${r.end}); call again with fromLine=${lastShown + 1}`]),
+      ...(complete
+        ? []
+        : [`… function continues at line ${lastShown + 1} (to ${r.end}). Prefer cursor="${nextCursor}": it ` +
+            `follows the function if lines are added above it and refuses if the function itself changed; ` +
+            `fromLine=${lastShown + 1} is a plain file line.`]),
       "",
       "Before reusing this from another service: check that service already depends on (or may depend on) " +
         `${r.service === "." ? "the root project" : r.service}, how it is consumed elsewhere (spec_nav_callers), ` +

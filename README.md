@@ -11,16 +11,18 @@ or changes code in a repo with more than one service:
 2. **What does this change actually touch?** The callers in other services,
    the constant left at its old value, the screen nobody mentioned.
 
-For the first, the server keeps a **catalog of every function** in the repo,
-read from each file's syntax tree, across every project and fourteen
-languages. An agent can search it by what the code does, read any candidate in
+For the first, the server keeps a **catalog of the repo's functions** — every
+form listed under [Languages](#languages), with what it does not read listed
+under [Limits](#limits) — taken from each file's syntax tree, across every
+project and fourteen languages. An agent can search it by what the code does, read any candidate in
 full, and check its callers before reusing or changing it. For the second,
 `spec_nav_map` returns **every** line matching a pattern, each tagged with the
 function it sits in, and `spec_nav_callers` resolves call sites through the
 TypeScript type checker.
 
-The catalog is complete and paged. Searches are ranked and lexical, and the
-output always says which of the two you are looking at. No tool claims to
+The catalog is paged and never cut, and each listing reports which files it
+could not read. Searches are ranked and lexical, and the output always says
+which of the two you are looking at. No tool claims to
 have covered the whole repo unless it did.
 
 ## What the map changes in practice
@@ -144,9 +146,9 @@ service boundary it should not cross.
 
 | Tool | Returns |
 |---|---|
-| `spec_nav_find_functions` | ranked functions whose name, class, signature, doc, path or body match the words of a query, across all services, with why each matched |
-| `spec_nav_read_function` | one function in full: signature, doc, imports it uses, source with line numbers. Long ones come in parts |
-| `spec_nav_functions` | the complete catalog of functions, filterable and paged, with a coverage report |
+| `spec_nav_find_functions` | ranked functions whose name, export alias, class, signature, doc, path or body match the words of a query, across all services, with why each matched; body-only matches marked and ranked last |
+| `spec_nav_read_function` | one function in full: signature, doc, imports it uses, its exact source (column to column) with line numbers. Long ones come in parts, continued by cursor |
+| `spec_nav_functions` | the function catalog, filterable and paged, with a coverage report |
 | `spec_nav_callers` | TS/JS call sites resolved by the type checker, each with its enclosing function and parameters; plus unresolved calls, interface calls and uses as a value |
 | `spec_nav_map` | every line matching a regex, across every project and language, with the enclosing function; paged |
 | `spec_nav_services` | the projects found under the root, with file and function counts |
@@ -166,18 +168,19 @@ Output on the fixture repo used by the tests (abridged):
 ```
 query: "calculate order fees" → words: calculate, order, fees
 RANKED LEXICAL CANDIDATES, not a complete answer: 4 of 14 catalogued functions matched at least half the words (by name, class/module, signature, doc, path, body). …
+Functions matching only in their body need every word, are marked [body only] and ranked after the rest.
 services with candidates: services/billing, packages/shared, services/api
 showing 1-4 — no further candidates
 coverage: 12 files read (typescript 9, python 1, javascript 2). Every supported file in scope was parsed without errors.
 Reading a candidate does not make it safe to import: check that the calling service may depend on the one that owns it before reusing it.
 
-#1  score 14.7  services/billing/src/order.ts:9-9  (service services/billing, typescript)
+#1  score 14.7  services/billing/src/order.ts:9:1-9:85  (service services/billing, typescript)
     [function, exported] computeOrderFee
     sig: function computeOrderFee(order: Order): number
     id:  services/billing/src/order.ts::computeOrderFee@99639d47
     why: calculate→name(synonym:compute)  order→name  fees→name(stem:fee)
     doc: Fee charged on each order.
-#2  score 9.6  packages/shared/src/fees.ts:2-2  (service packages/shared, typescript)
+#2  score 9.6  packages/shared/src/fees.ts:2:1-2:76  (service packages/shared, typescript)
     [function, exported] calculateShippingFees
     sig: function calculateShippingFees(weight: number)
     id:  packages/shared/src/fees.ts::calculateShippingFees@53c1f6b8
@@ -189,11 +192,31 @@ Identifiers are split on camelCase and snake_case. Words match exactly, by
 stem (`fees`/`fee`), by prefix of four or more letters (`calc`/`calculate`),
 or through a short fixed list of verbs code uses interchangeably
 (`calculate`/`compute`, `get`/`fetch`/`load`, `delete`/`remove`, …). A
-candidate must match at least half the query's words, at least one of them
-outside the function body. Nothing is sent to an external service and no API
-key is needed. It does not understand meaning: a function that does the job
-under unrelated words (`applySurcharge` for "add fee") only shows up if one of
-those listed equivalences or its doc comment bridges the gap.
+candidate must match at least half the query's words. The names a function is
+exported under (`module.exports.giveBack`) count as names.
+
+**Body-only matches.** With `searchBodies` (the default), a function whose
+only matches are in its body — `const shippingFee = …` inside `process()` — is
+returned too, but it must match *every* query word, exactly or by stem, none of
+them syntax like `return`/`const`. It is marked `bodyOnly` (`[body only]` in
+text) and ranked after every candidate matched by name, signature or doc. If
+body-only matches exceed 25 and 10% of the functions searched, they are
+withheld as noise and the output gives the count (`bodyOnlyWithheld`).
+`searchBodies: false` drops them.
+
+**Unicode and Vietnamese.** Words are split by Unicode letter class, so
+"tính phí vận chuyển" is tính, phí, vận, chuyển, and `tinhPhiVanChuyen` splits
+the same way. Diacritics are optional when matching (`phí` = `phi`, `đơn` =
+`don`). English stemming, prefixes and synonyms apply only to words written in
+ASCII, so `thuế` is not stemmed into `thu`. **Nothing is translated**: a
+Vietnamese query finds code, names and comments that use those words, not
+`calculateShippingFee`. The output says so whenever a query has non-English
+words; to find English-named code, run a separate query in English.
+
+Nothing is sent to an external service and no API key is needed. It does not
+understand meaning: a function that does the job under unrelated words
+(`applySurcharge` for "add fee") only shows up if one of those listed
+equivalences or its doc comment bridges the gap.
 
 ### `spec_nav_read_function`
 
@@ -205,15 +228,27 @@ those listed equivalences or its doc comment bridges the gap.
 
 Returns the signature, the whole doc comment, the imports the function uses
 (for TS/JS, the import declarations whose names appear in the body; for other
-languages, best-effort), and the source with line numbers. A function longer
-than one part (400 lines or ~26k characters by default) ends with
-`MORE: call again with the same id and fromLine=N`. Nothing is cut silently.
+languages, best-effort), and the source with line numbers. The source is the
+function's exact extent from the syntax tree, start column to end column:
+in `function first() {…} function second() {…}` on one line, reading `first`
+returns only `first`. When only indentation precedes the start, it is kept so
+the lines below still line up. `name` may also be a name the function is
+exported under.
 
-An id is `file::QualifiedName@hash`, where the hash is of the function's own
-text. Editing elsewhere in the file keeps the id valid (it is read at its new
-position). Editing the function itself, or deleting it, makes the id stale, and
-the read answers `STALE ID` with the current id rather than showing you
-different code from what you were looking at.
+A function longer than one part (400 lines or ~26k characters by default) ends
+with `MORE: call again with the same id and fromLine=N, or with cursor="…"`.
+Prefer the cursor: it records the position *within the function* and its
+hash, so if lines are added above the function between parts the next part
+still continues at the right place (with a note that it moved), and if the
+function itself changed the read is refused as `STALE` instead of joining parts
+of two versions. Nothing is cut silently.
+
+An id is `file::QualifiedName@hash`, where the hash is of the function's exact
+text. Editing elsewhere in the file — including a neighbour on the same line —
+keeps the id valid (it is read at its new position). Editing the function
+itself, or deleting it, makes the id stale, and the read answers `STALE ID`
+with the current id rather than showing you different code from what you were
+looking at.
 
 ### `spec_nav_functions`
 
@@ -241,8 +276,21 @@ has a qualified name (`Class.method`, `module.fn`, `outer.inner`), kind
 (function, nested function, method, constructor, getter, setter, property,
 arrow function, function expression), signature, parameters, return type when
 the source states one, export/visibility when the language makes it
-knowable, line range and doc comment (cut at 240 characters and marked when
-cut).
+knowable, line range plus `startColumn`/`endColumn` (text shows `line:column`
+when a function shares a line), and doc comment (cut at 240 characters and
+marked when cut).
+
+`exportedAs` lists the other names a function is exported under —
+`module.exports`, `module.exports.giveBack`, `exports.x`, `default`, an
+`export { a as b }` alias. Aliases never create extra entries: one function is
+one entry however many ways it is exported, and `exportedOnly` includes
+CommonJS exports.
+
+When one variable or property is assigned several functions
+(`if (x) format = a; else format = b;`), each is listed under the same name
+with its own id (`format`, `format~2`), and `alternatives` lists the others'
+ids. Which one a call reaches is decided at runtime; the catalog does not
+guess.
 
 Pages use a cursor that resumes after the last item returned, so a page is
 never repeated or skipped. A cursor only works with the arguments that
@@ -355,7 +403,14 @@ longer than 160 characters are shortened and end with `…`.
 | Language | Extensions | Names you get |
 |---|---|---|
 | TypeScript | `.ts` `.tsx` `.mts` `.cts` | `OrderService.calculateFee`, arrow functions by the variable or property they are assigned to |
-| JavaScript | `.js` `.jsx` `.mjs` `.cjs` | same as TypeScript, plus `module.exports.x =`, `exports.x =` and `Foo.prototype.x =` |
+| JavaScript | `.js` `.jsx` `.mjs` `.cjs` | same as TypeScript, plus CommonJS: `module.exports = function calculateFee…` (named `calculateFee`; an anonymous one is named `module.exports`), `module.exports.x =`, `exports.x =`, `module.exports = { a, b: c }` and `module.exports = fn` (marking the declared function exported) |
+
+In both, a function stored by assignment is catalogued under the variable or
+property it is stored in: `let f; f = () => …` (qualified by the scope that
+*declares* `f`, resolved with the TypeScript binder, so a same-named variable
+in another function is a different entry), `obj.k = …`, `obj["k"] = …`,
+`Foo.prototype.k = …`, `this.k = …` (under the class or constructor function),
+and `??=`/`||=`/`&&=`.
 | Python | `.py` `.pyi` | `OrderCalculator.compute_total`, docstrings included |
 | Go | `.go` | `Order.Total` — the receiver type, not a bare `Total` |
 | Java | `.java` | `FeeService.total`, constructors included |
@@ -392,6 +447,20 @@ indentation.
 - **Anonymous functions are not catalogued.** An inline callback has no name to
   reuse. They are counted in coverage, and a line inside one is attributed to
   the named function around it.
+- **Function forms not catalogued.** In JS/TS: functions reached only through
+  destructuring (`[a, b] = [() => 1, () => 2]`), `Object.assign(module.exports,
+  {…})`, `Object.defineProperty`, computed keys that are not literals
+  (`obj[name] = …`), the outer target of a chain (`a = b = () => …` is listed as
+  `b` only), functions returned from factories, and re-exports such as
+  `module.exports = require("./x")` (the function is listed in its own file).
+  In the tree-sitter languages, only declarations: a lambda or closure assigned
+  to a variable (Python `f = lambda …`, Go `f := func…`, Rust `let f = |x| …`)
+  has no name in the syntax tree and is neither listed nor counted in
+  coverage's anonymous total (that count is JS/TS only).
+- **Search does not translate.** Vietnamese (or any non-English) queries match
+  the same words in the code; they do not find English names. Unaccented
+  Vietnamese is indistinguishable from English, so English stemming may still
+  apply to it (`thue` → `thu`). Single-letter words are not indexed.
 - **Unsupported languages** (Vue/Svelte single-file components, Kotlin, Swift,
   SQL, templates, …) are not read. They are counted in coverage so their
   absence is visible.

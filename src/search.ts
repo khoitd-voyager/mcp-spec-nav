@@ -27,19 +27,23 @@ export function uniqueTokens(text: string): string[] {
   return [...new Set(tokenize(text))].map(intern);
 }
 
-/** Split identifiers and prose into lower-case words. */
+/**
+ * Split identifiers and prose into lower-case words, by Unicode letter and
+ * digit classes — `tínhPhíVậnChuyển` and "tính phí vận chuyển" both give
+ * tính, phí, vận, chuyển. Words keep their diacritics; matching folds them.
+ */
 export function tokenize(text: string): string[] {
   const out: string[] = [];
-  for (const raw of text.split(/[^A-Za-z0-9]+/)) {
+  for (const raw of text.normalize("NFC").split(/[^\p{L}\p{M}\p{N}]+/u)) {
     if (!raw) continue;
     const parts = raw
-      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
-      .replace(/([A-Za-z])([0-9])/g, "$1 $2")
+      .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, "$1 $2")
+      .replace(/(\p{Lu}+)(\p{Lu}\p{Ll})/gu, "$1 $2")
+      .replace(/(\p{L})(\p{N})/gu, "$1 $2")
       .split(" ");
     for (const p of parts) {
       const w = p.toLowerCase();
-      if (w.length >= 2 && !/^\d+$/.test(w)) out.push(w);
+      if ([...w].length >= 2 && !/^\p{N}+$/u.test(w)) out.push(w);
     }
   }
   return out;
@@ -50,6 +54,8 @@ const STOPWORDS = new Set([
   "the", "a", "an", "of", "for", "to", "in", "on", "by", "with", "and", "or", "from", "into",
   "that", "which", "this", "it", "its", "function", "functions", "method", "methods", "func",
   "fn", "helper", "logic", "code", "some", "any", "all", "existing",
+  // Vietnamese, with diacritics only — unaccented forms collide with English.
+  "hàm", "các", "của", "và", "để", "là", "một", "những", "trong", "cho", "với", "được", "này", "đó",
 ]);
 
 export function queryTokens(query: string): string[] {
@@ -58,8 +64,37 @@ export function queryTokens(query: string): string[] {
   return [...seen];
 }
 
-/** A crude suffix stripper — enough to match `fees`/`fee`, `orders`/`order`. */
+const isAscii = (w: string) => /^[\x00-\x7f]*$/.test(w);
+
+const folded = new Map<string, string>();
+/** Diacritics removed, `đ` → `d`: "phí" and "phi" fold to the same word. */
+export function fold(w: string): string {
+  if (isAscii(w)) return w;
+  let f = folded.get(w);
+  if (f === undefined) {
+    f = w.normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d");
+    folded.set(w, f);
+  }
+  return f;
+}
+
+const stems = new Map<string, string>();
+/**
+ * A crude English suffix stripper — enough to match `fees`/`fee`,
+ * `orders`/`order`. Words with non-ASCII letters are returned as they are:
+ * English suffix rules turn Vietnamese `thuế` into `thu`, another word.
+ */
 export function stem(w: string): string {
+  if (!isAscii(w)) return w;
+  let s = stems.get(w);
+  if (s === undefined) {
+    s = stemAscii(w);
+    stems.set(w, s);
+  }
+  return s;
+}
+
+function stemAscii(w: string): string {
   const rules: Array<[RegExp, string]> = [
     [/ations?$/, ""],
     [/ings?$/, ""],
@@ -116,12 +151,16 @@ for (const g of SYNONYM_GROUPS) {
   }
 }
 
-export type MatchQuality = "exact" | "stem" | "prefix" | "synonym";
-const QUALITY_SCORE: Record<MatchQuality, number> = { exact: 1, stem: 0.9, prefix: 0.65, synonym: 0.55 };
+export type MatchQuality = "exact" | "accent" | "stem" | "prefix" | "synonym";
+const QUALITY_SCORE: Record<MatchQuality, number> = { exact: 1, accent: 0.95, stem: 0.9, prefix: 0.65, synonym: 0.55 };
 
 /** How well a query word matches one document word, if at all. */
 export function matchWord(q: string, w: string): MatchQuality | undefined {
   if (q === w) return "exact";
+  if (fold(q) === fold(w)) return "accent";
+  // Prefixes, stems and synonyms are English rules; they say nothing about
+  // a word written with other letters.
+  if (!isAscii(q) || !isAscii(w)) return undefined;
   const qs = stem(q);
   const ws = stem(w);
   if (qs === ws) return "stem";
@@ -157,7 +196,21 @@ export interface ScoredMatch {
   score: number;
   matched: number;
   reasons: string[];
+  /** Every word matched only inside the body: weaker evidence, ranked after the rest. */
+  bodyOnly?: boolean;
 }
+
+/**
+ * Syntax, not behaviour: words every body contains. A body that "matches"
+ * `return` says nothing about what the function does.
+ */
+const BODY_NOISE = new Set([
+  "return", "const", "let", "var", "function", "if", "else", "for", "while", "do", "switch", "case",
+  "break", "continue", "new", "this", "self", "true", "false", "null", "nil", "none", "undefined",
+  "async", "await", "def", "func", "fn", "pub", "end", "try", "catch", "finally", "throw", "raise",
+  "import", "from", "export", "class", "public", "private", "protected", "static", "void", "int",
+  "string", "bool", "boolean", "number", "err", "error", "ctx", "args", "arg", "val", "value",
+]);
 
 function bestIn(q: string, words: Iterable<string>): { quality: MatchQuality; word: string } | undefined {
   let best: { quality: MatchQuality; word: string } | undefined;
@@ -172,14 +225,18 @@ function bestIn(q: string, words: Iterable<string>): { quality: MatchQuality; wo
 
 /**
  * Score one function against the query words. A function needs to match at
- * least half the words (all of them for a two-word query is not required, one
- * of two is enough) and at least one match outside the body — a word that
- * only appears in a body is weak evidence on its own.
+ * least half the words (one of two is enough).
+ *
+ * A function whose matches are all in its body is a weaker candidate — the
+ * word may be a local variable in code doing something else — so it must
+ * match every query word, exactly or by stem, none of them syntax noise, and
+ * it is flagged `bodyOnly` so the caller can rank it after the rest.
  */
 export function scoreDoc(qTokens: string[], doc: SearchDoc, useBody: boolean): ScoredMatch | undefined {
   let score = 0;
   let matched = 0;
   let outsideBody = false;
+  let strongInBody = true;
   const reasons: string[] = [];
   for (const q of qTokens) {
     let best: { field: Field; quality: MatchQuality; word: string; value: number } | undefined;
@@ -196,13 +253,23 @@ export function scoreDoc(qTokens: string[], doc: SearchDoc, useBody: boolean): S
     matched++;
     score += best.value;
     if (best.field !== "body") outsideBody = true;
+    else if (!(best.quality === "exact" || best.quality === "accent" || best.quality === "stem") || BODY_NOISE.has(q)) {
+      strongInBody = false;
+    }
     reasons.push(
       `${q}→${best.field}${best.quality === "exact" ? "" : `(${best.quality}${best.word !== q ? `:${best.word}` : ""})`}`,
     );
   }
   const needed = Math.max(1, Math.ceil(qTokens.length / 2));
-  if (matched < needed || !outsideBody) return undefined;
+  if (matched < needed) return undefined;
+  const bodyOnly = !outsideBody;
+  if (bodyOnly && (matched < qTokens.length || !strongInBody)) return undefined;
   // Covering more of the query beats matching one word very well.
   const coverage = matched / qTokens.length;
-  return { score: Math.round(score * (0.4 + 0.6 * coverage) * 100) / 100, matched, reasons };
+  return {
+    score: Math.round(score * (0.4 + 0.6 * coverage) * 100) / 100,
+    matched,
+    reasons,
+    ...(bodyOnly ? { bodyOnly: true } : {}),
+  };
 }

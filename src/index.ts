@@ -70,19 +70,26 @@ server.registerTool(
   "spec_nav_find_functions",
   {
     description:
-      "BEFORE WRITING NEW LOGIC: search every function in the repo, across all services, for one " +
+      "BEFORE WRITING NEW LOGIC: search every catalogued function in the repo, across all services, for one " +
       "that already does the job. Describe the behaviour in words (\"calculate order fee\"); names " +
       "are split on camelCase/snake_case and matched by word, stem, prefix and a few common verb " +
-      "synonyms (calculate/compute, get/fetch…) against name, class/module, signature, doc comment, " +
-      "path and (by default) body. Returns ranked candidates with why each matched, and an id to " +
-      "read with spec_nav_read_function. Lexical only: a function doing the same thing under " +
-      "different words can be missed — try other wordings, or browse spec_nav_functions.",
+      "synonyms (calculate/compute, get/fetch…) against name, export aliases, class/module, signature, " +
+      "doc comment, path and (by default) body. Returns ranked candidates with why each matched, and " +
+      "an id to read with spec_nav_read_function. A function matching only in its body must match " +
+      "every word, is marked bodyOnly and ranked after the rest. Words in any script are kept whole " +
+      "(Vietnamese \"tính phí\" matches tinhPhi, with or without diacritics), but nothing is " +
+      "TRANSLATED: to find English-named code from a Vietnamese description, run a second query " +
+      "with English keywords. Lexical only: a function doing the same thing under different words " +
+      "can be missed — try other wordings, or browse spec_nav_functions.",
     inputSchema: {
       query: z.string().describe('What the function does, in words. E.g. "calculate order fees"'),
       services: servicesArg,
       file: z.string().optional().describe("Only files whose path contains this (or matches it, with * globs)."),
       language: z.string().optional().describe('e.g. "typescript", "javascript", "python", "go"'),
-      searchBodies: z.boolean().optional().describe("Also match words in function bodies (default true; weighted low)."),
+      searchBodies: z
+        .boolean()
+        .optional()
+        .describe("Also match words in function bodies (default true; weighted low; body-only matches need every word). false drops body-only matches."),
       limit: z.number().int().positive().optional().describe("Candidates per page (default 20, max 100)."),
       cursor: cursorArg,
       format: formatArg,
@@ -101,14 +108,19 @@ server.registerTool(
   "spec_nav_functions",
   {
     description:
-      "The complete function catalog, read from each file's syntax tree: every named function, " +
-      "method, constructor, accessor and named arrow/function expression, with qualified name " +
+      "The function catalog, read from each file's syntax tree: every named function, method, " +
+      "constructor, accessor and named arrow/function expression — in JS/TS also functions assigned " +
+      "to a variable or property after declaration (`x = () => …`, `obj.k = function …`, " +
+      "`this.k = …`) and CommonJS exports (`module.exports = function name…`, `exports.k = …`; an " +
+      "anonymous `module.exports = …` is named module.exports). Each has qualified name " +
       "(Class.method, outer.inner), kind, signature, parameters, return type when written, " +
-      "export/visibility, line range, doc comment (shortened, marked when cut) and a stable id. " +
-      "Filter by services, file, name, kind, language. Paged: the header gives the total, this " +
-      "page's range, and COMPLETE or a cursor. A coverage line says which files were read and " +
-      "which were not (syntax errors, unsupported languages, skipped files) — the catalog is only " +
-      "complete when it says so. Inline anonymous callbacks are counted, not listed.",
+      "export/visibility (exportedAs lists aliases such as module.exports.x), exact line:column " +
+      "range, doc comment (shortened, marked when cut) and a stable id. A variable assigned several " +
+      "functions lists each, with `alternatives` naming the others. Filter by services, file, name, " +
+      "kind, language. Paged: the header gives the total, this page's range, and COMPLETE or a " +
+      "cursor. A coverage line says which files were read and which were not (syntax errors, " +
+      "unsupported languages, skipped files) — the catalog is only complete when it says so. Inline " +
+      "anonymous callbacks are counted, not listed.",
     inputSchema: {
       services: servicesArg,
       file: z.string().optional().describe("Only files whose path contains this (or matches it, with * globs)."),
@@ -134,18 +146,25 @@ server.registerTool(
   "spec_nav_read_function",
   {
     description:
-      "Read one function in full: signature, whole doc comment, the imports it uses, and its source " +
-      "with line numbers. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), " +
-      "or by `file` + `name` (+ `line` to pick among same-named ones). Long functions come in parts: " +
-      "the output says where it stopped and the `fromLine` to continue with — nothing is cut " +
-      "silently. If the file changed since the id was issued, it answers STALE ID with the current " +
-      "id instead of showing different code. Does not tell you whether another service may import " +
-      "it — check dependencies and service boundaries before reusing.",
+      "Read one function in full: signature, whole doc comment, the imports it uses, and its exact " +
+      "source with line numbers — from the column it starts at to the column it ends at, so a " +
+      "neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / " +
+      "spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported " +
+      "under; + `line` to pick among same-named ones). Long functions come in parts: the output says " +
+      "where it stopped and gives a `cursor` (or `fromLine`) to continue with — nothing is cut " +
+      "silently. If the function changed since the id was issued, or between parts, it answers STALE " +
+      "instead of showing different code. When a variable is assigned several functions, it says " +
+      "which others exist. Does not tell you whether another service may import it — check " +
+      "dependencies and service boundaries before reusing.",
     inputSchema: {
       id: z.string().optional(),
       file: z.string().optional().describe("Path relative to the repo root."),
-      name: z.string().optional().describe('Qualified ("OrderService.calculateFee") or short name.'),
+      name: z.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),
       line: z.number().int().positive().optional().describe("A line inside the function, to disambiguate."),
+      cursor: z
+        .string()
+        .optional()
+        .describe("nextCursor from the previous part: continues there even if the function moved; refuses if it changed."),
       fromLine: z.number().int().positive().optional().describe("Continue a long function from this file line."),
       maxLines: z.number().int().positive().optional().describe("Lines per part (default 400)."),
       format: formatArg,

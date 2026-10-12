@@ -1,7 +1,7 @@
 {
   "name": "mcp-spec-nav",
   "version": "0.2.0",
-  "description": "MCP server that catalogs every function across a polyglot monorepo and reads code structurally — find existing functions to reuse, read them in full, resolve TypeScript/JavaScript callers, and survey every match for a pattern with the function it sits in",
+  "description": "MCP server that catalogs the functions across a polyglot monorepo and reads code structurally — find existing functions to reuse, read them in full, resolve TypeScript/JavaScript callers, and survey every match for a pattern with the function it sits in",
   "type": "module",
   "license": "MIT",
   "bin": {
