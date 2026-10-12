@@ -97,17 +97,6 @@ export function loadFailures(): Array<{ id: string; reason: string }> {
   return [...failed].map(([id, reason]) => ({ id, reason }));
 }
 
-export interface ScopeRange {
-  /** 1-indexed first line. */
-  start: number;
-  /** 1-indexed last line. */
-  end: number;
-  /** Function name, qualified with its class when there is one. */
-  name: string;
-  /** Line the function is declared on. */
-  line: number;
-}
-
 function nodeName(node: TSNode, lang: LangSpec): string | undefined {
   const field = lang.containerNameField?.[node.type];
   const named = node.childForFieldName(field ?? "name");
@@ -206,22 +195,289 @@ function receiverType(node: TSNode): string | undefined {
   return undefined;
 }
 
+/** One function as tree-sitter sees it, before the catalog adds ids. */
+export interface RawFunction {
+  name: string;
+  /** Enclosing class/module/function names, outermost first. */
+  qualifier: string[];
+  kind: string;
+  /** 1-indexed, inclusive; decorators and attributes are included. */
+  start: number;
+  end: number;
+  signature: string;
+  params: string[];
+  returnType?: string;
+  exported?: boolean;
+  visibility?: string;
+  isStatic?: boolean;
+  isAsync?: boolean;
+  doc?: string;
+}
+
+export interface TreeSitterResult {
+  functions: RawFunction[];
+  /** Line of the first syntax error, if the file did not parse cleanly. */
+  errorLine?: number;
+}
+
+const COMMENT_TYPES = /comment/;
+
+function collapse(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+/** Parameter list text items, comments dropped. */
+function paramItems(params: TSNode | null | undefined): string[] {
+  if (!params) return [];
+  const out: string[] = [];
+  for (let i = 0; i < params.namedChildCount; i++) {
+    const c = params.namedChild(i);
+    if (!c || COMMENT_TYPES.test(c.type)) continue;
+    out.push(collapse(c.text));
+  }
+  return out;
+}
+
+/** The parameters node of a function, wherever its grammar keeps it. */
+function paramsNode(node: TSNode, lang: LangSpec): TSNode | undefined {
+  const direct = node.childForFieldName("parameters");
+  if (direct) return direct;
+  if (lang.declaratorNodes?.includes(node.type)) {
+    // C/C++: the parameter list hangs off the function_declarator.
+    let d: TSNode | undefined = node.childForFieldName("declarator");
+    while (d) {
+      const p = d.childForFieldName("parameters");
+      if (p) return p;
+      d = d.childForFieldName("declarator");
+    }
+  }
+  return undefined;
+}
+
+/** Elixir `def total(a, b)`: the args of the inner call. */
+function elixirParams(node: TSNode): string[] {
+  const args = node.childForFieldName("arguments") ?? node.child(1);
+  const head = args?.namedChild(0);
+  if (head?.type === "call") {
+    const inner = head.namedChildren?.find?.((c: TSNode) => c.type === "arguments") ?? head.child(1);
+    return paramItems(inner);
+  }
+  return [];
+}
+
 /**
- * Every named function in a file, as line ranges.
- *
- * One pass, collecting ranges, rather than a tree walk per matching line —
- * the same reason the TypeScript path collects ranges first: descending the
- * tree once per hit is what dominates runtime on a large file.
+ * The text from a function's first character to the start of its body,
+ * collapsed onto one line — what a reader needs to call it.
  */
-export function functionRanges(root: TSNode, lang: LangSpec): ScopeRange[] {
+function signatureOf(node: TSNode, body: TSNode | undefined): string {
+  const text: string = node.text;
+  let sig = body ? text.slice(0, body.startIndex - node.startIndex) : text.split("\n")[0];
+  sig = collapse(sig).replace(/\s*(\{|=>|=|:)\s*$/, "").replace(/\s+do$/, "");
+  return sig.length > 300 ? sig.slice(0, 299) + "…" : sig;
+}
+
+function modifiersText(node: TSNode): string {
+  const parts: string[] = [];
+  for (let i = 0; i < node.childCount; i++) {
+    const c = node.child(i);
+    if (!c) continue;
+    if (c.type === "modifiers" || c.type === "modifier" || c.type === "visibility_modifier" ||
+        c.type === "static_modifier" || c.type === "abstract_modifier" || c.type === "final_modifier" ||
+        c.type === "storage_class_specifier") {
+      parts.push(c.text);
+    }
+  }
+  return parts.join(" ");
+}
+
+function visibilityOf(node: TSNode, name: string, lang: LangSpec, keyword?: string):
+  { visibility?: string; exported?: boolean; isStatic?: boolean } {
+  const mods = modifiersText(node);
+  const isStatic = /\bstatic\b/.test(mods) || undefined;
+  if (lang.visibilityByName === "go") {
+    const exported = /^[A-Z]/.test(name);
+    return { exported, visibility: exported ? "exported" : "package" };
+  }
+  if (lang.visibilityByName === "python") {
+    if (/^__.*__$/.test(name)) return { visibility: "public" };
+    if (name.startsWith("_")) return { visibility: "private", exported: false };
+    return { visibility: "public" };
+  }
+  if (lang.id === "elixir") {
+    const priv = keyword === "defp" || keyword === "defmacrop";
+    return { visibility: priv ? "private" : "public", exported: !priv };
+  }
+  if (lang.id === "rust") {
+    const pub = /\bpub\b/.test(mods);
+    return { visibility: pub ? "pub" : "private", exported: pub };
+  }
+  if (lang.id === "c") {
+    // `static` at file scope is internal linkage, not a static method.
+    return /\bstatic\b/.test(mods) ? { visibility: "static (file-local)", exported: false } : { exported: true };
+  }
+  const m = mods.match(/\b(public|private|protected|internal)\b/);
+  return { visibility: m?.[1], isStatic };
+}
+
+/**
+ * The comment block directly above a function, by reading lines upward —
+ * grammars disagree on where a comment attaches (Ruby hangs it off the class
+ * body, not the method), but "the lines right above it" never does.
+ */
+export function docAbove(lines: string[], startLine: number, commentLine: RegExp): string | undefined {
+  const out: string[] = [];
+  let i = startLine - 2; // 0-indexed line above
+  // Attributes and annotations sit between a doc comment and its function.
+  while (i >= 0 && /^\s*(#\[|@\w+(\(.*\))?\s*$|\[\w)/.test(lines[i]) && !commentLine.test(lines[i])) i--;
+  let inBlock = false;
+  while (i >= 0) {
+    const l = lines[i];
+    if (!inBlock && /\*\/\s*$/.test(l) && !/^\s*\/\*/.test(l)) {
+      inBlock = true;
+      out.unshift(l);
+      i--;
+      continue;
+    }
+    if (inBlock) {
+      out.unshift(l);
+      if (/^\s*\/\*/.test(l)) inBlock = false;
+      i--;
+      continue;
+    }
+    if (!commentLine.test(l)) break;
+    out.unshift(l);
+    i--;
+  }
+  if (!out.length) return undefined;
+  const cleaned = out
+    .map((l) => l.replace(/^\s*(\/\*\*?|\*\/|\*|\/\/\/?|#+|--)\s?/, "").replace(/\s*\*\/\s*$/, ""))
+    .join("\n")
+    .trim();
+  return cleaned || undefined;
+}
+
+/** A Python docstring: the first statement of the body, when it is a string. */
+function pythonDocstring(node: TSNode): string | undefined {
+  const body = node.childForFieldName("body");
+  const first = body?.namedChild(0);
+  if (first?.type !== "expression_statement") return undefined;
+  const str = first.namedChild(0);
+  if (str?.type !== "string") return undefined;
+  return str.text.replace(/^[rubfRUBF]*("""|\'\'\'|"|')/, "").replace(/("""|\'\'\'|"|')$/, "").trim() || undefined;
+}
+
+/** Elixir `@doc "..."` or `@doc """ ... """` right above a def. */
+function elixirDoc(text: string, startIndex: number): string | undefined {
+  const before = text.slice(Math.max(0, startIndex - 4000), startIndex);
+  const m = before.match(/@doc\s+("""([\s\S]*?)"""|"((?:[^"\\]|\\.)*)")\s*$/);
+  return m ? (m[2] ?? m[3] ?? "").trim() || undefined : undefined;
+}
+
+/** The first syntax error in a tree, as a 1-indexed line. */
+function firstErrorLine(root: TSNode): number | undefined {
+  if (!root.hasError) return undefined;
+  const stack: TSNode[] = [root];
+  while (stack.length) {
+    const n = stack.shift()!;
+    if (n.isError || n.isMissing) return n.startPosition.row + 1;
+    if (!n.hasError) continue;
+    for (let i = 0; i < n.childCount; i++) {
+      const c = n.child(i);
+      if (c) stack.push(c);
+    }
+  }
+  return root.startPosition.row + 1;
+}
+
+/**
+ * Every named function in a file, with what a reader needs to decide whether
+ * to reuse it: qualified name, kind, signature, parameters, return type,
+ * visibility and doc comment.
+ *
+ * One walk, using the parse tree's own node types — so a method keeps the
+ * name its language gives it rather than one guessed from indentation.
+ * Anonymous functions (Go func literals, Rust closures) carry no name and are
+ * not listed; a line inside one is attributed to the named function around it.
+ */
+export async function extractFunctions(text: string, lang: LangSpec): Promise<TreeSitterResult | undefined> {
+  const parser = await parserFor(lang);
+  if (!parser) return undefined;
+  let tree: any;
+  try {
+    tree = parser.parse(text);
+  } catch {
+    return undefined;
+  }
+  if (!tree) return undefined;
+  try {
+    return { functions: walkFunctions(tree.rootNode, lang, text), errorLine: firstErrorLine(tree.rootNode) };
+  } finally {
+    // Trees live in WASM memory, which the JS garbage collector never sees.
+    // Not deleting them leaks a little per file, which on a big repo is a lot.
+    tree.delete();
+  }
+}
+
+function walkFunctions(root: TSNode, lang: LangSpec, text: string): RawFunction[] {
   const fnTypes = new Set(lang.functionNodes);
   const containerTypes = new Set(lang.containerNodes);
-  const ranges: ScopeRange[] = [];
-
+  const out: RawFunction[] = [];
+  const lines = text.split("\n");
   const callDef = lang.callDefinition;
 
-  /** Class/module names enclosing the current node, outermost first. */
-  const walk = (node: TSNode, scope: string[]) => {
+  type Scope = { name: string; isFunction: boolean };
+
+  const record = (node: TSNode, name: string, scope: Scope[], keyword?: string, receiver?: string) => {
+    const qualifier = scope.map((s) => s.name);
+    if (receiver) qualifier.push(receiver);
+    const inFunction = scope.length > 0 && scope[scope.length - 1].isFunction;
+    const inContainer = !!receiver || (scope.length > 0 && !scope[scope.length - 1].isFunction);
+    // Python decorators and Rust attributes belong with the function.
+    const outer = node.parent?.type === "decorated_definition" ? node.parent : node;
+    const start = outer.startPosition.row + 1;
+    const end = node.endPosition.row + 1;
+
+    let kind = inFunction ? "nested function" : inContainer ? "method" : "function";
+    if (lang.constructorNodes?.includes(node.type) || lang.constructorNames?.includes(name)) kind = "constructor";
+    if (node.type === "property_declaration") kind = "property";
+    if (node.type === "local_function_statement") kind = "nested function";
+    if (node.type === "singleton_method") kind = "method";
+
+    const body = node.childForFieldName("body") ?? undefined;
+    const params = callDef && node.type === callDef.node ? elixirParams(node) : paramItems(paramsNode(node, lang));
+    let returnType: string | undefined;
+    for (const f of lang.returnFields ?? []) {
+      const r = node.childForFieldName(f);
+      if (r) {
+        returnType = collapse(r.text);
+        break;
+      }
+    }
+    const vis = visibilityOf(node, name, lang, keyword);
+    const isStatic = vis.isStatic || node.type === "singleton_method" || undefined;
+    let doc: string | undefined;
+    if (lang.id === "python") doc = pythonDocstring(node);
+    if (!doc && lang.id === "elixir") doc = elixirDoc(text, node.startIndex);
+    if (!doc) doc = docAbove(lines, start, lang.commentLine);
+
+    out.push({
+      name,
+      qualifier,
+      kind,
+      start,
+      end,
+      signature: signatureOf(node, body),
+      params,
+      returnType,
+      exported: vis.exported,
+      visibility: vis.visibility,
+      isStatic,
+      isAsync: /^\s*async\b/.test(node.text) || undefined,
+      doc,
+    });
+  };
+
+  const walk = (node: TSNode, scope: Scope[]) => {
     let nextScope = scope;
 
     // Elixir and friends: a definition is a call to `def`/`defmodule`, so
@@ -230,15 +486,10 @@ export function functionRanges(root: TSNode, lang: LangSpec): ScopeRange[] {
       const parts = callDefinitionParts(node);
       if (parts) {
         if (callDef.containerKeywords.includes(parts.keyword)) {
-          nextScope = [...scope, parts.name];
+          nextScope = [...scope, { name: parts.name, isFunction: false }];
         } else if (callDef.functionKeywords.includes(parts.keyword)) {
-          ranges.push({
-            start: node.startPosition.row + 1,
-            end: node.endPosition.row + 1,
-            name: scope.length ? `${scope.join(".")}.${parts.name}` : parts.name,
-            line: node.startPosition.row + 1,
-          });
-          nextScope = [...scope, parts.name];
+          record(node, parts.name, scope, parts.keyword);
+          nextScope = [...scope, { name: parts.name, isFunction: true }];
         }
       }
     } else if (containerTypes.has(node.type)) {
@@ -246,7 +497,7 @@ export function functionRanges(root: TSNode, lang: LangSpec): ScopeRange[] {
       // An anonymous container (`impl Trait for T` with no simple type, a
       // bare `module`) adds nothing a reader can act on, so it is skipped
       // rather than inserted as a placeholder.
-      if (name) nextScope = [...scope, name];
+      if (name) nextScope = [...scope, { name, isFunction: false }];
     } else if (fnTypes.has(node.type)) {
       const name = lang.declaratorNodes?.includes(node.type)
         ? declaratorName(node)
@@ -254,20 +505,10 @@ export function functionRanges(root: TSNode, lang: LangSpec): ScopeRange[] {
       if (name) {
         // A receiver-declared method is not nested inside its type, so the
         // qualifier comes from the receiver instead of the walked scope.
-        const receiver = lang.receiverNodes?.includes(node.type)
-          ? receiverType(node)
-          : undefined;
-        const qualifier = receiver ? [...scope, receiver] : scope;
-        ranges.push({
-          start: node.startPosition.row + 1,
-          end: node.endPosition.row + 1,
-          // `Order.total` rather than `total`: the qualifier is what makes a
-          // common method name identifiable.
-          name: qualifier.length ? `${qualifier.join(".")}.${name}` : name,
-          line: node.startPosition.row + 1,
-        });
+        const receiver = lang.receiverNodes?.includes(node.type) ? receiverType(node) : undefined;
+        record(node, name, scope, undefined, receiver);
         // A nested function's name is qualified by the function holding it.
-        nextScope = [...scope, name];
+        nextScope = [...scope, ...(receiver ? [{ name: receiver, isFunction: false }] : []), { name, isFunction: true }];
       }
     }
 
@@ -278,34 +519,5 @@ export function functionRanges(root: TSNode, lang: LangSpec): ScopeRange[] {
   };
 
   walk(root, []);
-  return ranges;
-}
-
-/**
- * The narrowest named function containing a line.
- *
- * Narrowest wins so a method beats the class around it. Unnamed scopes were
- * never collected, so a line in a callback is attributed to the named
- * function that contains it — which is the answer a reader wants.
- */
-export function enclosingRange(ranges: ScopeRange[], line: number): ScopeRange | undefined {
-  let best: ScopeRange | undefined;
-  for (const r of ranges) {
-    if (r.start > line || line > r.end) continue;
-    if (!best || r.end - r.start < best.end - best.start) best = r;
-  }
-  return best;
-}
-
-/** Parse a file's text, or undefined if its grammar is unavailable. */
-export async function parseFile(text: string, lang: LangSpec): Promise<TSNode | undefined> {
-  const parser = await parserFor(lang);
-  if (!parser) return undefined;
-  try {
-    // A file that does not parse cleanly still yields a tree; tree-sitter
-    // recovers around errors, and a partly-labelled file beats none.
-    return parser.parse(text)?.rootNode;
-  } catch {
-    return undefined;
-  }
+  return out;
 }

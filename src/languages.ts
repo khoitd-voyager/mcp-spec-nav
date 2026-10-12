@@ -62,12 +62,31 @@ export interface LangSpec {
   };
   /** Comment/import lines: present in the file but not a use of the symbol. */
   noise: RegExp;
+  /** A line that is a comment, for reading the doc comment above a function. */
+  commentLine: RegExp;
+  /** A line that is an import, for listing what a function depends on. */
+  importLine: RegExp;
+  /**
+   * Whether an import line names the identifiers it brings in, so it can be
+   * kept or dropped by whether the function body uses them. A C `#include`
+   * or a C# `using` brings in a whole namespace, so they are listed as-is.
+   */
+  importsNameIdentifiers: boolean;
+  /** Method names that are constructors by convention (`__init__`). */
+  constructorNames?: string[];
+  /** Node types that are constructors by syntax. */
+  constructorNodes?: string[];
+  /** Fields that hold a return type, tried in order. */
+  returnFields?: string[];
+  /** How a name signals visibility, when the language does it that way. */
+  visibilityByName?: "go" | "python";
 }
 
 /**
- * TypeScript is deliberately absent: it keeps going through ts-morph, which
- * resolves tsconfig path aliases and powers `spec_nav_callers`. Tree-sitter
- * would see the syntax but not the project.
+ * TypeScript and JavaScript are deliberately absent: they go through the
+ * TypeScript compiler's own parser (and ts-morph for `spec_nav_callers`),
+ * which can resolve symbols across files. Tree-sitter would see the syntax but
+ * not the project.
  */
 export const LANGUAGES: LangSpec[] = [
   {
@@ -77,6 +96,12 @@ export const LANGUAGES: LangSpec[] = [
     functionNodes: ["function_definition"],
     containerNodes: ["class_definition"],
     noise: /^\s*(#|"""|'''|from\s+\S+\s+import\s|import\s)/,
+    commentLine: /^\s*#/,
+    importLine: /^\s*(from\s+\S+\s+import\s+.+|import\s+.+)$/,
+    importsNameIdentifiers: true,
+    constructorNames: ["__init__"],
+    returnFields: ["return_type"],
+    visibilityByName: "python",
   },
   {
     id: "go",
@@ -86,6 +111,11 @@ export const LANGUAGES: LangSpec[] = [
     containerNodes: ["type_declaration"],
     receiverNodes: ["method_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|")/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*(import\s+.+|(\w+\s+)?"[^"]+"\s*)$/,
+    importsNameIdentifiers: true,
+    returnFields: ["result"],
+    visibilityByName: "go",
   },
   {
     id: "java",
@@ -94,6 +124,11 @@ export const LANGUAGES: LangSpec[] = [
     functionNodes: ["method_declaration", "constructor_declaration"],
     containerNodes: ["class_declaration", "interface_declaration", "enum_declaration", "record_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|package\s|@\w+\s*$)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*import\s+.+;/,
+    importsNameIdentifiers: true,
+    constructorNodes: ["constructor_declaration"],
+    returnFields: ["type"],
   },
   {
     id: "ruby",
@@ -102,6 +137,10 @@ export const LANGUAGES: LangSpec[] = [
     functionNodes: ["method", "singleton_method"],
     containerNodes: ["class", "module", "singleton_class"],
     noise: /^\s*(#|require\s|require_relative\s)/,
+    commentLine: /^\s*#/,
+    importLine: /^\s*(require|require_relative|load)\s+.+/,
+    importsNameIdentifiers: false,
+    constructorNames: ["initialize"],
   },
   {
     id: "rust",
@@ -112,6 +151,10 @@ export const LANGUAGES: LangSpec[] = [
     // An `impl Order` names its type in `type`, not `name`.
     containerNameField: { impl_item: "type" },
     noise: /^\s*(\/\/|\/\*|\*|use\s|#\[)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*(pub\s+)?use\s+.+;/,
+    importsNameIdentifiers: true,
+    returnFields: ["return_type"],
   },
   {
     id: "php",
@@ -120,6 +163,11 @@ export const LANGUAGES: LangSpec[] = [
     functionNodes: ["function_definition", "method_declaration"],
     containerNodes: ["class_declaration", "interface_declaration", "trait_declaration"],
     noise: /^\s*(\/\/|#|\/\*|\*|use\s|namespace\s|require\s|include\s)/,
+    commentLine: /^\s*(\/\/|#(?!\[)|\/\*|\*)/,
+    importLine: /^\s*(use\s+.+;|(require|include)(_once)?\b.+;)/,
+    importsNameIdentifiers: true,
+    constructorNames: ["__construct"],
+    returnFields: ["return_type"],
   },
   {
     id: "c",
@@ -129,6 +177,10 @@ export const LANGUAGES: LangSpec[] = [
     containerNodes: [],
     declaratorNodes: ["function_definition"],
     noise: /^\s*(\/\/|\/\*|\*|#include|#import)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*#\s*(include|import)\b.+/,
+    importsNameIdentifiers: false,
+    returnFields: ["type"],
   },
   {
     id: "cpp",
@@ -138,6 +190,10 @@ export const LANGUAGES: LangSpec[] = [
     containerNodes: ["class_specifier", "struct_specifier", "namespace_definition"],
     declaratorNodes: ["function_definition"],
     noise: /^\s*(\/\/|\/\*|\*|#include|#import|using\s)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*(#\s*(include|import)\b.+|using\s+.+;|import\s+.+;)/,
+    importsNameIdentifiers: false,
+    returnFields: ["type"],
   },
   {
     id: "scala",
@@ -146,6 +202,10 @@ export const LANGUAGES: LangSpec[] = [
     functionNodes: ["function_definition"],
     containerNodes: ["object_definition", "class_definition", "trait_definition"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|package\s)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*import\s+.+/,
+    importsNameIdentifiers: true,
+    returnFields: ["return_type"],
   },
   {
     id: "elixir",
@@ -160,6 +220,9 @@ export const LANGUAGES: LangSpec[] = [
       containerKeywords: ["defmodule", "defprotocol", "defimpl"],
     },
     noise: /^\s*(#|@doc|@moduledoc|alias\s|import\s|require\s|use\s)/,
+    commentLine: /^\s*#/,
+    importLine: /^\s*(alias|import|require|use)\s+.+/,
+    importsNameIdentifiers: true,
   },
   {
     id: "bash",
@@ -168,6 +231,9 @@ export const LANGUAGES: LangSpec[] = [
     functionNodes: ["function_definition"],
     containerNodes: [],
     noise: /^\s*#/,
+    commentLine: /^\s*#(?!!)/,
+    importLine: /^\s*(source|\.)\s+\S+/,
+    importsNameIdentifiers: false,
   },
   {
     id: "csharp",
@@ -181,6 +247,11 @@ export const LANGUAGES: LangSpec[] = [
     ],
     containerNodes: ["class_declaration", "struct_declaration", "interface_declaration", "record_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|using\s|namespace\s|\[\w+)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*(global\s+)?using\s+[^(]+;/,
+    importsNameIdentifiers: false,
+    constructorNodes: ["constructor_declaration"],
+    returnFields: ["returns", "type"],
   },
 ];
 

@@ -1,7 +1,7 @@
 {
   "name": "mcp-spec-nav",
-  "version": "0.1.0",
-  "description": "MCP server that reads code structurally across eight languages — every match for a pattern tagged with the function it sits in — so an agent surveys a change instead of guessing where to grep",
+  "version": "0.2.0",
+  "description": "MCP server that catalogs every function across a polyglot monorepo and reads code structurally — find existing functions to reuse, read them in full, resolve TypeScript/JavaScript callers, and survey every match for a pattern with the function it sits in",
   "type": "module",
   "license": "MIT",
   "bin": {
@@ -23,6 +23,7 @@
     "ts-morph",
     "claude",
     "typescript",
+    "javascript",
     "python",
     "go",
     "java",
@@ -34,7 +35,8 @@
   ],
   "scripts": {
     "build": "node build.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
