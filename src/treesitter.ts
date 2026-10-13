@@ -76,6 +76,7 @@ export async function parserFor(lang: LangSpec): Promise<TSParser | undefined> {
   if (cached) return cached;
 
   try {
+    if (!lang.wasm) throw new Error(`${lang.id} has no tree-sitter grammar`);
     const { Parser, Language } = await ensureRuntime();
     let grammar = grammars.get(lang.id);
     if (!grammar) {

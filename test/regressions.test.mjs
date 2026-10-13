@@ -386,15 +386,28 @@ test("Vietnamese words are kept whole and match with or without diacritics", asy
   assert.equal(d.candidates[0].name, "tinhPhiVanChuyen");
   const dPlain = await s.json("spec_nav_find_functions", { query: "don hang" });
   assert.equal(dPlain.candidates[0].name, "tinhPhiVanChuyen");
-  // `thuế` must not be stemmed into `thu` and match an unrelated word
+  // `thuế` must not be stemmed into `thu` and match an unrelated word…
   const t = await s.json("spec_nav_find_functions", { query: "thuế" });
-  assert.equal(t.candidates.length, 0);
+  assert.ok(!t.candidates.some((c) => c.name === "thuTien"), t.candidates.map((c) => c.name).join(", "));
+  // …but the dictionary does know it means tax.
+  assert.deepEqual(t.candidates.map((c) => c.name), ["calculateTax"]);
+  assert.ok(t.candidates[0].why.some((w) => /thuế→name\(vi:tax\)/.test(w)), t.candidates[0].why.join(" "));
 });
 
-test("a Vietnamese query says it is not translated", async () => {
+test("a Vietnamese query is translated through the dictionary, and says what was not", async () => {
+  const r = await s.json("spec_nav_find_functions", { query: "tính phí vận chuyển" });
+  assert.deepEqual(r.terms, ["tính", "phí", "vận chuyển"]);
+  assert.ok(r.translated.some((t) => /vận chuyển → shipping/.test(t)));
+  // The Vietnamese-named function still ranks first; English-named code is now found too.
+  assert.equal(r.candidates[0].name, "tinhPhiVanChuyen");
+  assert.ok(r.candidates.some((c) => c.name === "shippingFeeFor"), r.candidates.map((c) => c.name).join(", "));
   const text = await s.call("spec_nav_find_functions", { query: "tính phí vận chuyển" });
-  assert.match(text, /not translated/i);
+  assert.match(text, /translated \(built-in dictionary\)/);
+  assert.match(text, /outside that dictionary is NOT translated/);
   assert.match(text, /add English keywords/i);
+  // Unaccented Vietnamese is not translated: `gia`, `tin` collide with English.
+  const plain = await s.json("spec_nav_find_functions", { query: "tinh phi van chuyen" });
+  assert.equal(plain.translated, undefined);
 });
 
 test("camelCase is still split, for Vietnamese and English names alike", async () => {

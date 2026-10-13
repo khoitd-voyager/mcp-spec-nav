@@ -30,9 +30,9 @@ Giúp AI tìm hàm có sẵn trước khi viết code mới và kiểm tra các 
 
 `mcp-spec-nav` is a local MCP server for coding agents such as Claude Code. It reads source code in the repository you choose and provides tools to:
 
-- Find existing functions across services and shared packages.
+- Find existing functions across services and shared packages — by words, by what they call, or by behavioural similarity to a draft.
 - Read a function's source, signature, documentation and relevant imports.
-- Find TypeScript/JavaScript callers before changing a function.
+- Find callers before changing a function: type-checked in TypeScript/JavaScript/Vue, evidence-based in Python, Go, Java, Kotlin, Swift and other languages, with dynamic uses listed.
 - Search a pattern across supported source files, with the enclosing function for each match.
 
 **Example:** You ask Claude to add an order fee calculation. Instead of immediately writing another implementation, Claude can look for existing fee functions in the billing service and shared packages, read them, and decide whether one fits.
@@ -174,9 +174,11 @@ For new logic or changes that affect other functions:
    Use English keywords for English-named code; try another wording if needed.
 2. Read the most relevant candidates with spec_nav_read_function.
    Avoid loading the entire catalog or every function body into context.
+   If nothing fits, draft the function and pass it to spec_nav_similar_functions.
 3. Check behavior, exports, dependencies and service boundaries before reusing code.
    Another service's function is not automatically safe to import.
-4. Use spec_nav_callers before changing a TS/JS function's signature or behavior.
+4. Use spec_nav_callers before changing a function's signature or behavior.
+   Check sites marked likely, ambiguous, unresolved or dynamic by hand.
    Use spec_nav_map with one broad regex for concepts spanning files or services.
 5. Inspect coverage and unresolved results. Follow cursors when you need the complete
    result set; use ordinary search/file reads for unsupported or missing areas.
@@ -196,9 +198,10 @@ These are MCP tool arguments, not terminal commands. Your agent calls them for y
 |---|---|
 | `spec_nav_services` | Check the scan root, discovered projects, counts and coverage. |
 | `spec_nav_find_functions` | Find ranked candidates for existing logic across services. |
+| `spec_nav_similar_functions` | Find functions that behave like a candidate or a draft, whatever they are named. |
 | `spec_nav_read_function` | Read one candidate's exact source and context. |
 | `spec_nav_functions` | Browse the function catalog with filters and pagination. |
-| `spec_nav_callers` | Inspect TS/JS calls, references and unresolved usages. |
+| `spec_nav_callers` | Inspect calls, references, dynamic uses and unresolved usages before a change. |
 | `spec_nav_map` | Find regex matches with the enclosing function. |
 
 **Search for functions**
@@ -207,7 +210,15 @@ These are MCP tool arguments, not terminal commands. Your agent calls them for y
 { "query": "calculate order fees", "limit": 20 }
 ```
 
-Pass this to `spec_nav_find_functions`. Results include function IDs and reasons for matching. Names, export aliases, signatures, documentation, paths and, by default, bodies are searched.
+Pass this to `spec_nav_find_functions`. Results include function IDs and reasons for matching. Names, export aliases, signatures, documentation, paths, the names each function calls and, by default, bodies are searched; rarer words weigh more.
+
+**Find code that behaves like a draft**
+
+```json
+{ "code": "function shippingCost(order) { const km = distanceKm(order.from, order.to); return round(km * zoneRate(order.zone), 2); }" }
+```
+
+Pass this to `spec_nav_similar_functions` (or `{ "id": "<id>" }` for an existing function). It compares the calls and body vocabulary of every function, ignoring names.
 
 **Read a function**
 
@@ -245,8 +256,9 @@ Pass this to `spec_nav_map`. Matching is case-insensitive. Comment/import lines 
 
 - **Pagination:** `MORE` or `nextCursor` means more results are available. Repeat the same query with that cursor. Completion of pagination is separate from completeness of source coverage.
 - **Coverage:** `PARTIAL` means some source files were unsupported, unreadable, skipped or had parse errors. Inspect those gaps with other tools.
-- **Search:** Results are ranked lexical matches, not semantic understanding. Body-only matches are marked and ranked lower. Broad body-only matches can be withheld as noise; the output reports that count.
-- **Callers:** Review unresolved calls, interface/base usages and references. Even `exhaustive: true` does not cover every runtime call, dynamic dispatch or external repository.
+- **Search:** Results are ranked lexical matches with labelled evidence, not semantic understanding. Matches only through called names are marked `[via calls]`, body-only matches `[body only]`; both rank lower. Broad body-only matches can be withheld as noise; the output reports that count.
+- **Similar:** A high similarity means the code looks alike (same calls, same vocabulary), not that it is interchangeable.
+- **Callers:** Each site says how it was bound. Review `likely`, `ambiguous`, `unresolved` and `dynamic` sites. Even `exhaustive: true` (type-checked targets only) does not cover names computed at runtime, calls over HTTP/RPC/queues or external repositories.
 - **Freshness:** Added, edited and deleted source files are reflected on subsequent calls. Function IDs depend on their source text; look up a changed function again if a read reports `STALE ID`.
 
 ### Troubleshooting
@@ -268,9 +280,9 @@ Pass this to `spec_nav_map`. Matching is case-insensitive. Comment/import lines 
 
 `mcp-spec-nav` là MCP server chạy local, giúp coding agent như Claude Code đọc code trong repo bạn chọn để:
 
-- Tìm các hàm có sẵn ở nhiều service và package dùng chung.
+- Tìm các hàm có sẵn ở nhiều service và package dùng chung — theo từ khóa, theo các hàm nó gọi, hoặc theo hành vi giống một bản nháp.
 - Đọc thân hàm, signature, tài liệu và import liên quan.
-- Tìm các nơi gọi hàm TypeScript/JavaScript trước khi sửa.
+- Tìm nơi gọi hàm trước khi sửa: kiểm tra bằng type checker cho TypeScript/JavaScript/Vue, theo bằng chứng (import, qualifier, kiểu receiver…) cho Python, Go, Java, Kotlin, Swift và các ngôn ngữ khác; liệt kê riêng các lời gọi động.
 - Tìm theo regex trong các file nguồn được hỗ trợ, kèm tên hàm chứa mỗi kết quả.
 
 **Ví dụ:** Bạn yêu cầu Claude thêm chức năng tính phí đơn hàng. Claude có thể tìm các hàm tính phí trong service billing và package dùng chung, đọc implementation rồi quyết định có tái sử dụng được không.
@@ -413,9 +425,11 @@ Với logic mới hoặc thay đổi ảnh hưởng tới các hàm khác:
    Dùng từ khóa tiếng Anh nếu code đặt tên bằng tiếng Anh; thử cách diễn đạt khác khi cần.
 2. Dùng spec_nav_read_function đọc các ứng viên phù hợp.
    Tránh nạp toàn bộ danh mục hoặc mọi thân hàm vào context.
+   Không thấy hàm phù hợp thì viết nháp rồi đưa cho spec_nav_similar_functions.
 3. Kiểm tra hành vi, export, dependency và ranh giới service trước khi tái sử dụng.
    Hàm ở service khác không mặc nhiên có thể import trực tiếp.
-4. Dùng spec_nav_callers trước khi đổi signature hoặc hành vi của hàm TS/JS.
+4. Dùng spec_nav_callers trước khi đổi signature hoặc hành vi của hàm.
+   Tự kiểm tra các chỗ được đánh dấu likely, ambiguous, unresolved hoặc dynamic.
    Dùng spec_nav_map với một regex đủ rộng khi thay đổi liên quan nhiều file/service.
 5. Đọc coverage và kết quả unresolved. Lấy trang tiếp theo nếu cần đủ kết quả;
    dùng tìm kiếm và đọc file thông thường cho phần không hỗ trợ hoặc còn thiếu.
@@ -433,9 +447,10 @@ Với agent khác, chuyển hướng dẫn này sang file phù hợp, chẳng h�
 |---|---|
 | `spec_nav_services` | Kiểm tra đường dẫn quét, các project, số lượng file/hàm và coverage. |
 | `spec_nav_find_functions` | Tìm các hàm có thể đáp ứng yêu cầu, xếp hạng và giải thích vì sao khớp. |
+| `spec_nav_similar_functions` | Tìm hàm có hành vi giống một hàm hoặc một bản nháp, dù tên khác hẳn. |
 | `spec_nav_read_function` | Đọc code chính xác của một hàm, kèm signature, tài liệu và import liên quan. |
 | `spec_nav_functions` | Xem danh mục hàm, lọc và lấy từng trang. |
-| `spec_nav_callers` | Kiểm tra lời gọi TS/JS, references và những trường hợp chưa resolve được. |
+| `spec_nav_callers` | Kiểm tra lời gọi, references, lời gọi động và những trường hợp chưa resolve được. |
 | `spec_nav_map` | Tìm dòng khớp regex, kèm tên hàm chứa dòng đó. |
 
 Ví dụ tham số cho agent gọi tool — không phải lệnh terminal:
@@ -444,6 +459,7 @@ Ví dụ tham số cho agent gọi tool — không phải lệnh terminal:
 |---|---|
 | `spec_nav_services` | `{}` |
 | `spec_nav_find_functions` | `{ "query": "calculate order fees", "limit": 20 }` |
+| `spec_nav_similar_functions` | `{ "code": "function tinhPhi(order) { … }" }` hoặc `{ "id": "<id>" }` |
 | `spec_nav_read_function` | `{ "file": "services/billing/src/fees.ts", "name": "calculateFee" }` |
 | `spec_nav_functions` | `{ "services": ["services/api"], "name": "fee", "limit": 100 }` |
 | `spec_nav_callers` | `{ "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }` |
@@ -455,8 +471,9 @@ Thay đường dẫn và tên hàm ví dụ bằng kết quả thực tế từ 
 
 - **MORE / nextCursor:** Còn trang kết quả. Gọi lại với cùng truy vấn và truyền cursor. Lấy hết trang không đồng nghĩa mọi loại file trong repo đều đã được hỗ trợ.
 - **PARTIAL / coverage:** Có phần chưa đọc được, chẳng hạn ngôn ngữ không hỗ trợ, file lỗi parse hoặc file bị bỏ qua. Cần kiểm tra thêm bằng công cụ khác.
-- **bodyOnly:** Ứng viên chỉ khớp trong thân hàm, được xếp sau các ứng viên khớp ở tên/signature/tài liệu. Kết quả quá rộng có thể bị giữ lại để giảm nhiễu; tool báo số lượng.
-- **unresolved:** Chưa xác định được hàm mà lời gọi trỏ tới. Không coi đây là callers đã xác nhận.
+- **via calls / bodyOnly:** Ứng viên chỉ khớp qua tên các hàm nó gọi, hoặc chỉ trong thân hàm; được xếp sau các ứng viên khớp ở tên/signature/tài liệu. Kết quả quá rộng có thể bị giữ lại để giảm nhiễu; tool báo số lượng.
+- **similarity:** Code giống nhau (cùng lời gọi, cùng từ vựng), không có nghĩa là dùng thay nhau được.
+- **likely / ambiguous / dynamic / unresolved:** Lần lượt: chỉ có một khai báo trùng tên nhưng chưa chứng minh; nhiều khai báo có thể khớp; tên xuất hiện dạng chuỗi/symbol (gọi động); chưa xác định được. Không coi là callers đã xác nhận.
 - **STALE ID:** Hàm đã thay đổi hoặc không còn ở vị trí định danh cũ. Tìm lại rồi đọc bằng ID hiện tại.
 
 `services: ["."]` chỉ chọn file của project gốc. Bỏ `services` để khảo sát toàn repo. File thêm/sửa/xóa được cập nhật ở các lần gọi tiếp theo.
@@ -492,25 +509,63 @@ Thay đường dẫn và tên hàm ví dụ bằng kết quả thực tế từ 
 | Scala | `.scala`, `.sc` |
 | Elixir | `.ex`, `.exs` |
 | Bash | `.sh`, `.bash`, `.zsh` |
+| Kotlin | `.kt`, `.kts` |
+| Swift | `.swift` |
+| Vue / Svelte / Astro | `.vue`, `.svelte`, `.astro` (script blocks; templates for callers) |
 
-TS/JS support named declarations, methods, accessors, arrows/function expressions stored in variables or properties, supported assignments and CommonJS exports. Other languages use tree-sitter to extract supported declarations. Caller resolution is **TS/JS only**.
+TS/JS support named declarations, methods, accessors, arrows/function expressions stored in variables or properties, supported assignments and CommonJS exports; Vue/Svelte/Astro components are read as their `<script>` (and frontmatter) with line numbers unchanged. Kotlin and Swift are read by a structural scanner (strings, interpolation, nested comments and brackets lexed exactly; classes, objects, extensions, `fun`/`func`, `init`/`constructor`, expression bodies, closures and computed properties recognised) because the published tree-sitter grammars do not parse them reliably here. Other languages use tree-sitter.
 
-TS/JS hỗ trợ declaration có tên, method, accessor, arrow/function expression lưu trong biến/property, các dạng assignment được hỗ trợ và CommonJS export. Các ngôn ngữ khác dùng tree-sitter để lấy declaration được hỗ trợ. Resolve callers **chỉ áp dụng TS/JS**.
+Callers are **type-checked in TS/JS/Vue/Svelte/Astro** and **evidence-based in every other supported language** (see `spec_nav_callers`).
+
+TS/JS hỗ trợ declaration có tên, method, accessor, arrow/function expression lưu trong biến/property, các dạng assignment được hỗ trợ và CommonJS export; component Vue/Svelte/Astro được đọc qua `<script>` (và frontmatter), giữ nguyên số dòng. Kotlin và Swift dùng scanner cấu trúc riêng (đọc chính xác chuỗi, interpolation, comment lồng nhau, ngoặc; nhận diện class, object, extension, `fun`/`func`, `init`/`constructor`, thân dạng biểu thức, closure, computed property) vì grammar tree-sitter hiện có không parse ổn định. Các ngôn ngữ khác dùng tree-sitter.
+
+Callers được **kiểm tra bằng type checker cho TS/JS/Vue/Svelte/Astro** và **theo bằng chứng cho mọi ngôn ngữ còn lại**.
+
+## Benchmark
+
+Two simulated agents ran the same tasks — one with only Grep/Read/Edit (like Claude Code's built-in tools), one with spec-nav plus Read/Edit. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file involved. Agents are deterministic policies, not an LLM; the baseline is given an LLM's synonym knowledge and the same generous "if it was read, it was recognised" rule. Method, assumptions and limits: [bench/README.md](bench/README.md). Full reports: [bench/results/](bench/results/).
+
+Hai agent mô phỏng chạy cùng task — một bên chỉ có Grep/Read/Edit, một bên có thêm spec-nav. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Agent là chính sách tất định, không phải LLM; phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng.
+
+| | Synthetic, 100 sessions | Synthetic, 50 large sessions | immich (real), 20 sessions | immich (real), 10 large sessions |
+|---|---:|---:|---:|---:|
+| Context per session, no MCP → MCP | 31k → 24k (−25%) | 92k → 71k (−24%) | 116k → 98k (−16%) | 302k → 227k (−25%) |
+| …of which search phase | −57% | −55% | −70% | −69% |
+| Input tokens with prompt caching | −18% | −26% | −16% | −38% |
+| Tool calls (model turns) | −10% | −9% | −2% | −20% |
+| Existing function reused | 97% → 99% | 90% → 95% | 55% → 90% | 40% → 93% |
+| Callers complete, nothing extra | 100% → 100% | 100% → 100% | 85% → 90% | 53% → 73% |
+| Wrong edits per session | 0 → 0 | 0 → 0 | 0.3 → 0.2 | 14.4 → 2.4 |
+| Session fully correct | 97% → 99% | 70% → 86% | 50% → 85% | 0% → 30% |
+| Tool time incl. MCP cold start | +4.1 s | +6.1 s | +3.2 s | +6.6 s |
+
+Reading what you will edit costs the same either way; the saving is in the search phase. On small, single-concept changes the gain is small — and every MCP turn carries ~3.8k tokens of tool definitions. Quality gains come from finding code under other names (reuse) and from not editing same-named calls on other classes (callers).
+
+Phần đọc file để sửa tốn như nhau; khoản tiết kiệm nằm ở pha tìm kiếm. Với thay đổi nhỏ, một khái niệm, lợi ích ít — và mỗi lượt có MCP mang thêm ~3,8k token định nghĩa tool. Chất lượng tăng nhờ tìm được code dù tên khác (reuse) và không sửa nhầm lời gọi trùng tên ở class khác (callers).
+
+**Large repository / Repo rất lớn** — VS Code (14,306 files, ~4.5M lines, 154k catalogued functions), Apple M4: first index 31 s, then `find_functions` 2.6–4.3 s, `map` 0.5–1.8 s, `similar_functions` 0.9 s, `read_function` 0.15 s; `callers` 16 s for an ordinary function, 90 s and 3 GB RAM for a name mentioned in 822 files (`readFile`). Server memory 0.7–0.9 GB outside `callers`. Details: [bench/results/perf-vscode.md](bench/results/perf-vscode.md).
+
+```bash
+npm run bench                                   # synthetic: 100 + 50 large sessions
+node bench/real.mjs --repo /path/to/your/repo   # your own repository, oracle-checked
+node bench/perf.mjs --repo /path/to/huge/repo   # timings and memory
+```
 
 ## Limits / Giới hạn
 
 | Area / Phần | English | Tiếng Việt |
 |---|---|---|
-| Search | Lexical matching, not semantic understanding. Similar behavior under unrelated names can be missed. | Tìm theo từ khóa, chưa hiểu ý nghĩa; có thể bỏ sót logic tương đương nhưng tên khác. |
-| Translation | Unicode/Vietnamese words and accent folding are supported. Queries are not translated into English. | Hỗ trợ từ Unicode/tiếng Việt và khớp có dấu/không dấu; không tự dịch sang tên hàm tiếng Anh. |
+| Search | Words, called names, abbreviations, synonym and concept lists, IDF — still lexical. `spec_nav_similar_functions` finds same-behaviour code under unrelated names only when it shares calls or vocabulary; two implementations written with nothing in common are missed. | Tìm theo từ, tên hàm được gọi, viết tắt, đồng nghĩa, khái niệm, IDF — vẫn là từ vựng. `spec_nav_similar_functions` tìm được code cùng hành vi khác tên khi chúng có chung lời gọi/từ vựng; hai cách viết không chung gì thì vẫn sót. |
+| Translation | Vietnamese written with diacritics is matched through a built-in dictionary of ~100 common domain terms; other words are not translated. | Tiếng Việt có dấu được dịch qua từ điển ~100 thuật ngữ phổ biến; từ ngoài từ điển không được dịch. |
 | Reuse | Check exports, behavior and package/service dependencies yourself. | Cần kiểm tra export, hành vi và dependency trước khi tái sử dụng. |
-| Callers | Dynamic calls, untyped receivers, unsupported files and external repositories can be missed or unresolved. | Lời gọi động, receiver thiếu kiểu, file không hỗ trợ và repo bên ngoài có thể không xác định được. |
+| Callers | Outside TS/JS, binding is by evidence (imports, qualifiers, declared receiver types), not a type checker: inferred types, inheritance and overloads can leave sites `likely`/`ambiguous`. Names built at runtime, HTTP/RPC/queue calls and external repositories are not traced. | Ngoài TS/JS, gắn lời gọi theo bằng chứng (import, qualifier, kiểu receiver được khai báo), không có type checker: kiểu suy luận, kế thừa, overload có thể để lại `likely`/`ambiguous`. Tên ghép lúc chạy, gọi qua HTTP/RPC/queue và repo ngoài không được lần theo. |
 | Anonymous callbacks | Inline anonymous callbacks are not individually catalogued; JS/TS counts them in coverage. | Callback anonymous không có mục riêng; coverage đếm chúng trong JS/TS. |
 | Function forms | JS/TS destructuring assignments, dynamic property assignments, factory-created functions, `Object.assign`/`Object.defineProperty` and some chained assignments are not fully covered. Other-language assigned lambdas/closures are not catalogued. | Chưa bao phủ đầy đủ assignment qua destructuring/property động, hàm từ factory, `Object.assign`/`Object.defineProperty` và một số gán nối. Lambda/closure gán biến ở ngôn ngữ khác chưa có trong danh mục. |
-| Unsupported files | Vue/Svelte components, Kotlin, Swift, SQL and other unsupported source types are not parsed. | Không parse Vue/Svelte component, Kotlin, Swift, SQL và các loại nguồn chưa hỗ trợ. |
+| Unsupported files | Dart, Lua, Objective-C, SQL and other unsupported source types are not parsed (they are counted in coverage). | Không parse Dart, Lua, Objective-C, SQL và các loại nguồn chưa hỗ trợ (có đếm trong coverage). |
 | Exclusions | Dependency/build directories, hidden directories, virtualenvs, declaration files, minified JS and supported files over 1.5 MB are excluded. | Bỏ qua dependency/build, thư mục ẩn, virtualenv, file declaration, JS minified và file hỗ trợ lớn hơn 1,5 MB. |
 | Types | Return types are reported when explicitly written; they are not inferred by the catalog. | Danh mục lấy kiểu trả về được khai báo, không suy luận kiểu. |
-| Large repos | Initial parsing and TS/JS caller analysis can take more time and memory. | Parse lần đầu và phân tích callers TS/JS có thể tốn thời gian/RAM trên repo lớn. |
+| Large repos | Measured on VS Code (14k files): first index ~31 s, searches seconds. TS/JS callers type-check only files that mention the name, in batches, following imports two steps; for a very common name this takes minutes and ~3 GB, and calls whose receiver type lies further away are reported `unresolved`. | Đo trên VS Code (14k file): index lần đầu ~31 s, tìm kiếm vài giây. Callers TS/JS chỉ type-check file nhắc tới tên, theo lô, lần import 2 bước; tên rất phổ biến tốn vài phút và ~3 GB, lời gọi có kiểu receiver nằm xa hơn được báo `unresolved`. |
+| Dependencies | TS/JS type resolution is best with dependencies installed (`node_modules`); without them, library types are unknown and more calls end up `unresolved`. | Resolve kiểu TS/JS tốt nhất khi đã cài dependency (`node_modules`); thiếu thì kiểu thư viện không có và nhiều lời gọi thành `unresolved`. |
 
 The server reads the current local checkout. No search API key is required, and its search does not send code to an external search service. Results are returned to your connected coding agent; that client's model/data handling settings still apply.
 
@@ -577,9 +632,9 @@ unzip -q build/mcp-spec-nav-<version>.mcpb -d /tmp/spec-nav-mcpb
 SPEC_NAV_DIST=/tmp/spec-nav-mcpb/dist/index.cjs node --test test/*.test.mjs
 ```
 
-These checks validate the tested scenarios. They do not establish that an agent will produce better code on every task. Compare real tasks with and without the MCP to evaluate missed usages, code reuse, correctness, time and token cost.
+These checks validate the tested scenarios. They do not establish that an agent will produce better code on every task. See [Benchmark](#benchmark) for with/without-MCP measurements, and run `bench/real.mjs` on your own repository.
 
-Các kiểm tra xác nhận tình huống đã test, không chứng minh AI sẽ code tốt hơn trong mọi task. Hãy so sánh task thật có/không MCP theo số nơi bỏ sót, mức tái sử dụng code, độ đúng, thời gian và token.
+Các kiểm tra xác nhận tình huống đã test, không chứng minh AI sẽ code tốt hơn trong mọi task. Xem [Benchmark](#benchmark) để biết số đo có/không MCP, và chạy `bench/real.mjs` trên repo của bạn.
 
 ## License / Giấy phép
 

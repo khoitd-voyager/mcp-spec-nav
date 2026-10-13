@@ -1,0 +1,6040 @@
+{
+  "label": "immich@cc7fd67",
+  "tasks": [
+    {
+      "id": "callers-001",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "toColumnarFormat",
+      "declFile": "e2e/src/ui/generators/timeline/rest-response.ts",
+      "declLine": 25,
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "line": 91
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "line": 108
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "line": 129
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-002",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "generateTimelineData",
+      "declFile": "e2e/src/ui/generators/timeline/model-objects.ts",
+      "declLine": 179,
+      "truth": [
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts",
+          "line": 36
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/utils.ts",
+          "line": 55
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts",
+          "line": 40
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts",
+          "line": 239
+        },
+        {
+          "file": "e2e/src/ui/specs/search/search-gallery.e2e-spec.ts",
+          "line": 40
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 47
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-003",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "generateUUID",
+      "declFile": "e2e/src/ui/generators/timeline/model-objects.ts",
+      "declLine": 43,
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "line": 59
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "line": 196
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "line": 241
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-004",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "getAsset",
+      "declFile": "e2e/src/ui/generators/timeline/rest-response.ts",
+      "declLine": 354,
+      "truth": [
+        {
+          "file": "e2e/src/ui/mock-network/timeline-network.ts",
+          "line": 73
+        },
+        {
+          "file": "e2e/src/ui/mock-network/timeline-network.ts",
+          "line": 113
+        },
+        {
+          "file": "e2e/src/ui/mock-network/timeline-network.ts",
+          "line": 127
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 438
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 447
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 469
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 521
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 659
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 757
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 802
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-005",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "getMockAsset",
+      "declFile": "e2e/src/ui/generators/timeline/utils.ts",
+      "declLine": 129,
+      "truth": [
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 213
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 219
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 232
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 238
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 251
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 257
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-006",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "generateConsecutiveDays",
+      "declFile": "e2e/src/ui/generators/timeline/model-objects.ts",
+      "declLine": 111,
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "line": 166
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 42
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 110
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 137
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 156
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-007",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "setupAssetViewerFixture",
+      "declFile": "e2e/src/ui/specs/asset-viewer/utils.ts",
+      "declLine": 28,
+      "truth": [
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/broken-asset.e2e-spec.ts",
+          "line": 14
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/face-editor.e2e-spec.ts",
+          "line": 38
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 26
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 66
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 116
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 155
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/stack.e2e-spec.ts",
+          "line": 16
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-008",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "generateDayAssets",
+      "declFile": "e2e/src/ui/generators/timeline/model-objects.ts",
+      "declLine": 95,
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "line": 130
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 35
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 57
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 76
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 97
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 117
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 132
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 151
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/distribution-patterns.ts",
+          "line": 163
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-009",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "toAssetResponseDto",
+      "declFile": "e2e/src/ui/generators/timeline/rest-response.ts",
+      "declLine": 285,
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "line": 364
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "line": 399
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "line": 405
+        },
+        {
+          "file": "e2e/src/ui/generators/memory/model-objects.ts",
+          "line": 27
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/utils.ts",
+          "line": 67
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/broken-asset.e2e-spec.ts",
+          "line": 18
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 29
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 72
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 119
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts",
+          "line": 158
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/stack.e2e-spec.ts",
+          "line": 22
+        },
+        {
+          "file": "e2e/src/ui/specs/search/search-gallery.e2e-spec.ts",
+          "line": 55
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-010",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "createDefaultTimelineConfig",
+      "declFile": "e2e/src/ui/generators/timeline/timeline-config.ts",
+      "declLine": 152,
+      "truth": [
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts",
+          "line": 36
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/utils.ts",
+          "line": 56
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts",
+          "line": 41
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts",
+          "line": 240
+        },
+        {
+          "file": "e2e/src/ui/specs/search/search-gallery.e2e-spec.ts",
+          "line": 40
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts",
+          "line": 47
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-011",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "withExifInner",
+      "declFile": "server/src/utils/database.ts",
+      "declLine": 125,
+      "truth": [
+        {
+          "file": "server/src/utils/database.ts",
+          "line": 541
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts",
+          "line": 296
+        },
+        {
+          "file": "server/src/repositories/asset-job.repository.ts",
+          "line": 47
+        },
+        {
+          "file": "server/src/repositories/asset-job.repository.ts",
+          "line": 139
+        },
+        {
+          "file": "server/src/repositories/asset-job.repository.ts",
+          "line": 237
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-012",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "WebsocketRepository.clientSend",
+      "declFile": "server/src/repositories/websocket.repository.ts",
+      "declLine": 106,
+      "truth": [
+        {
+          "file": "server/src/services/version.service.ts",
+          "line": 149
+        },
+        {
+          "file": "server/src/services/version.service.ts",
+          "line": 162
+        },
+        {
+          "file": "server/src/services/asset.service.ts",
+          "line": 133
+        },
+        {
+          "file": "server/src/services/asset.service.ts",
+          "line": 197
+        },
+        {
+          "file": "server/src/services/job.service.ts",
+          "line": 128
+        },
+        {
+          "file": "server/src/services/job.service.ts",
+          "line": 137
+        },
+        {
+          "file": "server/src/services/job.service.ts",
+          "line": 190
+        },
+        {
+          "file": "server/src/services/job.service.ts",
+          "line": 193
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 101
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 143
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 153
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 158
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 163
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 174
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 184
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 189
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 194
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 199
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 204
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 222
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 250
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 256
+        },
+        {
+          "file": "server/src/services/notification.service.ts",
+          "line": 496
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-013",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "BaseConfig.getMaxBitrateValue",
+      "declFile": "server/src/utils/media.ts",
+      "declLine": 385,
+      "truth": [
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 331
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 377
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 381
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1092
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-014",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "PersonService.getUsersForPeople",
+      "declFile": "server/src/services/person.service.ts",
+      "declLine": 842,
+      "truth": [
+        {
+          "file": "server/src/controllers/person.controller.ts",
+          "line": 233
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1383
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1399
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1465
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1495
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1502
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1529
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 1530
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-015",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "BaseConfig.shouldToneMap",
+      "declFile": "server/src/utils/media.ts",
+      "declLine": 359,
+      "truth": [
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 402
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 769
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 910
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1037
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1117
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-016",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "MediumTestContext.newMetadata",
+      "declFile": "server/test/medium.factory.ts",
+      "declLine": 205,
+      "truth": [
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 741
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 817
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 842
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 844
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 862
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 863
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 880
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 881
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-017",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "paginationHelper",
+      "declFile": "server/src/utils/pagination.ts",
+      "declLine": 11,
+      "truth": [
+        {
+          "file": "server/src/repositories/search.repository.ts",
+          "line": 238
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts",
+          "line": 335
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts",
+          "line": 550
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts",
+          "line": 584
+        },
+        {
+          "file": "server/src/repositories/person.repository.ts",
+          "line": 524
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-018",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "DatabaseBackupService.restoreDatabaseBackup",
+      "declFile": "server/src/services/database-backup.service.ts",
+      "declLine": 361,
+      "truth": [
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 338
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 740
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 757
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 821
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 868
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 884
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 898
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 913
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 930
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-019",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "ProcessRepository.spawnDuplexStream",
+      "declFile": "server/src/repositories/process.repository.ts",
+      "declLine": 9,
+      "truth": [
+        {
+          "file": "server/src/services/database-backup.service.ts",
+          "line": 243
+        },
+        {
+          "file": "server/src/services/database-backup.service.ts",
+          "line": 250
+        },
+        {
+          "file": "server/src/services/database-backup.service.ts",
+          "line": 404
+        },
+        {
+          "file": "server/src/services/database-backup.service.ts",
+          "line": 442
+        },
+        {
+          "file": "server/src/repositories/process.repository.spec.ts",
+          "line": 32
+        },
+        {
+          "file": "server/src/repositories/process.repository.spec.ts",
+          "line": 37
+        },
+        {
+          "file": "server/src/repositories/process.repository.spec.ts",
+          "line": 58
+        },
+        {
+          "file": "server/src/repositories/process.repository.spec.ts",
+          "line": 76
+        },
+        {
+          "file": "server/src/repositories/process.repository.spec.ts",
+          "line": 86
+        },
+        {
+          "file": "server/src/repositories/process.repository.spec.ts",
+          "line": 99
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-020",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "asHumanReadable",
+      "declFile": "server/src/utils/bytes.ts",
+      "declLine": 9,
+      "truth": [
+        {
+          "file": "server/src/services/server.service.ts",
+          "line": 74
+        },
+        {
+          "file": "server/src/services/server.service.ts",
+          "line": 75
+        },
+        {
+          "file": "server/src/services/server.service.ts",
+          "line": 76
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-021",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "SmartInfoService.onConfigUpdate",
+      "declFile": "server/src/services/smart-info.service.ts",
+      "declLine": 19,
+      "truth": [
+        {
+          "file": "server/src/services/smart-info.service.spec.ts",
+          "line": 86
+        },
+        {
+          "file": "server/src/services/smart-info.service.spec.ts",
+          "line": 100
+        },
+        {
+          "file": "server/src/services/smart-info.service.spec.ts",
+          "line": 117
+        },
+        {
+          "file": "server/src/services/smart-info.service.spec.ts",
+          "line": 133
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-022",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "BaseConfig.getOutputThreadOptions",
+      "declFile": "server/src/utils/media.ts",
+      "declLine": 315,
+      "truth": [
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 553
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 566
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 607
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 729
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 868
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 997
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-023",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "DownloadService.getDownloadInfo",
+      "declFile": "server/src/services/download.service.ts",
+      "declLine": 20,
+      "truth": [
+        {
+          "file": "server/src/controllers/download.controller.ts",
+          "line": 25
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 223
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 238
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 253
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 268
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 287
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 318
+        },
+        {
+          "file": "server/src/services/download.service.spec.ts",
+          "line": 347
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-024",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "LibraryService.handleDeleteLibrary",
+      "declFile": "server/src/services/library.service.ts",
+      "declLine": 376,
+      "truth": [
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 1140
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 1151
+        },
+        {
+          "file": "server/test/medium/specs/services/library.service.spec.ts",
+          "line": 318
+        },
+        {
+          "file": "server/test/medium/specs/services/library.service.spec.ts",
+          "line": 338
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-025",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "MaintenanceWorkerService.runAction",
+      "declFile": "server/src/maintenance/maintenance-worker.service.ts",
+      "declLine": 282,
+      "truth": [
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 86
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 279
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts",
+          "line": 291
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts",
+          "line": 302
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts",
+          "line": 326
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts",
+          "line": 344
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts",
+          "line": 373
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-026",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "LibraryService.handleSyncFiles",
+      "declFile": "server/src/services/library.service.ts",
+      "declLine": 254,
+      "truth": [
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 568
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 606
+        },
+        {
+          "file": "server/test/medium/specs/services/library.service.spec.ts",
+          "line": 83
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-027",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "SearchService.searchPerson",
+      "declFile": "server/src/services/search.service.ts",
+      "declLine": 38,
+      "truth": [
+        {
+          "file": "server/src/controllers/search.controller.ts",
+          "line": 113
+        },
+        {
+          "file": "server/src/services/search.service.spec.ts",
+          "line": 36
+        },
+        {
+          "file": "server/src/services/search.service.spec.ts",
+          "line": 40
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-028",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "AssetService.handleAssetDeletion",
+      "declFile": "server/src/services/asset.service.ts",
+      "declLine": 315,
+      "truth": [
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 576
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 598
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 612
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 625
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 642
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 655
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 665
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 671
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 258
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 279
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 297
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 320
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 340
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-029",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "AssetMediaService.getUploadFolder",
+      "declFile": "server/src/services/asset-media.service.ts",
+      "declLine": 104,
+      "truth": [
+        {
+          "file": "server/src/services/asset-media.service.ts",
+          "line": 119
+        },
+        {
+          "file": "server/src/middleware/file-upload.interceptor.ts",
+          "line": 113
+        },
+        {
+          "file": "server/src/services/asset-media.service.spec.ts",
+          "line": 281
+        },
+        {
+          "file": "server/src/services/asset-media.service.spec.ts",
+          "line": 285
+        },
+        {
+          "file": "server/src/services/asset-media.service.spec.ts",
+          "line": 292
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-030",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "PersonService.reassignFaces",
+      "declFile": "server/src/services/person.service.ts",
+      "declLine": 100,
+      "truth": [
+        {
+          "file": "server/src/controllers/person.controller.ts",
+          "line": 189
+        },
+        {
+          "file": "server/src/services/person.service.spec.ts",
+          "line": 511
+        },
+        {
+          "file": "server/src/services/person.service.spec.ts",
+          "line": 537
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 64
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 74
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 90
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts",
+          "line": 109
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-031",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "BaseService.requirePersonAccess",
+      "declFile": "server/src/services/base.service.ts",
+      "declLine": 303,
+      "truth": [
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 103
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 145
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 195
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 206
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 220
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 263
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 335
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 764
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 854
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 895
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-032",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "ThumbnailConfig.getScaling",
+      "declFile": "server/src/utils/media.ts",
+      "declLine": 546,
+      "truth": [
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 268
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 547
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 687
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 759
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 864
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 948
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1028
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1030
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1122
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1131
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 1139
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 815
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 901
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 903
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-033",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "QsvSwDecodeConfig.getBaseOutputOptions",
+      "declFile": "server/src/utils/media.ts",
+      "declLine": 802,
+      "truth": [
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 149
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 183
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 672
+        },
+        {
+          "file": "server/src/utils/media.ts",
+          "line": 803
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-034",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "PluginService.search",
+      "declFile": "server/src/services/plugin.service.ts",
+      "declLine": 17,
+      "truth": [
+        {
+          "file": "server/src/controllers/plugin.controller.ts",
+          "line": 29
+        },
+        {
+          "file": "server/test/medium/specs/services/plugin.service.spec.ts",
+          "line": 36
+        },
+        {
+          "file": "server/test/medium/specs/services/plugin.service.spec.ts",
+          "line": 57
+        },
+        {
+          "file": "server/test/medium/specs/services/plugin.service.spec.ts",
+          "line": 103
+        },
+        {
+          "file": "server/test/medium/specs/services/plugin.service.spec.ts",
+          "line": 174
+        },
+        {
+          "file": "server/test/medium/specs/services/plugin.service.spec.ts",
+          "line": 231
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-035",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "AssetEditRepository.replaceAll",
+      "declFile": "server/src/repositories/asset-edit.repository.ts",
+      "declLine": 14,
+      "truth": [
+        {
+          "file": "server/src/services/asset.service.ts",
+          "line": 612
+        },
+        {
+          "file": "server/src/services/asset.service.ts",
+          "line": 630
+        },
+        {
+          "file": "server/test/medium.factory.ts",
+          "line": 349
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-edit.repository.spec.ts",
+          "line": 36
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-edit.repository.spec.ts",
+          "line": 54
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-edit.repository.spec.ts",
+          "line": 74
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-edit.repository.spec.ts",
+          "line": 84
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-edit.repository.spec.ts",
+          "line": 102
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-edit.repository.spec.ts",
+          "line": 108
+        },
+        {
+          "file": "server/test/medium/specs/services/audit.database.spec.ts",
+          "line": 56
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 28
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 60
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 125
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 173
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 185
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 213
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 236
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 243
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-edit.spec.ts",
+          "line": 290
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-036",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "mapAdminConfig",
+      "declFile": "server/src/dtos/config.dto.ts",
+      "declLine": 534,
+      "truth": [
+        {
+          "file": "server/src/services/system-config.service.ts",
+          "line": 34
+        },
+        {
+          "file": "server/src/services/system-config.service.ts",
+          "line": 38
+        },
+        {
+          "file": "server/src/services/system-config.service.ts",
+          "line": 103
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-037",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "DatabaseRepository.vacuum",
+      "declFile": "server/src/repositories/database.repository.ts",
+      "declLine": 252,
+      "truth": [
+        {
+          "file": "server/src/repositories/database.repository.ts",
+          "line": 249
+        },
+        {
+          "file": "server/src/services/person.service.ts",
+          "line": 907
+        },
+        {
+          "file": "server/src/services/database.service.ts",
+          "line": 120
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-038",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "SearchService.searchLargeAssets",
+      "declFile": "server/src/services/search.service.ts",
+      "declLine": 153,
+      "truth": [
+        {
+          "file": "server/src/controllers/search.controller.ts",
+          "line": 79
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts",
+          "line": 61
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts",
+          "line": 79
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-039",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "StackService.removeAsset",
+      "declFile": "server/src/services/stack.service.ts",
+      "declLine": 63,
+      "truth": [
+        {
+          "file": "server/src/controllers/stack.controller.ts",
+          "line": 110
+        },
+        {
+          "file": "server/src/services/stack.service.spec.ts",
+          "line": 230
+        },
+        {
+          "file": "server/src/services/stack.service.spec.ts",
+          "line": 243
+        },
+        {
+          "file": "server/src/services/stack.service.spec.ts",
+          "line": 256
+        },
+        {
+          "file": "server/src/services/stack.service.spec.ts",
+          "line": 269
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-040",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "StorageCore.isImmichPath",
+      "declFile": "server/src/cores/storage.core.ts",
+      "declLine": 152,
+      "truth": [
+        {
+          "file": "server/src/services/library.service.ts",
+          "line": 303
+        },
+        {
+          "file": "server/src/cores/storage.core.spec.ts",
+          "line": 16
+        },
+        {
+          "file": "server/src/cores/storage.core.spec.ts",
+          "line": 21
+        },
+        {
+          "file": "server/src/cores/storage.core.spec.ts",
+          "line": 26
+        },
+        {
+          "file": "server/src/cores/storage.core.spec.ts",
+          "line": 31
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-041",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "IntegrityService.handleUntrackedFiles",
+      "declFile": "server/src/services/integrity.service.ts",
+      "declLine": 275,
+      "truth": [
+        {
+          "file": "server/src/services/integrity.service.spec.ts",
+          "line": 35
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 281
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 316
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-042",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "AssetService.upsertBulkMetadata",
+      "declFile": "server/src/services/asset.service.ts",
+      "declLine": 424,
+      "truth": [
+        {
+          "file": "server/src/controllers/asset.controller.ts",
+          "line": 122
+        },
+        {
+          "file": "server/src/services/asset.service.spec.ts",
+          "line": 782
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 727
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 749
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 769
+        },
+        {
+          "file": "server/test/medium/specs/services/asset.service.spec.ts",
+          "line": 793
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-043",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "ClusterGroupService.deleteRequest",
+      "declFile": "server/src/services/cluster-group.service.ts",
+      "declLine": 70,
+      "truth": [
+        {
+          "file": "server/src/controllers/cluster-group.controller.ts",
+          "line": 50
+        },
+        {
+          "file": "server/test/medium/specs/services/cluster-group.service.spec.ts",
+          "line": 438
+        },
+        {
+          "file": "server/test/medium/specs/services/cluster-group.service.spec.ts",
+          "line": 453
+        },
+        {
+          "file": "server/test/medium/specs/services/cluster-group.service.spec.ts",
+          "line": 469
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-044",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "MaintenanceWorkerService.setStatus",
+      "declFile": "server/src/maintenance/maintenance-worker.service.ts",
+      "declLine": 220,
+      "truth": [
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 274
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 321
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 331
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts",
+          "line": 339
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts",
+          "line": 82
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-045",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "IntegrityService.handleChecksumFiles",
+      "declFile": "server/src/services/integrity.service.ts",
+      "declLine": 534,
+      "truth": [
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 564
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 586
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 638
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 676
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 700
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts",
+          "line": 725
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-046",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "NotificationService.handleSendEmail",
+      "declFile": "server/src/services/notification.service.ts",
+      "declLine": 432,
+      "truth": [
+        {
+          "file": "server/src/services/notification.service.spec.ts",
+          "line": 547
+        },
+        {
+          "file": "server/src/services/notification.service.spec.ts",
+          "line": 556
+        },
+        {
+          "file": "server/src/services/notification.service.spec.ts",
+          "line": 566
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-047",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "DatabaseBackupService.downloadBackup",
+      "declFile": "server/src/services/database-backup.service.ts",
+      "declLine": 281,
+      "truth": [
+        {
+          "file": "server/src/controllers/database-backup.controller.ts",
+          "line": 54
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.controller.ts",
+          "line": 83
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 646
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts",
+          "line": 650
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-048",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "AuthFactory.session",
+      "declFile": "server/test/factories/auth.factory.ts",
+      "declLine": 37,
+      "truth": [
+        {
+          "file": "server/src/services/api-key.service.spec.ts",
+          "line": 264
+        },
+        {
+          "file": "server/src/services/auth.service.spec.ts",
+          "line": 184
+        },
+        {
+          "file": "server/src/services/auth.service.spec.ts",
+          "line": 1453
+        },
+        {
+          "file": "server/src/services/auth.service.spec.ts",
+          "line": 1510
+        },
+        {
+          "file": "server/src/services/session.service.spec.ts",
+          "line": 31
+        },
+        {
+          "file": "server/src/services/session.service.spec.ts",
+          "line": 47
+        },
+        {
+          "file": "server/src/utils/search-filter.spec.ts",
+          "line": 8
+        },
+        {
+          "file": "server/src/utils/search-filter.spec.ts",
+          "line": 9
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-049",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "MediumTestContext.newJobStatus",
+      "declFile": "server/test/medium.factory.ts",
+      "declLine": 279,
+      "truth": [
+        {
+          "file": "server/test/medium/specs/repositories/asset-job.repository.spec.ts",
+          "line": 43
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-job.repository.spec.ts",
+          "line": 53
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-job.repository.spec.ts",
+          "line": 71
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-job.repository.spec.ts",
+          "line": 85
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-job.repository.spec.ts",
+          "line": 104
+        },
+        {
+          "file": "server/test/medium/specs/services/memory.service.spec.ts",
+          "line": 56
+        },
+        {
+          "file": "server/test/medium/specs/services/memory.service.spec.ts",
+          "line": 350
+        },
+        {
+          "file": "server/test/medium/specs/services/memory.service.spec.ts",
+          "line": 390
+        },
+        {
+          "file": "server/test/medium/specs/services/memory.service.spec.ts",
+          "line": 444
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "callers-050",
+      "type": "callers",
+      "language": "typescript",
+      "symbol": "LibraryService.onConfigInit",
+      "declFile": "server/src/services/library.service.ts",
+      "declLine": 46,
+      "truth": [
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 43
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 78
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 88
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 96
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 104
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 115
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 120
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 652
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 798
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 866
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 913
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 932
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts",
+          "line": 1126
+        },
+        {
+          "file": "server/test/medium/specs/services/library.service.spec.ts",
+          "line": 609
+        }
+      ],
+      "oracle": "TypeScript findReferences"
+    },
+    {
+      "id": "reuse-001",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "get a mock album from timeline data",
+      "englishQuery": "get a mock album from timeline data",
+      "prompt": "Before implementing \"get a mock album from timeline data\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "mock"
+        ],
+        [
+          "timeline"
+        ],
+        [
+          "album"
+        ],
+        [
+          "data"
+        ]
+      ],
+      "llmSpecific": [
+        "mock"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "name": "getAlbum",
+          "line": 374
+        }
+      ]
+    },
+    {
+      "id": "reuse-002",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "returns the lowercase filename extension without a dot and",
+      "englishQuery": "returns the lowercase filename extension without a dot and",
+      "prompt": "Before implementing \"returns the lowercase filename extension without a dot and\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "dot"
+        ],
+        [
+          "lowercase"
+        ],
+        [
+          "extension"
+        ],
+        [
+          "without"
+        ]
+      ],
+      "llmSpecific": [
+        "dot"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/asset-utils.ts",
+          "name": "getFilenameExtension",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "id": "reuse-003",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "reads subnormal floats as zero on the calling thread which ort does only on its own threads",
+      "englishQuery": "reads subnormal floats as zero on the calling thread which ort does only on its own threads",
+      "prompt": "Before implementing \"reads subnormal floats as zero on the calling thread which ort does only on its own threads\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "subnormal"
+        ],
+        [
+          "floats"
+        ],
+        [
+          "thread"
+        ],
+        [
+          "calling"
+        ]
+      ],
+      "llmSpecific": [
+        "subnormal"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/sessions/ort.py",
+          "name": "flush_denormals",
+          "line": 432
+        }
+      ]
+    },
+    {
+      "id": "reuse-004",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "toggles the sidebar visibility if available at the current screen width",
+      "englishQuery": "toggles the sidebar visibility if available at the current screen width",
+      "prompt": "Before implementing \"toggles the sidebar visibility if available at the current screen width\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "toggles"
+        ],
+        [
+          "sidebar"
+        ],
+        [
+          "screen"
+        ],
+        [
+          "available"
+        ]
+      ],
+      "llmSpecific": [
+        "toggles"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/stores/sidebar.svelte.ts",
+          "name": "toggle",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "id": "reuse-005",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "returns aspect ratio for the asset",
+      "englishQuery": "returns aspect ratio for the asset",
+      "prompt": "Before implementing \"returns aspect ratio for the asset\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "ratio"
+        ],
+        [
+          "aspect"
+        ],
+        [
+          "asset"
+        ]
+      ],
+      "llmSpecific": [
+        "ratio"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/asset-utils.ts",
+          "name": "getAssetRatio",
+          "line": 159
+        }
+      ]
+    },
+    {
+      "id": "reuse-006",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "manages worker lifecycle",
+      "englishQuery": "manages worker lifecycle",
+      "prompt": "Before implementing \"manages worker lifecycle\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "manages"
+        ],
+        [
+          "lifecycle"
+        ],
+        [
+          "worker"
+        ]
+      ],
+      "llmSpecific": [
+        "manages"
+      ],
+      "truth": [
+        {
+          "file": "server/src/main.ts",
+          "name": "bootstrap",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "id": "reuse-007",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "returns true if the asset is an image supported by web browsers false otherwise",
+      "englishQuery": "returns true if the asset is an image supported by web browsers false otherwise",
+      "prompt": "Before implementing \"returns true if the asset is an image supported by web browsers false otherwise\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "browsers"
+        ],
+        [
+          "otherwise"
+        ],
+        [
+          "supported"
+        ],
+        [
+          "web"
+        ]
+      ],
+      "llmSpecific": [
+        "browsers"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/asset-utils.ts",
+          "name": "isWebCompatibleImage",
+          "line": 229
+        }
+      ]
+    },
+    {
+      "id": "reuse-008",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "select random days using seed variation to avoid collisions",
+      "englishQuery": "select random days using seed variation to avoid collisions",
+      "prompt": "Before implementing \"select random days using seed variation to avoid collisions\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "variation"
+        ],
+        [
+          "collisions"
+        ],
+        [
+          "seed"
+        ],
+        [
+          "avoid"
+        ]
+      ],
+      "llmSpecific": [
+        "variation"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/utils.ts",
+          "name": "selectRandomDays",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "id": "reuse-009",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "generate random boolean with given probability",
+      "englishQuery": "generate random boolean with given probability",
+      "prompt": "Before implementing \"generate random boolean with given probability\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "probability"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "random"
+        ],
+        [
+          "boolean"
+        ]
+      ],
+      "llmSpecific": [
+        "probability"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/utils.ts",
+          "name": "nextBoolean",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "id": "reuse-010",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "deeply clones and converts a class instance to a plain object",
+      "englishQuery": "deeply clones and converts a class instance to a plain object",
+      "prompt": "Before implementing \"deeply clones and converts a class instance to a plain object\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "deeply"
+        ],
+        [
+          "clones"
+        ],
+        [
+          "converts"
+        ],
+        [
+          "plain"
+        ]
+      ],
+      "llmSpecific": [
+        "deeply"
+      ],
+      "truth": [
+        {
+          "file": "server/src/utils/object.ts",
+          "name": "isEqualObject",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "id": "reuse-011",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "distribute assets evenly across consecutive days",
+      "englishQuery": "distribute assets evenly across consecutive days",
+      "prompt": "Before implementing \"distribute assets evenly across consecutive days\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "distribute"
+        ],
+        [
+          "evenly"
+        ],
+        [
+          "consecutive"
+        ],
+        [
+          "across"
+        ]
+      ],
+      "llmSpecific": [
+        "distribute"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "name": "generateConsecutiveDays",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "id": "reuse-012",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "main generator function for timeline data",
+      "englishQuery": "main generator function for timeline data",
+      "prompt": "Before implementing \"main generator function for timeline data\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "generator"
+        ],
+        [
+          "main"
+        ],
+        [
+          "timeline"
+        ],
+        [
+          "function"
+        ]
+      ],
+      "llmSpecific": [
+        "generator"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "name": "generateTimelineData",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "id": "reuse-013",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "param input file path to the input image",
+      "englishQuery": "param input file path to the input image",
+      "prompt": "Before implementing \"param input file path to the input image\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "param"
+        ],
+        [
+          "input"
+        ],
+        [
+          "image"
+        ],
+        [
+          "file"
+        ]
+      ],
+      "llmSpecific": [
+        "param"
+      ],
+      "truth": [
+        {
+          "file": "server/src/repositories/media.repository.ts",
+          "name": "extract",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "id": "reuse-014",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "marks this invocation as complete",
+      "englishQuery": "marks this invocation as complete",
+      "prompt": "Before implementing \"marks this invocation as complete\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "marks"
+        ],
+        [
+          "invocation"
+        ],
+        [
+          "complete"
+        ]
+      ],
+      "llmSpecific": [
+        "marks"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/invocationTracker.ts",
+          "name": "isActive",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "id": "reuse-015",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "re-lays the data file so every region starts aligned",
+      "englishQuery": "re-lays the data file so every region starts aligned",
+      "prompt": "Before implementing \"re-lays the data file so every region starts aligned\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "re-lays"
+        ],
+        [
+          "aligned"
+        ],
+        [
+          "region"
+        ],
+        [
+          "starts"
+        ]
+      ],
+      "llmSpecific": [
+        "re-lays"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/sessions/prepare.py",
+          "name": "align",
+          "line": 67
+        }
+      ]
+    },
+    {
+      "id": "reuse-016",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "calls a function when a click occurs outside of the element or when the escape key is pressed",
+      "englishQuery": "calls a function when a click occurs outside of the element or when the escape key is pressed",
+      "prompt": "Before implementing \"calls a function when a click occurs outside of the element or when the escape key is pressed\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "pressed"
+        ],
+        [
+          "occurs"
+        ],
+        [
+          "escape"
+        ],
+        [
+          "calls"
+        ]
+      ],
+      "llmSpecific": [
+        "pressed"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/actions/click-outside.ts",
+          "name": "clickOutside",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "id": "reuse-017",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "the arch keys its programs by and the and hip it loads which its keys leave out",
+      "englishQuery": "the arch keys its programs by and the and hip it loads which its keys leave out",
+      "prompt": "Before implementing \"the arch keys its programs by and the and hip it loads which its keys leave out\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "programs"
+        ],
+        [
+          "hip"
+        ],
+        [
+          "arch"
+        ],
+        [
+          "loads"
+        ]
+      ],
+      "llmSpecific": [
+        "programs"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/sessions/ort.py",
+          "name": "_amd_gpu",
+          "line": 408
+        }
+      ]
+    },
+    {
+      "id": "reuse-018",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "extract a single bucket from timeline data",
+      "englishQuery": "extract a single bucket from timeline data",
+      "prompt": "Before implementing \"extract a single bucket from timeline data\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "bucket"
+        ],
+        [
+          "extract"
+        ],
+        [
+          "single"
+        ],
+        [
+          "timeline"
+        ]
+      ],
+      "llmSpecific": [
+        "bucket"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "name": "getTimeBucket",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "id": "reuse-019",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "generate assets for a month with specified distribution pattern",
+      "englishQuery": "generate assets for a month with specified distribution pattern",
+      "prompt": "Before implementing \"generate assets for a month with specified distribution pattern\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "distribution"
+        ],
+        [
+          "pattern"
+        ],
+        [
+          "specified"
+        ],
+        [
+          "generate"
+        ]
+      ],
+      "llmSpecific": [
+        "distribution"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "name": "generateMonthAssets",
+          "line": 139
+        }
+      ]
+    },
+    {
+      "id": "reuse-020",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "generate random integer in range min",
+      "englishQuery": "generate random integer in range min",
+      "prompt": "Before implementing \"generate random integer in range min\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "integer"
+        ],
+        [
+          "generate"
+        ],
+        [
+          "range"
+        ],
+        [
+          "random"
+        ]
+      ],
+      "llmSpecific": [
+        "integer"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/utils.ts",
+          "name": "nextInt",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "id": "reuse-021",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "get a single asset by id from timeline data",
+      "englishQuery": "get a single asset by id from timeline data",
+      "prompt": "Before implementing \"get a single asset by id from timeline data\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "single"
+        ],
+        [
+          "timeline"
+        ],
+        [
+          "data"
+        ],
+        [
+          "asset"
+        ]
+      ],
+      "llmSpecific": [
+        "single"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "name": "getAsset",
+          "line": 354
+        }
+      ]
+    },
+    {
+      "id": "reuse-022",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "adds assets to existing segments creating new segments as needed",
+      "englishQuery": "adds assets to existing segments creating new segments as needed",
+      "prompt": "Before implementing \"adds assets to existing segments creating new segments as needed\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "adds"
+        ],
+        [
+          "segments"
+        ],
+        [
+          "creating"
+        ],
+        [
+          "needed"
+        ]
+      ],
+      "llmSpecific": [
+        "adds"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts",
+          "name": "addAssetsUpsertSegments",
+          "line": 534
+        }
+      ]
+    },
+    {
+      "id": "reuse-023",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "the outputs in the precision the npu computed them in which rknnlite would widen to fp32 on the cpu",
+      "englishQuery": "the outputs in the precision the npu computed them in which rknnlite would widen to fp32 on the cpu",
+      "prompt": "Before implementing \"the outputs in the precision the npu computed them in which rknnlite would widen to fp32 on the cpu\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "rknnlite"
+        ],
+        [
+          "npu"
+        ],
+        [
+          "computed"
+        ],
+        [
+          "widen"
+        ]
+      ],
+      "llmSpecific": [
+        "rknnlite"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/sessions/rknn/rknnpool.py",
+          "name": "native_outputs",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "id": "reuse-024",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "convert bytes to best human readable unit and number of that unit",
+      "englishQuery": "convert bytes to best human readable unit and number of that unit",
+      "prompt": "Before implementing \"convert bytes to best human readable unit and number of that unit\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "best"
+        ],
+        [
+          "human"
+        ],
+        [
+          "readable"
+        ],
+        [
+          "convert"
+        ]
+      ],
+      "llmSpecific": [
+        "best"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/byte-units.ts",
+          "name": "getBytesWithUnit",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "id": "reuse-025",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "what of its options the graph is built for an instance serves only requests that agree on it",
+      "englishQuery": "what of its options the graph is built for an instance serves only requests that agree on it",
+      "prompt": "Before implementing \"what of its options the graph is built for an instance serves only requests that agree on it\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "serves"
+        ],
+        [
+          "agree"
+        ],
+        [
+          "built"
+        ],
+        [
+          "graph"
+        ]
+      ],
+      "llmSpecific": [
+        "serves"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/models/base.py",
+          "name": "graph",
+          "line": 56
+        }
+      ]
+    },
+    {
+      "id": "reuse-026",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "function to save additional data state before scrolling infinite",
+      "englishQuery": "function to save additional data state before scrolling infinite",
+      "prompt": "Before implementing \"function to save additional data state before scrolling infinite\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "scrolling"
+        ],
+        [
+          "infinite"
+        ],
+        [
+          "additional"
+        ],
+        [
+          "save"
+        ]
+      ],
+      "llmSpecific": [
+        "scrolling"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/actions/scroll-memory.ts",
+          "name": "scrollMemory",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "id": "reuse-027",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "calls a function when focus leaves the element",
+      "englishQuery": "calls a function when focus leaves the element",
+      "prompt": "Before implementing \"calls a function when focus leaves the element\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "leaves"
+        ],
+        [
+          "calls"
+        ],
+        [
+          "element"
+        ],
+        [
+          "focus"
+        ]
+      ],
+      "llmSpecific": [
+        "leaves"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/actions/focus-outside.ts",
+          "name": "focusOutside",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "id": "reuse-028",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "makes sure all thumbnails for albums are updated by",
+      "englishQuery": "makes sure all thumbnails for albums are updated by",
+      "prompt": "Before implementing \"makes sure all thumbnails for albums are updated by\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "makes"
+        ],
+        [
+          "thumbnails"
+        ],
+        [
+          "sure"
+        ],
+        [
+          "updated"
+        ]
+      ],
+      "llmSpecific": [
+        "makes"
+      ],
+      "truth": [
+        {
+          "file": "server/src/repositories/album.repository.ts",
+          "name": "updateThumbnails",
+          "line": 397
+        }
+      ]
+    },
+    {
+      "id": "reuse-029",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "validates a object to ensure all values are within expected ranges",
+      "englishQuery": "validates a object to ensure all values are within expected ranges",
+      "prompt": "Before implementing \"validates a object to ensure all values are within expected ranges\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "ranges"
+        ],
+        [
+          "validates"
+        ],
+        [
+          "ensure"
+        ],
+        [
+          "within"
+        ]
+      ],
+      "llmSpecific": [
+        "ranges"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/timeline-config.ts",
+          "name": "validateTimelineConfig",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "id": "reuse-030",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "convert from bytes to a specified unit",
+      "englishQuery": "convert from bytes to a specified unit",
+      "prompt": "Before implementing \"convert from bytes to a specified unit\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "convert"
+        ],
+        [
+          "specified"
+        ],
+        [
+          "unit"
+        ],
+        [
+          "bytes"
+        ]
+      ],
+      "llmSpecific": [
+        "convert"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/byte-units.ts",
+          "name": "convertFromBytes",
+          "line": 68
+        }
+      ]
+    },
+    {
+      "id": "reuse-031",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "order each group of four points as top-left top-right bottom-right bottom-left",
+      "englishQuery": "order each group of four points as top-left top-right bottom-right bottom-left",
+      "prompt": "Before implementing \"order each group of four points as top-left top-right bottom-right bottom-left\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "four"
+        ],
+        [
+          "bottom-left"
+        ],
+        [
+          "points"
+        ],
+        [
+          "top-right"
+        ]
+      ],
+      "llmSpecific": [
+        "four"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/models/ocr/postprocess.py",
+          "name": "order_points_clockwise",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "id": "reuse-032",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "reset the sidebar visibility to the default based on the current screen width",
+      "englishQuery": "reset the sidebar visibility to the default based on the current screen width",
+      "prompt": "Before implementing \"reset the sidebar visibility to the default based on the current screen width\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "sidebar"
+        ],
+        [
+          "screen"
+        ],
+        [
+          "current"
+        ],
+        [
+          "reset"
+        ]
+      ],
+      "llmSpecific": [
+        "sidebar"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/stores/sidebar.svelte.ts",
+          "name": "reset",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "reuse-033",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "single precision from half through as numpy converts one value at a time without native half support",
+      "englishQuery": "single precision from half through as numpy converts one value at a time without native half support",
+      "prompt": "Before implementing \"single precision from half through as numpy converts one value at a time without native half support\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "converts"
+        ],
+        [
+          "half"
+        ],
+        [
+          "precision"
+        ],
+        [
+          "numpy"
+        ]
+      ],
+      "llmSpecific": [
+        "converts"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/models/transforms.py",
+          "name": "widen",
+          "line": 76
+        }
+      ]
+    },
+    {
+      "id": "reuse-034",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "upright crop size for each box and the perspective coefficients that map the box onto it",
+      "englishQuery": "upright crop size for each box and the perspective coefficients that map the box onto it",
+      "prompt": "Before implementing \"upright crop size for each box and the perspective coefficients that map the box onto it\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "upright"
+        ],
+        [
+          "coefficients"
+        ],
+        [
+          "perspective"
+        ],
+        [
+          "onto"
+        ]
+      ],
+      "llmSpecific": [
+        "upright"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/models/ocr/recognition.py",
+          "name": "_crop_geometry",
+          "line": 123
+        }
+      ]
+    },
+    {
+      "id": "reuse-035",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "starts a new invocation and returns an object with utilities to manage the invocation lifecycle",
+      "englishQuery": "starts a new invocation and returns an object with utilities to manage the invocation lifecycle",
+      "prompt": "Before implementing \"starts a new invocation and returns an object with utilities to manage the invocation lifecycle\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "invocation"
+        ],
+        [
+          "starts"
+        ],
+        [
+          "lifecycle"
+        ],
+        [
+          "utilities"
+        ]
+      ],
+      "llmSpecific": [
+        "invocation"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/invocationTracker.ts",
+          "name": "startInvocation",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "id": "reuse-036",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "indices of top to bottom then left to right within a line",
+      "englishQuery": "indices of top to bottom then left to right within a line",
+      "prompt": "Before implementing \"indices of top to bottom then left to right within a line\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "indices"
+        ],
+        [
+          "within"
+        ],
+        [
+          "right"
+        ],
+        [
+          "bottom"
+        ]
+      ],
+      "llmSpecific": [
+        "indices"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/models/ocr/detection.py",
+          "name": "reading_order",
+          "line": 112
+        }
+      ]
+    },
+    {
+      "id": "reuse-037",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "create a default timeline configuration",
+      "englishQuery": "create a default timeline configuration",
+      "prompt": "Before implementing \"create a default timeline configuration\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "configuration"
+        ],
+        [
+          "timeline"
+        ],
+        [
+          "default"
+        ],
+        [
+          "create"
+        ]
+      ],
+      "llmSpecific": [
+        "configuration"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/timeline-config.ts",
+          "name": "createDefaultTimelineConfig",
+          "line": 152
+        }
+      ]
+    },
+    {
+      "id": "reuse-038",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "wraps a method that takes a collection of parameters and sequentially calls it with chunks of the collection",
+      "englishQuery": "wraps a method that takes a collection of parameters and sequentially calls it with chunks of the collection",
+      "prompt": "Before implementing \"wraps a method that takes a collection of parameters and sequentially calls it with chunks of the collection\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "wraps"
+        ],
+        [
+          "sequentially"
+        ],
+        [
+          "chunks"
+        ],
+        [
+          "collection"
+        ]
+      ],
+      "llmSpecific": [
+        "wraps"
+      ],
+      "truth": [
+        {
+          "file": "server/src/decorators.ts",
+          "name": "Chunked",
+          "line": 68
+        }
+      ]
+    },
+    {
+      "id": "reuse-039",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "parse parameter to extract year-month key",
+      "englishQuery": "parse parameter to extract year-month key",
+      "prompt": "Before implementing \"parse parameter to extract year-month key\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "year-month"
+        ],
+        [
+          "parameter"
+        ],
+        [
+          "extract"
+        ],
+        [
+          "parse"
+        ]
+      ],
+      "llmSpecific": [
+        "year-month"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/utils.ts",
+          "name": "parseTimeBucketKey",
+          "line": 112
+        }
+      ]
+    },
+    {
+      "id": "reuse-040",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "generate assets for a specific day",
+      "englishQuery": "generate assets for a specific day",
+      "prompt": "Before implementing \"generate assets for a specific day\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "generate"
+        ],
+        [
+          "specific"
+        ],
+        [
+          "day"
+        ],
+        [
+          "assets"
+        ]
+      ],
+      "llmSpecific": [
+        "generate"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "name": "generateDayAssets",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "id": "reuse-041",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "localized number of bytes with a unit",
+      "englishQuery": "localized number of bytes with a unit",
+      "prompt": "Before implementing \"localized number of bytes with a unit\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "localized"
+        ],
+        [
+          "unit"
+        ],
+        [
+          "bytes"
+        ],
+        [
+          "number"
+        ]
+      ],
+      "llmSpecific": [
+        "localized"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/byte-units.ts",
+          "name": "getByteUnitString",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "id": "reuse-042",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "update the asset stack state in the asset store based on the provided stack response",
+      "englishQuery": "update the asset stack state in the asset store based on the provided stack response",
+      "prompt": "Before implementing \"update the asset stack state in the asset store based on the provided stack response\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "provided"
+        ],
+        [
+          "stack"
+        ],
+        [
+          "store"
+        ],
+        [
+          "response"
+        ]
+      ],
+      "llmSpecific": [
+        "provided"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/actions.ts",
+          "name": "updateStackedAssetInTimeline",
+          "line": 63
+        }
+      ]
+    },
+    {
+      "id": "reuse-043",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "convert timeline asset models to columnar format",
+      "englishQuery": "convert timeline asset models to columnar format",
+      "prompt": "Before implementing \"convert timeline asset models to columnar format\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "columnar"
+        ],
+        [
+          "convert"
+        ],
+        [
+          "models"
+        ],
+        [
+          "format"
+        ]
+      ],
+      "llmSpecific": [
+        "columnar"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts",
+          "name": "toColumnarFormat",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "id": "reuse-044",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "zod schema that validates an array of strings as ip addresses or ip cidr ranges",
+      "englishQuery": "zod schema that validates an array of strings as ip addresses or ip cidr ranges",
+      "prompt": "Before implementing \"zod schema that validates an array of strings as ip addresses or ip cidr ranges\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "addresses"
+        ],
+        [
+          "cidr"
+        ],
+        [
+          "ranges"
+        ],
+        [
+          "validates"
+        ]
+      ],
+      "llmSpecific": [
+        "addresses"
+      ],
+      "truth": [
+        {
+          "file": "server/src/validation.ts",
+          "name": "IsIPRange",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "id": "reuse-045",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "the ip version release and execution units keys its blobs by and the driver it checks them against",
+      "englishQuery": "the ip version release and execution units keys its blobs by and the driver it checks them against",
+      "prompt": "Before implementing \"the ip version release and execution units keys its blobs by and the driver it checks them against\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "blobs"
+        ],
+        [
+          "driver"
+        ],
+        [
+          "execution"
+        ],
+        [
+          "against"
+        ]
+      ],
+      "llmSpecific": [
+        "blobs"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/sessions/ort.py",
+          "name": "_intel_gpu",
+          "line": 362
+        }
+      ]
+    },
+    {
+      "id": "reuse-046",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "returns the filename of an asset including file extension",
+      "englishQuery": "returns the filename of an asset including file extension",
+      "prompt": "Before implementing \"returns the filename of an asset including file extension\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "including"
+        ],
+        [
+          "extension"
+        ],
+        [
+          "filename"
+        ],
+        [
+          "file"
+        ]
+      ],
+      "llmSpecific": [
+        "including"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/asset-utils.ts",
+          "name": "getAssetFilename",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "id": "reuse-047",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "generate a random aspect ratio based on weighted probabilities",
+      "englishQuery": "generate a random aspect ratio based on weighted probabilities",
+      "prompt": "Before implementing \"generate a random aspect ratio based on weighted probabilities\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "weighted"
+        ],
+        [
+          "probabilities"
+        ],
+        [
+          "ratio"
+        ],
+        [
+          "aspect"
+        ]
+      ],
+      "llmSpecific": [
+        "weighted"
+      ],
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts",
+          "name": "generateAspectRatio",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "id": "reuse-048",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "needed for accurate segments especially when remuxing seeking and or vfr is involved",
+      "englishQuery": "needed for accurate segments especially when remuxing seeking and or vfr is involved",
+      "prompt": "Before implementing \"needed for accurate segments especially when remuxing seeking and or vfr is involved\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "remuxing"
+        ],
+        [
+          "involved"
+        ],
+        [
+          "especially"
+        ],
+        [
+          "seeking"
+        ]
+      ],
+      "llmSpecific": [
+        "remuxing"
+      ],
+      "truth": [
+        {
+          "file": "server/src/repositories/media.repository.ts",
+          "name": "probePackets",
+          "line": 310
+        }
+      ]
+    },
+    {
+      "id": "reuse-049",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "ts",
+      "description": "convert to bytes from on a specified unit",
+      "englishQuery": "convert to bytes from on a specified unit",
+      "prompt": "Before implementing \"convert to bytes from on a specified unit\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "convert"
+        ],
+        [
+          "specified"
+        ],
+        [
+          "unit"
+        ],
+        [
+          "bytes"
+        ]
+      ],
+      "llmSpecific": [
+        "convert"
+      ],
+      "truth": [
+        {
+          "file": "web/src/lib/utils/byte-units.ts",
+          "name": "convertToBytes",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "id": "reuse-050",
+      "type": "reuse",
+      "difficulty": "real-doc",
+      "language": "py",
+      "description": "mean probability inside the min-area rect for",
+      "englishQuery": "mean probability inside the min-area rect for",
+      "prompt": "Before implementing \"mean probability inside the min-area rect for\", find an existing function in the repo that already does it.",
+      "llmKeywords": [
+        [
+          "min-area"
+        ],
+        [
+          "probability"
+        ],
+        [
+          "mean"
+        ],
+        [
+          "rect"
+        ]
+      ],
+      "llmSpecific": [
+        "min-area"
+      ],
+      "truth": [
+        {
+          "file": "machine-learning/immich_ml/models/ocr/postprocess.py",
+          "name": "box_score",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "id": "survey-001",
+      "type": "survey",
+      "concept": "string bool",
+      "pattern": "string[_ -]?bool",
+      "truth": [
+        {
+          "file": "server/src/validation.ts"
+        },
+        {
+          "file": "server/src/dtos/config.dto.ts"
+        },
+        {
+          "file": "server/src/dtos/env.dto.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-002",
+      "type": "survey",
+      "concept": "asset dimensions",
+      "pattern": "asset[_ -]?dimensions",
+      "truth": [
+        {
+          "file": "server/src/services/asset.service.ts"
+        },
+        {
+          "file": "server/src/services/person.service.ts"
+        },
+        {
+          "file": "server/src/dtos/person.dto.ts"
+        },
+        {
+          "file": "server/src/utils/editor.spec.ts"
+        },
+        {
+          "file": "server/src/utils/editor.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-003",
+      "type": "survey",
+      "concept": "person repo",
+      "pattern": "person[_ -]?repo",
+      "truth": [
+        {
+          "file": "server/src/cores/storage.core.ts"
+        },
+        {
+          "file": "server/src/services/media.service.ts"
+        },
+        {
+          "file": "server/src/services/metadata.service.ts"
+        },
+        {
+          "file": "server/src/services/memory.service.ts"
+        },
+        {
+          "file": "server/src/services/cluster-group.service.ts"
+        },
+        {
+          "file": "server/src/services/base.service.ts"
+        },
+        {
+          "file": "server/src/services/cli.service.ts"
+        },
+        {
+          "file": "server/src/services/search.service.ts"
+        },
+        {
+          "file": "server/src/services/person.service.ts"
+        },
+        {
+          "file": "server/src/repositories/index.ts"
+        },
+        {
+          "file": "server/src/repositories/person.repository.ts"
+        },
+        {
+          "file": "server/test/medium.factory.ts"
+        },
+        {
+          "file": "server/test/utils.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/memory.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-face.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/cluster-group.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-person.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/repositories/person-user.repository.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/repositories/person.repository.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-004",
+      "type": "survey",
+      "concept": "list backups",
+      "pattern": "list[_ -]?backups",
+      "truth": [
+        {
+          "file": "server/src/services/database-backup.service.spec.ts"
+        },
+        {
+          "file": "server/src/controllers/database-backup.controller.ts"
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.controller.ts"
+        },
+        {
+          "file": "server/src/services/database-backup.service.ts"
+        },
+        {
+          "file": "web/src/routes/admin/maintenance/+page.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-005",
+      "type": "survey",
+      "concept": "global this",
+      "pattern": "global[_ -]?this",
+      "truth": [
+        {
+          "file": "web/src/service-worker/index.ts"
+        },
+        {
+          "file": "web/src/service-worker/messaging.ts"
+        },
+        {
+          "file": "web/src/test-data/setup.ts"
+        },
+        {
+          "file": "web/src/app.html"
+        },
+        {
+          "file": "web/src/lib/components/AdaptiveImage.svelte"
+        },
+        {
+          "file": "web/src/lib/components/assets/thumbnail/__test__/Thumbnail.spec.ts"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/map/Map.svelte"
+        },
+        {
+          "file": "web/src/lib/route.spec.ts"
+        },
+        {
+          "file": "web/src/lib/utils/wakelock.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/utils/ocr-utils.ts"
+        },
+        {
+          "file": "web/src/lib/utils/asset-utils.ts"
+        },
+        {
+          "file": "web/src/lib/utils/sw-messaging.ts"
+        },
+        {
+          "file": "web/src/lib/utils/license-utils.ts"
+        },
+        {
+          "file": "web/src/lib/utils/maintenance.spec.ts"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/OcrBoundingBox.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/PhotoViewer.svelte"
+        },
+        {
+          "file": "web/src/lib/stores/keyboard-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/utils.ts"
+        },
+        {
+          "file": "server/src/utils/fetch.ts"
+        },
+        {
+          "file": "web/src/lib/managers/edit/transform-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-006",
+      "type": "survey",
+      "concept": "created before",
+      "pattern": "created[_ -]?before",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "server/src/dtos/map.dto.ts"
+        },
+        {
+          "file": "server/src/dtos/search.dto.ts"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/map/Map.svelte"
+        },
+        {
+          "file": "server/src/utils/database.ts"
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts"
+        },
+        {
+          "file": "server/src/repositories/map.repository.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-007",
+      "type": "survey",
+      "concept": "import paths",
+      "pattern": "import[_ -]?paths",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/specs/server/api/library.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/trash.e2e-spec.ts"
+        },
+        {
+          "file": "web/src/routes/admin/library-management/[id]/+layout.svelte"
+        },
+        {
+          "file": "web/src/lib/services/library.service.ts"
+        },
+        {
+          "file": "server/src/services/library.service.spec.ts"
+        },
+        {
+          "file": "server/src/controllers/library.controller.spec.ts"
+        },
+        {
+          "file": "server/src/services/library.service.ts"
+        },
+        {
+          "file": "server/src/database.ts"
+        },
+        {
+          "file": "server/src/dtos/library.dto.ts"
+        },
+        {
+          "file": "server/test/small.factory.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/library.service.spec.ts"
+        },
+        {
+          "file": "server/src/types.ts"
+        },
+        {
+          "file": "server/src/schema/migrations/1744910873969-InitialMigration.ts"
+        },
+        {
+          "file": "server/src/repositories/asset.repository.ts"
+        },
+        {
+          "file": "server/src/schema/tables/library.table.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-008",
+      "type": "survey",
+      "concept": "default value",
+      "pattern": "default[_ -]?value",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "web/src/lib/utils/workflow.spec.ts"
+        },
+        {
+          "file": "web/src/lib/utils/persisted.ts"
+        },
+        {
+          "file": "web/src/lib/components/SchemaConfiguration.svelte"
+        },
+        {
+          "file": "server/src/controllers/config-public.controller.ts"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/settings/SystemConfigButtonRow.svelte"
+        },
+        {
+          "file": "server/src/controllers/config-admin.controller.ts"
+        },
+        {
+          "file": "server/src/controllers/system-config.controller.ts"
+        },
+        {
+          "file": "server/src/controllers/config-user.controller.ts"
+        },
+        {
+          "file": "server/src/controllers/workflow.controller.ts"
+        },
+        {
+          "file": "server/src/repositories/config.repository.spec.ts"
+        },
+        {
+          "file": "server/src/repositories/cluster-group.repository.ts"
+        },
+        {
+          "file": "web/src/lib/managers/system-config-manager.svelte.ts"
+        },
+        {
+          "file": "server/src/utils/config.ts"
+        },
+        {
+          "file": "server/src/queries/cluster.group.repository.sql"
+        },
+        {
+          "file": "server/src/utils/preferences.ts"
+        },
+        {
+          "file": "server/src/dtos/json-schema.dto.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-009",
+      "type": "survey",
+      "concept": "modify date",
+      "pattern": "modify[_ -]?date",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts"
+        },
+        {
+          "file": "e2e/src/ui/mock-network/broken-asset-network.ts"
+        },
+        {
+          "file": "server/src/services/metadata.service.ts"
+        },
+        {
+          "file": "server/test/factories/asset-exif.factory.ts"
+        },
+        {
+          "file": "server/src/repositories/media.repository.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-album-asset-exif.spec.ts"
+        },
+        {
+          "file": "server/src/schema/migrations/1744910873969-InitialMigration.ts"
+        },
+        {
+          "file": "server/src/repositories/asset.repository.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-partner-asset-exif.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-exif.spec.ts"
+        },
+        {
+          "file": "server/src/services/job.service.ts"
+        },
+        {
+          "file": "server/src/schema/tables/asset-exif.table.ts"
+        },
+        {
+          "file": "server/src/services/metadata.service.spec.ts"
+        },
+        {
+          "file": "server/src/queries/stack.repository.sql"
+        },
+        {
+          "file": "server/src/repositories/workflow.repository.ts"
+        },
+        {
+          "file": "server/src/queries/sync.repository.sql"
+        },
+        {
+          "file": "server/src/queries/shared.link.repository.sql"
+        },
+        {
+          "file": "web/src/lib/utils/duplicate-utils.ts"
+        },
+        {
+          "file": "server/src/database.ts"
+        },
+        {
+          "file": "server/src/dtos/sync.dto.ts"
+        },
+        {
+          "file": "server/src/dtos/exif.dto.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-010",
+      "type": "survey",
+      "concept": "slideshow state",
+      "pattern": "slideshow[_ -]?state",
+      "truth": [
+        {
+          "file": "web/src/routes/(user)/albums/[albumId=id]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/services/asset.service.ts"
+        },
+        {
+          "file": "web/src/lib/stores/slideshow.store.ts"
+        },
+        {
+          "file": "web/src/lib/components/album-page/AlbumViewer.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/SlideshowBar.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/PhotoViewer.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/AssetViewer.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/AssetViewer.spec.ts"
+        },
+        {
+          "file": "web/src/lib/modals/SlideshowSettingsModal.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-011",
+      "type": "survey",
+      "concept": "reassign face",
+      "pattern": "reassign[_ -]?face",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "server/src/services/person.service.spec.ts"
+        },
+        {
+          "file": "server/src/controllers/face.controller.ts"
+        },
+        {
+          "file": "server/src/controllers/person.controller.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/people/[personId]/[[photos=photos]]/[[assetId=id]]/UnmergeFaceSelector.svelte"
+        },
+        {
+          "file": "server/src/services/person.service.ts"
+        },
+        {
+          "file": "web/src/lib/components/faces-page/PersonSidePanel.svelte"
+        },
+        {
+          "file": "server/src/repositories/person.repository.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-012",
+      "type": "survey",
+      "concept": "create person",
+      "pattern": "create[_ -]?person",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/utils.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/person.e2e-spec.ts"
+        },
+        {
+          "file": "server/src/services/person.service.spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/asset.e2e-spec.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/people/[personId]/[[photos=photos]]/[[assetId=id]]/UnmergeFaceSelector.svelte"
+        },
+        {
+          "file": "server/src/controllers/person.controller.ts"
+        },
+        {
+          "file": "web/src/lib/modals/CreateFaceModal.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/face-editor/FaceEditor.svelte"
+        },
+        {
+          "file": "web/src/lib/components/faces-page/AssignFaceSidePanel.svelte"
+        },
+        {
+          "file": "web/src/lib/components/faces-page/PersonSidePanel.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-013",
+      "type": "survey",
+      "concept": "single transaction",
+      "pattern": "single[_ -]?transaction",
+      "truth": [
+        {
+          "file": "LICENSE"
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/database-backup.service.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-014",
+      "type": "survey",
+      "concept": "from async",
+      "pattern": "from[_ -]?async",
+      "truth": [
+        {
+          "file": "web/eslint.config.js"
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts"
+        },
+        {
+          "file": "server/src/repositories/storage.repository.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset-job.repository.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-015",
+      "type": "survey",
+      "concept": "decode image",
+      "pattern": "decode[_ -]?image",
+      "truth": [
+        {
+          "file": "server/src/services/media.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/media.service.ts"
+        },
+        {
+          "file": "server/src/services/auth.service.spec.ts"
+        },
+        {
+          "file": "mobile/android/app/src/main/kotlin/app/alextran/immich/images/LocalImagesImpl.kt"
+        },
+        {
+          "file": "server/src/repositories/media.repository.ts"
+        },
+        {
+          "file": "mobile/ios/Runner/Images/RemoteImagesImpl.swift"
+        },
+        {
+          "file": "server/src/repositories/media.repository.spec.ts"
+        },
+        {
+          "file": "server/test/repositories/media.repository.mock.ts"
+        },
+        {
+          "file": "server/src/utils/profile-image.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-016",
+      "type": "survey",
+      "concept": "with stacked",
+      "pattern": "with[_ -]?stacked",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/user-admin.e2e-spec.ts"
+        },
+        {
+          "file": "server/src/dtos/search.dto.ts"
+        },
+        {
+          "file": "server/src/controllers/search.controller.spec.ts"
+        },
+        {
+          "file": "server/src/dtos/time-bucket.dto.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/albums/[albumId=id]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "server/src/services/search.service.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/photos/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/recently-added/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/partners/[userId]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/components/timeline/TimelineAssetViewer.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/map/[[photos=photos]]/[[assetId=id]]/MapTimelinePanel.svelte"
+        },
+        {
+          "file": "web/src/lib/components/timeline/Timeline.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/favorites/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/utilities/geolocation/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/AssetViewer.svelte"
+        },
+        {
+          "file": "server/src/utils/database.ts"
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts"
+        },
+        {
+          "file": "server/src/repositories/asset.repository.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-017",
+      "type": "survey",
+      "concept": "other people",
+      "pattern": "other[_ -]?people",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "web/src/test-data/factories/person-factory.ts"
+        },
+        {
+          "file": "server/src/services/person.service.spec.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/people/[personId]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "server/src/database.ts"
+        },
+        {
+          "file": "server/src/dtos/person.dto.ts"
+        },
+        {
+          "file": "web/src/lib/components/faces-page/PersonIndicator.svelte"
+        },
+        {
+          "file": "web/src/lib/utils/person.spec.ts"
+        },
+        {
+          "file": "server/test/factories/types.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts"
+        },
+        {
+          "file": "server/test/factories/person.factory.ts"
+        },
+        {
+          "file": "server/test/medium/specs/repositories/memory.repository.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/repositories/person.repository.spec.ts"
+        },
+        {
+          "file": "web/src/lib/modals/PersonEditModal.svelte"
+        },
+        {
+          "file": "server/src/repositories/person.repository.ts"
+        },
+        {
+          "file": "server/src/queries/person.repository.sql"
+        }
+      ]
+    },
+    {
+      "id": "survey-018",
+      "type": "survey",
+      "concept": "sort order",
+      "pattern": "sort[_ -]?order",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-month.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/group-insertion-cache.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-day.svelte.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/sharing/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/albums/AlbumsControls.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/user-settings/FeatureSettings.svelte"
+        },
+        {
+          "file": "web/src/lib/components/album-page/AlbumsList.svelte"
+        },
+        {
+          "file": "web/src/lib/components/album-page/AlbumsTableHeader.svelte"
+        },
+        {
+          "file": "web/src/lib/utils/album-utils.ts"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/album-selection/album-selection-utils.spec.ts"
+        },
+        {
+          "file": "server/src/enum.ts"
+        },
+        {
+          "file": "server/src/dtos/search.dto.ts"
+        },
+        {
+          "file": "server/src/controllers/album.controller.ts"
+        },
+        {
+          "file": "server/src/dtos/time-bucket.dto.ts"
+        },
+        {
+          "file": "web/src/lib/modals/AlbumPickerModal.svelte"
+        },
+        {
+          "file": "mobile/android/app/src/main/kotlin/app/alextran/immich/sync/MessagesImplBase.kt"
+        },
+        {
+          "file": "web/src/lib/stores/preferences.store.ts"
+        },
+        {
+          "file": "mobile/ios/Runner/Schemas/Constants.swift"
+        }
+      ]
+    },
+    {
+      "id": "survey-019",
+      "type": "survey",
+      "concept": "scan library",
+      "pattern": "scan[_ -]?library",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/utils.ts"
+        },
+        {
+          "file": "server/src/services/library.service.ts"
+        },
+        {
+          "file": "server/src/controllers/library.controller.ts"
+        },
+        {
+          "file": "web/src/lib/services/library.service.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-020",
+      "type": "survey",
+      "concept": "code challenge",
+      "pattern": "code[_ -]?challenge",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/specs/server/api/oauth.e2e-spec.ts"
+        },
+        {
+          "file": "server/src/services/auth.service.ts"
+        },
+        {
+          "file": "server/src/repositories/oauth.repository.ts"
+        },
+        {
+          "file": "server/src/dtos/auth.dto.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-021",
+      "type": "survey",
+      "concept": "assets count",
+      "pattern": "assets[_ -]?count",
+      "truth": [
+        {
+          "file": "web/src/lib/services/stack.service.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-month.svelte.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/people/[personId]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/internal/layout-support.svelte.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/map/[[photos=photos]]/[[assetId=id]]/MapTimelinePanel.svelte"
+        },
+        {
+          "file": "mobile/android/app/src/main/kotlin/app/alextran/immich/sync/MessagesImplBase.kt"
+        },
+        {
+          "file": "web/src/routes/(user)/utilities/duplicates/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/user-settings/UserUsageStatistic.svelte"
+        },
+        {
+          "file": "web/src/lib/utils/asset-utils.ts"
+        },
+        {
+          "file": "web/src/lib/modals/AssetDeleteConfirmModal.svelte"
+        },
+        {
+          "file": "mobile/ios/Runner/Sync/MessagesImpl.swift"
+        }
+      ]
+    },
+    {
+      "id": "survey-022",
+      "type": "survey",
+      "concept": "delete metadata",
+      "pattern": "delete[_ -]?metadata",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "server/src/services/asset.service.ts"
+        },
+        {
+          "file": "server/test/repositories/asset.repository.mock.ts"
+        },
+        {
+          "file": "server/src/services/user.service.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-metadata.spec.ts"
+        },
+        {
+          "file": "server/src/controllers/asset.controller.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-user-metadata.spec.ts"
+        },
+        {
+          "file": "server/src/repositories/user.repository.ts"
+        },
+        {
+          "file": "server/src/repositories/asset.repository.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-023",
+      "type": "survey",
+      "concept": "trash repository",
+      "pattern": "trash[_ -]?repository",
+      "truth": [
+        {
+          "file": "server/src/services/trash.service.ts"
+        },
+        {
+          "file": "server/src/services/base.service.ts"
+        },
+        {
+          "file": "server/test/utils.ts"
+        },
+        {
+          "file": "server/src/repositories/index.ts"
+        },
+        {
+          "file": "server/src/repositories/trash.repository.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-024",
+      "type": "survey",
+      "concept": "fullsize file",
+      "pattern": "fullsize[_ -]?file",
+      "truth": [
+        {
+          "file": "server/src/services/media.service.ts"
+        },
+        {
+          "file": "server/src/services/asset.service.ts"
+        },
+        {
+          "file": "server/src/utils/asset.util.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-025",
+      "type": "survey",
+      "concept": "updated asset",
+      "pattern": "updated[_ -]?asset",
+      "truth": [
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/utilities/geolocation/+page.svelte"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-asset-face.spec.ts"
+        },
+        {
+          "file": "mobile/ios/Runner/Sync/MessagesImpl.swift"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/AssetViewer.svelte"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/actions/ArchiveAction.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-026",
+      "type": "survey",
+      "concept": "duplicate detection",
+      "pattern": "duplicate[_ -]?detection",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/ui/mock-network/base-network.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/jobs.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/server.e2e-spec.ts"
+        },
+        {
+          "file": "server/src/services/server.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/system-config.service.spec.ts"
+        },
+        {
+          "file": "web/src/lib/services/queue.service.ts"
+        },
+        {
+          "file": "web/src/routes/admin/queues/QueuePanel.svelte"
+        },
+        {
+          "file": "server/src/services/duplicate.service.ts"
+        },
+        {
+          "file": "web/src/routes/admin/system-settings/MachineLearningSettings.svelte"
+        },
+        {
+          "file": "web/src/routes/admin/system-settings/JobSettings.svelte"
+        },
+        {
+          "file": "server/src/services/queue.service.spec.ts"
+        },
+        {
+          "file": "server/src/controllers/asset-media.controller.ts"
+        },
+        {
+          "file": "server/src/services/server.service.ts"
+        },
+        {
+          "file": "server/src/services/duplicate.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/queue.service.ts"
+        },
+        {
+          "file": "server/src/dtos/queue-legacy.dto.ts"
+        },
+        {
+          "file": "server/src/dtos/server.dto.ts"
+        },
+        {
+          "file": "server/src/dtos/config.dto.ts"
+        },
+        {
+          "file": "server/src/types.ts"
+        },
+        {
+          "file": "server/src/enum.ts"
+        },
+        {
+          "file": "server/src/utils/misc.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-027",
+      "type": "survey",
+      "concept": "tracked paths",
+      "pattern": "tracked[_ -]?paths",
+      "truth": [
+        {
+          "file": "server/src/services/integrity.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/integrity.service.ts"
+        },
+        {
+          "file": "server/src/repositories/integrity.repository.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-028",
+      "type": "survey",
+      "concept": "delete license",
+      "pattern": "delete[_ -]?license",
+      "truth": [
+        {
+          "file": "server/test/medium/specs/services/user.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/user.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/server.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/user.service.ts"
+        },
+        {
+          "file": "server/src/controllers/server.controller.ts"
+        },
+        {
+          "file": "server/src/services/server.service.ts"
+        },
+        {
+          "file": "server/src/controllers/user.controller.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-029",
+      "type": "survey",
+      "concept": "motion filename",
+      "pattern": "motion[_ -]?filename",
+      "truth": [
+        {
+          "file": "web/src/lib/services/asset.service.ts"
+        },
+        {
+          "file": "server/src/services/storage-template.service.ts"
+        },
+        {
+          "file": "server/src/utils/file.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-030",
+      "type": "survey",
+      "concept": "output frames",
+      "pattern": "output[_ -]?frames",
+      "truth": [
+        {
+          "file": "server/src/services/metadata.service.ts"
+        },
+        {
+          "file": "server/src/services/metadata.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/hls.service.ts"
+        },
+        {
+          "file": "server/test/fixtures/media.stub.ts"
+        },
+        {
+          "file": "server/test/repositories/media.repository.mock.ts"
+        },
+        {
+          "file": "server/src/repositories/media.repository.ts"
+        },
+        {
+          "file": "server/src/repositories/asset.repository.ts"
+        },
+        {
+          "file": "server/src/queries/video.stream.repository.sql"
+        },
+        {
+          "file": "server/src/types.ts"
+        },
+        {
+          "file": "server/src/utils/database.ts"
+        },
+        {
+          "file": "server/test/medium/specs/repositories/asset.repository.spec.ts"
+        },
+        {
+          "file": "server/src/schema/migrations/1777654048096-CreateAudioVideoTables.ts"
+        },
+        {
+          "file": "server/src/schema/tables/asset-av.table.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-031",
+      "type": "survey",
+      "concept": "sidecar data",
+      "pattern": "sidecar[_ -]?data",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/utils.ts"
+        },
+        {
+          "file": "server/src/services/asset-media.service.ts"
+        },
+        {
+          "file": "server/src/services/metadata.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/asset-media.service.spec.ts"
+        },
+        {
+          "file": "server/src/middleware/file-upload.interceptor.ts"
+        },
+        {
+          "file": "server/src/dtos/asset-media.dto.ts"
+        },
+        {
+          "file": "server/test/utils.ts"
+        },
+        {
+          "file": "server/src/types.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-032",
+      "type": "survey",
+      "concept": "edit count",
+      "pattern": "edit[_ -]?count",
+      "truth": [
+        {
+          "file": "server/src/schema/migrations/1768587436457-AddEditCountToAsset.ts"
+        },
+        {
+          "file": "server/src/schema/migrations/ORDER"
+        },
+        {
+          "file": "server/src/schema/migrations/1768757482271-SwitchToIsEdited.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-033",
+      "type": "survey",
+      "concept": "overwrite file",
+      "pattern": "overwrite[_ -]?file",
+      "truth": [
+        {
+          "file": "server/src/services/media.service.ts"
+        },
+        {
+          "file": "server/src/services/storage.service.ts"
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/maintenance.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/database-backup.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/storage.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/database-backup.service.ts"
+        },
+        {
+          "file": "server/src/services/metadata.service.spec.ts"
+        },
+        {
+          "file": "server/test/repositories/storage.repository.mock.ts"
+        },
+        {
+          "file": "server/src/repositories/storage.repository.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/storage.service.spec.ts"
+        },
+        {
+          "file": "server/src/utils/maintenance.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-034",
+      "type": "survey",
+      "concept": "previous button",
+      "pattern": "previous[_ -]?button",
+      "truth": [
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/utils.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-035",
+      "type": "survey",
+      "concept": "session storage",
+      "pattern": "session[_ -]?storage",
+      "truth": [
+        {
+          "file": "web/src/lib/actions/scroll-memory.ts"
+        },
+        {
+          "file": "web/src/lib/constants.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/people/[personId]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/people/+page.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-036",
+      "type": "survey",
+      "concept": "only favorites",
+      "pattern": "only[_ -]?favorites",
+      "truth": [
+        {
+          "file": "web/src/routes/(user)/memories/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/map/[[photos=photos]]/[[assetId=id]]/MapTimelinePanel.svelte"
+        },
+        {
+          "file": "web/src/lib/modals/MemoriesSettingsModal.svelte"
+        },
+        {
+          "file": "web/src/lib/managers/user-preferences-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/modals/MapSettingsModal.svelte"
+        },
+        {
+          "file": "web/src/lib/managers/memory-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/map/Map.svelte"
+        },
+        {
+          "file": "web/src/lib/stores/preferences.store.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-037",
+      "type": "survey",
+      "concept": "checksum files",
+      "pattern": "checksum[_ -]?files",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "server/src/services/system-config.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/job.service.ts"
+        },
+        {
+          "file": "server/src/services/integrity.service.ts"
+        },
+        {
+          "file": "web/src/routes/admin/system-settings/IntegrityChecksSettings.svelte"
+        },
+        {
+          "file": "server/src/enum.ts"
+        },
+        {
+          "file": "server/src/dtos/config.dto.ts"
+        },
+        {
+          "file": "server/src/types.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/integrity.service.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-038",
+      "type": "survey",
+      "concept": "update geometry",
+      "pattern": "update[_ -]?geometry",
+      "truth": [
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/types.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/internal/layout-support.svelte.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-039",
+      "type": "survey",
+      "concept": "test asset",
+      "pattern": "test[_ -]?asset",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/utils.ts"
+        },
+        {
+          "file": "e2e/docker-compose.yml"
+        },
+        {
+          "file": "e2e/docker-compose.dev.yml"
+        },
+        {
+          "file": "e2e/src/specs/server/api/asset.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/library.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/search.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/map.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/trash.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/jobs.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/cli/upload.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/integrity.e2e-spec.ts"
+        },
+        {
+          "file": "machine-learning/conftest.py"
+        },
+        {
+          "file": "e2e/src/specs/web/asset-viewer/detail-panel.e2e-spec.ts"
+        },
+        {
+          "file": "server/test/medium.factory.ts"
+        },
+        {
+          "file": "e2e/src/specs/web/album.e2e-spec.ts"
+        },
+        {
+          "file": "server/src/services/storage-template.service.spec.ts"
+        },
+        {
+          "file": "server/src/dtos/album.dto.ts"
+        },
+        {
+          "file": "server/test/medium/specs/exif/exif-tags.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/exif/audio-video.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/exif/exif-gps.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/exif/exif-date-time.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-040",
+      "type": "survey",
+      "concept": "cleanup interval",
+      "pattern": "cleanup[_ -]?interval",
+      "truth": [
+        {
+          "file": "server/src/services/transcoding.service.spec.ts"
+        },
+        {
+          "file": "server/src/services/transcoding.service.ts"
+        },
+        {
+          "file": "server/src/constants.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-041",
+      "type": "survey",
+      "concept": "update user",
+      "pattern": "update[_ -]?user",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "web/src/lib/services/user-admin.service.ts"
+        },
+        {
+          "file": "web/src/lib/services/album.service.ts"
+        },
+        {
+          "file": "server/src/services/user-admin.service.spec.ts"
+        },
+        {
+          "file": "web/src/routes/admin/users/[id]/edit/+page.svelte"
+        },
+        {
+          "file": "server/src/services/album.service.spec.ts"
+        },
+        {
+          "file": "server/src/controllers/user.controller.ts"
+        },
+        {
+          "file": "server/src/controllers/album.controller.ts"
+        },
+        {
+          "file": "server/src/controllers/user-admin.controller.ts"
+        },
+        {
+          "file": "server/src/services/album.service.ts"
+        },
+        {
+          "file": "server/src/dtos/user.dto.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-user-metadata.spec.ts"
+        },
+        {
+          "file": "web/src/lib/modals/AlbumOptionsModal.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-042",
+      "type": "survey",
+      "concept": "asset config",
+      "pattern": "asset[_ -]?config",
+      "truth": [
+        {
+          "file": "e2e/src/ui/generators/timeline/model-objects.ts"
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline/rest-response.ts"
+        },
+        {
+          "file": "e2e/src/ui/generators/timeline.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/timeline/utils.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/face-editor.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/utils.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/search/search-gallery.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-043",
+      "type": "survey",
+      "concept": "websocket repository",
+      "pattern": "websocket[_ -]?repository",
+      "truth": [
+        {
+          "file": "server/src/services/job.service.ts"
+        },
+        {
+          "file": "server/src/services/transcoding.service.ts"
+        },
+        {
+          "file": "server/src/services/asset.service.ts"
+        },
+        {
+          "file": "server/src/services/version.service.ts"
+        },
+        {
+          "file": "server/src/services/hls.service.ts"
+        },
+        {
+          "file": "server/src/services/notification.service.ts"
+        },
+        {
+          "file": "server/src/services/base.service.ts"
+        },
+        {
+          "file": "server/test/medium.factory.ts"
+        },
+        {
+          "file": "server/test/utils.ts"
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.spec.ts"
+        },
+        {
+          "file": "server/src/maintenance/maintenance-websocket.repository.ts"
+        },
+        {
+          "file": "server/src/maintenance/maintenance-worker.service.ts"
+        },
+        {
+          "file": "server/src/repositories/websocket.repository.ts"
+        },
+        {
+          "file": "server/src/repositories/index.ts"
+        },
+        {
+          "file": "server/test/medium/specs/workflow/workflow-core-plugin.spec.ts"
+        },
+        {
+          "file": "server/src/app.module.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-044",
+      "type": "survey",
+      "concept": "partner repository",
+      "pattern": "partner[_ -]?repository",
+      "truth": [
+        {
+          "file": "server/src/services/map.service.ts"
+        },
+        {
+          "file": "server/src/services/partner.service.ts"
+        },
+        {
+          "file": "server/src/services/base.service.ts"
+        },
+        {
+          "file": "server/src/services/search.service.ts"
+        },
+        {
+          "file": "server/src/services/person.service.ts"
+        },
+        {
+          "file": "server/src/services/timeline.service.ts"
+        },
+        {
+          "file": "server/src/repositories/index.ts"
+        },
+        {
+          "file": "server/src/repositories/partner.repository.ts"
+        },
+        {
+          "file": "server/src/utils/asset.util.ts"
+        },
+        {
+          "file": "server/test/medium.factory.ts"
+        },
+        {
+          "file": "server/test/utils.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/person.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/timeline.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/partner.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/memory.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/audit.database.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-partner-asset.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-partner.spec.ts"
+        },
+        {
+          "file": "server/test/medium/specs/sync/sync-partner-stack.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-045",
+      "type": "survey",
+      "concept": "modal rows",
+      "pattern": "modal[_ -]?rows",
+      "truth": [
+        {
+          "file": "web/src/lib/modals/AlbumPickerModal.svelte"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/album-selection/album-selection-utils.spec.ts"
+        },
+        {
+          "file": "web/src/lib/components/shared-components/album-selection/album-selection-utils.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-046",
+      "type": "survey",
+      "concept": "with stack",
+      "pattern": "with[_ -]?stack",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/ocr.e2e-spec.ts"
+        },
+        {
+          "file": "e2e/src/specs/server/api/user-admin.e2e-spec.ts"
+        },
+        {
+          "file": "server/src/services/asset.service.ts"
+        },
+        {
+          "file": "server/src/utils/database.ts"
+        },
+        {
+          "file": "server/src/dtos/search.dto.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/recently-added/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "server/src/dtos/asset-response.dto.ts"
+        },
+        {
+          "file": "server/src/dtos/time-bucket.dto.ts"
+        },
+        {
+          "file": "server/src/controllers/search.controller.spec.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/albums/[albumId=id]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "server/src/services/search.service.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/photos/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts"
+        },
+        {
+          "file": "web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/partners/[userId]/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/map/[[photos=photos]]/[[assetId=id]]/MapTimelinePanel.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/favorites/[[photos=photos]]/[[assetId=id]]/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/components/timeline/TimelineAssetViewer.svelte"
+        },
+        {
+          "file": "web/src/routes/(user)/utilities/geolocation/+page.svelte"
+        },
+        {
+          "file": "web/src/lib/components/timeline/Timeline.svelte"
+        },
+        {
+          "file": "server/src/repositories/asset.repository.ts"
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts"
+        },
+        {
+          "file": "web/src/lib/components/asset-viewer/AssetViewer.svelte"
+        }
+      ]
+    },
+    {
+      "id": "survey-047",
+      "type": "survey",
+      "concept": "with person",
+      "pattern": "with[_ -]?person",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "e2e/src/ui/specs/asset-viewer/face-editor.e2e-spec.ts"
+        },
+        {
+          "file": "web/src/lib/utils/person.spec.ts"
+        },
+        {
+          "file": "web/src/lib/utils/thumbnail-util.spec.ts"
+        },
+        {
+          "file": "server/src/services/person.service.ts"
+        },
+        {
+          "file": "server/src/repositories/person.repository.ts"
+        },
+        {
+          "file": "server/src/dtos/person.dto.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-048",
+      "type": "survey",
+      "concept": "previous memory",
+      "pattern": "previous[_ -]?memory",
+      "truth": [
+        {
+          "file": "e2e/src/ui/specs/memory/memory-viewer.e2e-spec.ts"
+        },
+        {
+          "file": "web/src/routes/(user)/memories/[id]/[[photos=photos]]/[[assetId=id]]/MemoryViewer.svelte"
+        },
+        {
+          "file": "web/src/lib/managers/memory-manager.svelte.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-049",
+      "type": "survey",
+      "concept": "search random",
+      "pattern": "search[_ -]?random",
+      "truth": [
+        {
+          "file": "open-api/immich-openapi-specs.json"
+        },
+        {
+          "file": "server/src/controllers/search.controller.ts"
+        },
+        {
+          "file": "server/src/services/search.service.ts"
+        },
+        {
+          "file": "server/src/services/search.service.spec.ts"
+        },
+        {
+          "file": "server/src/repositories/search.repository.ts"
+        },
+        {
+          "file": "server/src/utils/database.ts"
+        },
+        {
+          "file": "server/test/medium/specs/services/search.service.spec.ts"
+        }
+      ]
+    },
+    {
+      "id": "survey-050",
+      "type": "survey",
+      "concept": "oauth repository",
+      "pattern": "oauth[_ -]?repository",
+      "truth": [
+        {
+          "file": "server/src/services/base.service.ts"
+        },
+        {
+          "file": "server/src/services/auth.service.ts"
+        },
+        {
+          "file": "server/test/utils.ts"
+        },
+        {
+          "file": "server/src/repositories/index.ts"
+        },
+        {
+          "file": "server/src/repositories/oauth.repository.ts"
+        }
+      ]
+    }
+  ],
+  "sessions": [
+    {
+      "id": "session-001",
+      "size": "standard",
+      "reuse": [
+        "reuse-001"
+      ],
+      "callers": [
+        "callers-001"
+      ],
+      "survey": [
+        "survey-001"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/generators/timeline/rest-response.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/generators/timeline/rest-response.ts, add support for \"get a mock album from timeline data\". Reuse existing logic if the repo already has it. The change needs a new parameter on toColumnarFormat (declared in e2e/src/ui/generators/timeline/rest-response.ts): update every caller. The \"string bool\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-002",
+      "size": "standard",
+      "reuse": [
+        "reuse-002"
+      ],
+      "callers": [
+        "callers-002"
+      ],
+      "survey": [
+        "survey-002"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts, add support for \"returns the lowercase filename extension without a dot and\". Reuse existing logic if the repo already has it. The change needs a new parameter on generateTimelineData (declared in e2e/src/ui/generators/timeline/model-objects.ts): update every caller. The \"asset dimensions\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-003",
+      "size": "standard",
+      "reuse": [
+        "reuse-003"
+      ],
+      "callers": [
+        "callers-003"
+      ],
+      "survey": [
+        "survey-003"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/generators/timeline/model-objects.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/generators/timeline/model-objects.ts, add support for \"reads subnormal floats as zero on the calling thread which ort does only on its own threads\". Reuse existing logic if the repo already has it. The change needs a new parameter on generateUUID (declared in e2e/src/ui/generators/timeline/model-objects.ts): update every caller. The \"person repo\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-004",
+      "size": "standard",
+      "reuse": [
+        "reuse-004"
+      ],
+      "callers": [
+        "callers-004"
+      ],
+      "survey": [
+        "survey-004"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/mock-network/timeline-network.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/mock-network/timeline-network.ts, add support for \"toggles the sidebar visibility if available at the current screen width\". Reuse existing logic if the repo already has it. The change needs a new parameter on getAsset (declared in e2e/src/ui/generators/timeline/rest-response.ts): update every caller. The \"list backups\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-005",
+      "size": "standard",
+      "reuse": [
+        "reuse-005"
+      ],
+      "callers": [
+        "callers-005"
+      ],
+      "survey": [
+        "survey-005"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/specs/timeline/timeline.e2e-spec.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/specs/timeline/timeline.e2e-spec.ts, add support for \"returns aspect ratio for the asset\". Reuse existing logic if the repo already has it. The change needs a new parameter on getMockAsset (declared in e2e/src/ui/generators/timeline/utils.ts): update every caller. The \"global this\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-006",
+      "size": "standard",
+      "reuse": [
+        "reuse-006"
+      ],
+      "callers": [
+        "callers-006"
+      ],
+      "survey": [
+        "survey-006"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/generators/timeline/distribution-patterns.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/generators/timeline/distribution-patterns.ts, add support for \"manages worker lifecycle\". Reuse existing logic if the repo already has it. The change needs a new parameter on generateConsecutiveDays (declared in e2e/src/ui/generators/timeline/model-objects.ts): update every caller. The \"created before\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-007",
+      "size": "standard",
+      "reuse": [
+        "reuse-007"
+      ],
+      "callers": [
+        "callers-007"
+      ],
+      "survey": [
+        "survey-007"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/specs/asset-viewer/broken-asset.e2e-spec.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/specs/asset-viewer/broken-asset.e2e-spec.ts, add support for \"returns true if the asset is an image supported by web browsers false otherwise\". Reuse existing logic if the repo already has it. The change needs a new parameter on setupAssetViewerFixture (declared in e2e/src/ui/specs/asset-viewer/utils.ts): update every caller. The \"import paths\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-008",
+      "size": "standard",
+      "reuse": [
+        "reuse-008"
+      ],
+      "callers": [
+        "callers-008"
+      ],
+      "survey": [
+        "survey-008"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/generators/timeline/distribution-patterns.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/generators/timeline/distribution-patterns.ts, add support for \"select random days using seed variation to avoid collisions\". Reuse existing logic if the repo already has it. The change needs a new parameter on generateDayAssets (declared in e2e/src/ui/generators/timeline/model-objects.ts): update every caller. The \"default value\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-009",
+      "size": "standard",
+      "reuse": [
+        "reuse-009"
+      ],
+      "callers": [
+        "callers-009"
+      ],
+      "survey": [
+        "survey-009"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/generators/memory/model-objects.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/generators/memory/model-objects.ts, add support for \"generate random boolean with given probability\". Reuse existing logic if the repo already has it. The change needs a new parameter on toAssetResponseDto (declared in e2e/src/ui/generators/timeline/rest-response.ts): update every caller. The \"modify date\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-010",
+      "size": "standard",
+      "reuse": [
+        "reuse-010"
+      ],
+      "callers": [
+        "callers-010"
+      ],
+      "survey": [
+        "survey-010"
+      ],
+      "featureFiles": [
+        "e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts"
+      ],
+      "prompt": "Feature: in e2e/src/ui/specs/asset-viewer/asset-viewer.e2e-spec.ts, add support for \"deeply clones and converts a class instance to a plain object\". Reuse existing logic if the repo already has it. The change needs a new parameter on createDefaultTimelineConfig (declared in e2e/src/ui/generators/timeline/timeline-config.ts): update every caller. The \"slideshow state\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-011",
+      "size": "standard",
+      "reuse": [
+        "reuse-011"
+      ],
+      "callers": [
+        "callers-011"
+      ],
+      "survey": [
+        "survey-011"
+      ],
+      "featureFiles": [
+        "server/src/repositories/search.repository.ts"
+      ],
+      "prompt": "Feature: in server/src/repositories/search.repository.ts, add support for \"distribute assets evenly across consecutive days\". Reuse existing logic if the repo already has it. The change needs a new parameter on withExifInner (declared in server/src/utils/database.ts): update every caller. The \"reassign face\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-012",
+      "size": "standard",
+      "reuse": [
+        "reuse-012"
+      ],
+      "callers": [
+        "callers-012"
+      ],
+      "survey": [
+        "survey-012"
+      ],
+      "featureFiles": [
+        "server/src/services/version.service.ts"
+      ],
+      "prompt": "Feature: in server/src/services/version.service.ts, add support for \"main generator function for timeline data\". Reuse existing logic if the repo already has it. The change needs a new parameter on WebsocketRepository.clientSend (declared in server/src/repositories/websocket.repository.ts): update every caller. The \"create person\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-013",
+      "size": "standard",
+      "reuse": [
+        "reuse-013"
+      ],
+      "callers": [
+        "callers-013"
+      ],
+      "survey": [
+        "survey-013"
+      ],
+      "featureFiles": [
+        "server/src/utils/media.ts"
+      ],
+      "prompt": "Feature: in server/src/utils/media.ts, add support for \"param input file path to the input image\". Reuse existing logic if the repo already has it. The change needs a new parameter on BaseConfig.getMaxBitrateValue (declared in server/src/utils/media.ts): update every caller. The \"single transaction\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-014",
+      "size": "standard",
+      "reuse": [
+        "reuse-014"
+      ],
+      "callers": [
+        "callers-014"
+      ],
+      "survey": [
+        "survey-014"
+      ],
+      "featureFiles": [
+        "server/src/controllers/person.controller.ts"
+      ],
+      "prompt": "Feature: in server/src/controllers/person.controller.ts, add support for \"marks this invocation as complete\". Reuse existing logic if the repo already has it. The change needs a new parameter on PersonService.getUsersForPeople (declared in server/src/services/person.service.ts): update every caller. The \"from async\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-015",
+      "size": "standard",
+      "reuse": [
+        "reuse-015"
+      ],
+      "callers": [
+        "callers-015"
+      ],
+      "survey": [
+        "survey-015"
+      ],
+      "featureFiles": [
+        "server/src/utils/media.ts"
+      ],
+      "prompt": "Feature: in server/src/utils/media.ts, add support for \"re-lays the data file so every region starts aligned\". Reuse existing logic if the repo already has it. The change needs a new parameter on BaseConfig.shouldToneMap (declared in server/src/utils/media.ts): update every caller. The \"decode image\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-016",
+      "size": "standard",
+      "reuse": [
+        "reuse-016"
+      ],
+      "callers": [
+        "callers-016"
+      ],
+      "survey": [
+        "survey-016"
+      ],
+      "featureFiles": [
+        "server/test/medium/specs/services/asset.service.spec.ts"
+      ],
+      "prompt": "Feature: in server/test/medium/specs/services/asset.service.spec.ts, add support for \"calls a function when a click occurs outside of the element or when the escape key is pressed\". Reuse existing logic if the repo already has it. The change needs a new parameter on MediumTestContext.newMetadata (declared in server/test/medium.factory.ts): update every caller. The \"with stacked\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-017",
+      "size": "standard",
+      "reuse": [
+        "reuse-017"
+      ],
+      "callers": [
+        "callers-017"
+      ],
+      "survey": [
+        "survey-017"
+      ],
+      "featureFiles": [
+        "server/src/repositories/search.repository.ts"
+      ],
+      "prompt": "Feature: in server/src/repositories/search.repository.ts, add support for \"the arch keys its programs by and the and hip it loads which its keys leave out\". Reuse existing logic if the repo already has it. The change needs a new parameter on paginationHelper (declared in server/src/utils/pagination.ts): update every caller. The \"other people\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-018",
+      "size": "standard",
+      "reuse": [
+        "reuse-018"
+      ],
+      "callers": [
+        "callers-018"
+      ],
+      "survey": [
+        "survey-018"
+      ],
+      "featureFiles": [
+        "server/src/maintenance/maintenance-worker.service.ts"
+      ],
+      "prompt": "Feature: in server/src/maintenance/maintenance-worker.service.ts, add support for \"extract a single bucket from timeline data\". Reuse existing logic if the repo already has it. The change needs a new parameter on DatabaseBackupService.restoreDatabaseBackup (declared in server/src/services/database-backup.service.ts): update every caller. The \"sort order\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-019",
+      "size": "standard",
+      "reuse": [
+        "reuse-019"
+      ],
+      "callers": [
+        "callers-019"
+      ],
+      "survey": [
+        "survey-019"
+      ],
+      "featureFiles": [
+        "server/src/services/database-backup.service.ts"
+      ],
+      "prompt": "Feature: in server/src/services/database-backup.service.ts, add support for \"generate assets for a month with specified distribution pattern\". Reuse existing logic if the repo already has it. The change needs a new parameter on ProcessRepository.spawnDuplexStream (declared in server/src/repositories/process.repository.ts): update every caller. The \"scan library\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "session-020",
+      "size": "standard",
+      "reuse": [
+        "reuse-020"
+      ],
+      "callers": [
+        "callers-020"
+      ],
+      "survey": [
+        "survey-020"
+      ],
+      "featureFiles": [
+        "server/src/services/server.service.ts"
+      ],
+      "prompt": "Feature: in server/src/services/server.service.ts, add support for \"generate random integer in range min\". Reuse existing logic if the repo already has it. The change needs a new parameter on asHumanReadable (declared in server/src/utils/bytes.ts): update every caller. The \"code challenge\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-001",
+      "size": "large",
+      "reuse": [
+        "reuse-021",
+        "reuse-022",
+        "reuse-023"
+      ],
+      "callers": [
+        "callers-021",
+        "callers-022",
+        "callers-023"
+      ],
+      "survey": [
+        "survey-021",
+        "survey-022",
+        "survey-023"
+      ],
+      "featureFiles": [
+        "server/src/services/smart-info.service.spec.ts",
+        "server/src/utils/media.ts",
+        "server/src/controllers/download.controller.ts"
+      ],
+      "prompt": "Feature: in server/src/services/smart-info.service.spec.ts, add support for \"get a single asset by id from timeline data\". Reuse existing logic if the repo already has it. The change needs a new parameter on SmartInfoService.onConfigUpdate (declared in server/src/services/smart-info.service.ts): update every caller. The \"assets count\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/utils/media.ts, add support for \"adds assets to existing segments creating new segments as needed\". Reuse existing logic if the repo already has it. The change needs a new parameter on BaseConfig.getOutputThreadOptions (declared in server/src/utils/media.ts): update every caller. The \"delete metadata\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/controllers/download.controller.ts, add support for \"the outputs in the precision the npu computed them in which rknnlite would widen to fp32 on the cpu\". Reuse existing logic if the repo already has it. The change needs a new parameter on DownloadService.getDownloadInfo (declared in server/src/services/download.service.ts): update every caller. The \"trash repository\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-002",
+      "size": "large",
+      "reuse": [
+        "reuse-024",
+        "reuse-025",
+        "reuse-026"
+      ],
+      "callers": [
+        "callers-024",
+        "callers-025",
+        "callers-026"
+      ],
+      "survey": [
+        "survey-024",
+        "survey-025",
+        "survey-026"
+      ],
+      "featureFiles": [
+        "server/src/services/library.service.spec.ts",
+        "server/src/maintenance/maintenance-worker.service.spec.ts",
+        "server/src/services/library.service.spec.ts"
+      ],
+      "prompt": "Feature: in server/src/services/library.service.spec.ts, add support for \"convert bytes to best human readable unit and number of that unit\". Reuse existing logic if the repo already has it. The change needs a new parameter on LibraryService.handleDeleteLibrary (declared in server/src/services/library.service.ts): update every caller. The \"fullsize file\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/maintenance/maintenance-worker.service.spec.ts, add support for \"what of its options the graph is built for an instance serves only requests that agree on it\". Reuse existing logic if the repo already has it. The change needs a new parameter on MaintenanceWorkerService.runAction (declared in server/src/maintenance/maintenance-worker.service.ts): update every caller. The \"updated asset\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/library.service.spec.ts, add support for \"function to save additional data state before scrolling infinite\". Reuse existing logic if the repo already has it. The change needs a new parameter on LibraryService.handleSyncFiles (declared in server/src/services/library.service.ts): update every caller. The \"duplicate detection\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-003",
+      "size": "large",
+      "reuse": [
+        "reuse-027",
+        "reuse-028",
+        "reuse-029"
+      ],
+      "callers": [
+        "callers-027",
+        "callers-028",
+        "callers-029"
+      ],
+      "survey": [
+        "survey-027",
+        "survey-028",
+        "survey-029"
+      ],
+      "featureFiles": [
+        "server/src/controllers/search.controller.ts",
+        "server/src/services/asset.service.spec.ts",
+        "server/src/middleware/file-upload.interceptor.ts"
+      ],
+      "prompt": "Feature: in server/src/controllers/search.controller.ts, add support for \"calls a function when focus leaves the element\". Reuse existing logic if the repo already has it. The change needs a new parameter on SearchService.searchPerson (declared in server/src/services/search.service.ts): update every caller. The \"tracked paths\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/asset.service.spec.ts, add support for \"makes sure all thumbnails for albums are updated by\". Reuse existing logic if the repo already has it. The change needs a new parameter on AssetService.handleAssetDeletion (declared in server/src/services/asset.service.ts): update every caller. The \"delete license\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/middleware/file-upload.interceptor.ts, add support for \"validates a object to ensure all values are within expected ranges\". Reuse existing logic if the repo already has it. The change needs a new parameter on AssetMediaService.getUploadFolder (declared in server/src/services/asset-media.service.ts): update every caller. The \"motion filename\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-004",
+      "size": "large",
+      "reuse": [
+        "reuse-030",
+        "reuse-031",
+        "reuse-032"
+      ],
+      "callers": [
+        "callers-030",
+        "callers-031",
+        "callers-032"
+      ],
+      "survey": [
+        "survey-030",
+        "survey-031",
+        "survey-032"
+      ],
+      "featureFiles": [
+        "server/src/controllers/person.controller.ts",
+        "server/src/services/person.service.ts",
+        "server/src/utils/media.ts"
+      ],
+      "prompt": "Feature: in server/src/controllers/person.controller.ts, add support for \"convert from bytes to a specified unit\". Reuse existing logic if the repo already has it. The change needs a new parameter on PersonService.reassignFaces (declared in server/src/services/person.service.ts): update every caller. The \"output frames\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/person.service.ts, add support for \"order each group of four points as top-left top-right bottom-right bottom-left\". Reuse existing logic if the repo already has it. The change needs a new parameter on BaseService.requirePersonAccess (declared in server/src/services/base.service.ts): update every caller. The \"sidecar data\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/utils/media.ts, add support for \"reset the sidebar visibility to the default based on the current screen width\". Reuse existing logic if the repo already has it. The change needs a new parameter on ThumbnailConfig.getScaling (declared in server/src/utils/media.ts): update every caller. The \"edit count\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-005",
+      "size": "large",
+      "reuse": [
+        "reuse-033",
+        "reuse-034",
+        "reuse-035"
+      ],
+      "callers": [
+        "callers-033",
+        "callers-034",
+        "callers-035"
+      ],
+      "survey": [
+        "survey-033",
+        "survey-034",
+        "survey-035"
+      ],
+      "featureFiles": [
+        "server/src/utils/media.ts",
+        "server/src/controllers/plugin.controller.ts",
+        "server/src/services/asset.service.ts"
+      ],
+      "prompt": "Feature: in server/src/utils/media.ts, add support for \"single precision from half through as numpy converts one value at a time without native half support\". Reuse existing logic if the repo already has it. The change needs a new parameter on QsvSwDecodeConfig.getBaseOutputOptions (declared in server/src/utils/media.ts): update every caller. The \"overwrite file\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/controllers/plugin.controller.ts, add support for \"upright crop size for each box and the perspective coefficients that map the box onto it\". Reuse existing logic if the repo already has it. The change needs a new parameter on PluginService.search (declared in server/src/services/plugin.service.ts): update every caller. The \"previous button\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/asset.service.ts, add support for \"starts a new invocation and returns an object with utilities to manage the invocation lifecycle\". Reuse existing logic if the repo already has it. The change needs a new parameter on AssetEditRepository.replaceAll (declared in server/src/repositories/asset-edit.repository.ts): update every caller. The \"session storage\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-006",
+      "size": "large",
+      "reuse": [
+        "reuse-036",
+        "reuse-037",
+        "reuse-038"
+      ],
+      "callers": [
+        "callers-036",
+        "callers-037",
+        "callers-038"
+      ],
+      "survey": [
+        "survey-036",
+        "survey-037",
+        "survey-038"
+      ],
+      "featureFiles": [
+        "server/src/services/system-config.service.ts",
+        "server/src/services/person.service.ts",
+        "server/src/controllers/search.controller.ts"
+      ],
+      "prompt": "Feature: in server/src/services/system-config.service.ts, add support for \"indices of top to bottom then left to right within a line\". Reuse existing logic if the repo already has it. The change needs a new parameter on mapAdminConfig (declared in server/src/dtos/config.dto.ts): update every caller. The \"only favorites\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/person.service.ts, add support for \"create a default timeline configuration\". Reuse existing logic if the repo already has it. The change needs a new parameter on DatabaseRepository.vacuum (declared in server/src/repositories/database.repository.ts): update every caller. The \"checksum files\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/controllers/search.controller.ts, add support for \"wraps a method that takes a collection of parameters and sequentially calls it with chunks of the collection\". Reuse existing logic if the repo already has it. The change needs a new parameter on SearchService.searchLargeAssets (declared in server/src/services/search.service.ts): update every caller. The \"update geometry\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-007",
+      "size": "large",
+      "reuse": [
+        "reuse-039",
+        "reuse-040",
+        "reuse-041"
+      ],
+      "callers": [
+        "callers-039",
+        "callers-040",
+        "callers-041"
+      ],
+      "survey": [
+        "survey-039",
+        "survey-040",
+        "survey-041"
+      ],
+      "featureFiles": [
+        "server/src/controllers/stack.controller.ts",
+        "server/src/services/library.service.ts",
+        "server/src/services/integrity.service.spec.ts"
+      ],
+      "prompt": "Feature: in server/src/controllers/stack.controller.ts, add support for \"parse parameter to extract year-month key\". Reuse existing logic if the repo already has it. The change needs a new parameter on StackService.removeAsset (declared in server/src/services/stack.service.ts): update every caller. The \"test asset\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/library.service.ts, add support for \"generate assets for a specific day\". Reuse existing logic if the repo already has it. The change needs a new parameter on StorageCore.isImmichPath (declared in server/src/cores/storage.core.ts): update every caller. The \"cleanup interval\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/integrity.service.spec.ts, add support for \"localized number of bytes with a unit\". Reuse existing logic if the repo already has it. The change needs a new parameter on IntegrityService.handleUntrackedFiles (declared in server/src/services/integrity.service.ts): update every caller. The \"update user\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-008",
+      "size": "large",
+      "reuse": [
+        "reuse-042",
+        "reuse-043",
+        "reuse-044"
+      ],
+      "callers": [
+        "callers-042",
+        "callers-043",
+        "callers-044"
+      ],
+      "survey": [
+        "survey-042",
+        "survey-043",
+        "survey-044"
+      ],
+      "featureFiles": [
+        "server/src/controllers/asset.controller.ts",
+        "server/src/controllers/cluster-group.controller.ts",
+        "server/src/maintenance/maintenance-worker.service.spec.ts"
+      ],
+      "prompt": "Feature: in server/src/controllers/asset.controller.ts, add support for \"update the asset stack state in the asset store based on the provided stack response\". Reuse existing logic if the repo already has it. The change needs a new parameter on AssetService.upsertBulkMetadata (declared in server/src/services/asset.service.ts): update every caller. The \"asset config\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/controllers/cluster-group.controller.ts, add support for \"convert timeline asset models to columnar format\". Reuse existing logic if the repo already has it. The change needs a new parameter on ClusterGroupService.deleteRequest (declared in server/src/services/cluster-group.service.ts): update every caller. The \"websocket repository\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/maintenance/maintenance-worker.service.spec.ts, add support for \"zod schema that validates an array of strings as ip addresses or ip cidr ranges\". Reuse existing logic if the repo already has it. The change needs a new parameter on MaintenanceWorkerService.setStatus (declared in server/src/maintenance/maintenance-worker.service.ts): update every caller. The \"partner repository\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-009",
+      "size": "large",
+      "reuse": [
+        "reuse-045",
+        "reuse-046",
+        "reuse-047"
+      ],
+      "callers": [
+        "callers-045",
+        "callers-046",
+        "callers-047"
+      ],
+      "survey": [
+        "survey-045",
+        "survey-046",
+        "survey-047"
+      ],
+      "featureFiles": [
+        "server/test/medium/specs/services/integrity.service.spec.ts",
+        "server/src/services/notification.service.spec.ts",
+        "server/src/controllers/database-backup.controller.ts"
+      ],
+      "prompt": "Feature: in server/test/medium/specs/services/integrity.service.spec.ts, add support for \"the ip version release and execution units keys its blobs by and the driver it checks them against\". Reuse existing logic if the repo already has it. The change needs a new parameter on IntegrityService.handleChecksumFiles (declared in server/src/services/integrity.service.ts): update every caller. The \"modal rows\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/notification.service.spec.ts, add support for \"returns the filename of an asset including file extension\". Reuse existing logic if the repo already has it. The change needs a new parameter on NotificationService.handleSendEmail (declared in server/src/services/notification.service.ts): update every caller. The \"with stack\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/controllers/database-backup.controller.ts, add support for \"generate a random aspect ratio based on weighted probabilities\". Reuse existing logic if the repo already has it. The change needs a new parameter on DatabaseBackupService.downloadBackup (declared in server/src/services/database-backup.service.ts): update every caller. The \"with person\" value also changes: update it everywhere, in every spelling."
+    },
+    {
+      "id": "large-010",
+      "size": "large",
+      "reuse": [
+        "reuse-048",
+        "reuse-049",
+        "reuse-050"
+      ],
+      "callers": [
+        "callers-048",
+        "callers-049",
+        "callers-050"
+      ],
+      "survey": [
+        "survey-048",
+        "survey-049",
+        "survey-050"
+      ],
+      "featureFiles": [
+        "server/src/services/api-key.service.spec.ts",
+        "server/test/medium/specs/repositories/asset-job.repository.spec.ts",
+        "server/src/services/library.service.spec.ts"
+      ],
+      "prompt": "Feature: in server/src/services/api-key.service.spec.ts, add support for \"needed for accurate segments especially when remuxing seeking and or vfr is involved\". Reuse existing logic if the repo already has it. The change needs a new parameter on AuthFactory.session (declared in server/test/factories/auth.factory.ts): update every caller. The \"previous memory\" value also changes: update it everywhere, in every spelling.\nFeature: in server/test/medium/specs/repositories/asset-job.repository.spec.ts, add support for \"convert to bytes from on a specified unit\". Reuse existing logic if the repo already has it. The change needs a new parameter on MediumTestContext.newJobStatus (declared in server/test/medium.factory.ts): update every caller. The \"search random\" value also changes: update it everywhere, in every spelling.\nFeature: in server/src/services/library.service.spec.ts, add support for \"mean probability inside the min-area rect for\". Reuse existing logic if the repo already has it. The change needs a new parameter on LibraryService.onConfigInit (declared in server/src/services/library.service.ts): update every caller. The \"oauth repository\" value also changes: update it everywhere, in every spelling."
+    }
+  ]
+}

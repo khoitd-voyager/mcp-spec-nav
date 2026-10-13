@@ -35,6 +35,7 @@ before(async () => {
     "nuget/packages/Newtonsoft.Json.13.0.1/lib/Helper.cs": "class Helper { void Vendored() {} }\n",
     "web/app.min.js": "function minified(){}",
     "web/App.vue": "<script>export default {}</script>\n",
+    "web/lib.dart": "void main() {}\n",
   });
   s = await startServer(root);
 });
@@ -105,7 +106,9 @@ test("map covers root, packages/ and deep JS without duplicate files", async () 
 test("coverage reports unsupported and skipped files and does not claim completeness", async () => {
   const r = await s.json("spec_nav_functions", {});
   assert.equal(r.coverage.complete, false);
-  assert.equal(r.coverage.unsupportedSourceFiles.byExtension[".vue"], 1);
+  assert.equal(r.coverage.unsupportedSourceFiles.byExtension[".dart"], 1);
+  assert.equal(r.coverage.unsupportedSourceFiles.byExtension[".vue"], undefined, "Vue components are parsed now");
+  assert.equal(r.coverage.byLanguage.vue, 1);
   assert.ok(r.coverage.skippedFiles.some((f) => f.file === "web/app.min.js"));
   assert.match(r.coverage.summary, /PARTIAL/);
   const excluded = r.coverage.excludedDirs.sample.join(" ");

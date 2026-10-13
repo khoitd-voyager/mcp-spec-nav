@@ -6,13 +6,16 @@ import {
   pathFilter,
   fingerprint,
   normaliseService,
+  isTsFamily,
   RepoScan,
   SourceEntry,
 } from "./project.js";
 import { languageById } from "./languages.js";
 import { extractFunctions, loadFailures, RawFunction } from "./treesitter.js";
 import { extractTsFunctions, parseSource, tsImportsUsed } from "./tsparse.js";
-import { uniqueTokens, queryTokens, scoreDoc, SearchDoc } from "./search.js";
+import { extractBraceFunctions, BraceLang } from "./bracelang.js";
+import { tsParseView } from "./sfc.js";
+import { uniqueTokens, intern, calleeKey, parseQuery, matchTerms, scoreMatches, idfWeights, SearchDoc, TermMatch, calleeNames } from "./search.js";
 import {
   CHAR_BUDGET,
   CHANGED_WARNING,
@@ -69,10 +72,12 @@ export interface FnRecord {
   hash: string;
 }
 
-interface Indexed {
+export interface Indexed {
   rec: FnRecord;
   fullDoc?: string;
   search: SearchDoc;
+  /** Names it calls, lower-cased: its behaviour, for spec_nav_similar_functions. */
+  callees: string[];
   /** Exact extent in the file text, UTF-16 offsets, end exclusive. */
   startOffset: number;
   endOffset: number;
@@ -82,6 +87,8 @@ export interface FileCatalog {
   stamp: string;
   entry: SourceEntry;
   functions: Indexed[];
+  /** Kotlin/Swift: offsets of declaration names, so call-site search skips them. */
+  declOffsets?: Set<number>;
   anonymous: Array<{ start: number; end: number }>;
   errorLine?: number;
   errorMessage?: string;
@@ -152,9 +159,11 @@ function toIndexed(entry: SourceEntry, raws: RawFunction[], text: string): Index
       docTruncated: docTruncated || undefined,
       hash,
     };
+    const callees = calleeNames(code, r.name);
     return {
       rec,
       fullDoc,
+      callees: [...new Set(callees.map((c) => intern(calleeKey(c))))],
       startOffset: r.startOffset,
       endOffset: r.endOffset,
       search: {
@@ -164,6 +173,8 @@ function toIndexed(entry: SourceEntry, raws: RawFunction[], text: string): Index
         signature: uniqueTokens([...r.params, r.returnType ?? ""].join(" ")),
         doc: fullDoc ? uniqueTokens(fullDoc) : [],
         path: pathWords,
+        // What it calls says what it does, whatever it is named.
+        calls: uniqueTokens(callees.join(" ")),
         body: uniqueTokens(code),
       },
     };
@@ -208,9 +219,12 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
     return fc;
   }
   let fc: FileCatalog;
-  if (entry.language === "typescript" || entry.language === "javascript") {
+  const lang = languageById(entry.language);
+  if (isTsFamily(entry.language)) {
     try {
-      const r = extractTsFunctions(entry.abs, text, entry.ext);
+      // A Vue/Svelte/Astro component is parsed as its script, offsets unchanged.
+      const view = tsParseView(entry.ext, text);
+      const r = extractTsFunctions(entry.abs, view.text, view.ext);
       fc = {
         stamp: entry.stamp,
         entry,
@@ -222,11 +236,25 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
     } catch (err) {
       fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], errorLine: 1, errorMessage: `parser crashed: ${err}` };
     }
+  } else if (lang?.engine === "brace") {
+    try {
+      const r = extractBraceFunctions(text, lang.id as BraceLang);
+      fc = {
+        stamp: entry.stamp,
+        entry,
+        functions: toIndexed(entry, r.functions, text),
+        anonymous: [],
+        declOffsets: r.nameOffsets,
+        errorLine: r.errorLine,
+        errorMessage: r.errorLine ? "unbalanced brackets or unterminated string" : undefined,
+      };
+    } catch (err) {
+      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], errorLine: 1, errorMessage: `scanner crashed: ${err}` };
+    }
   } else {
-    const lang = languageById(entry.language)!;
-    const r = await extractFunctions(text, lang);
+    const r = await extractFunctions(text, lang!);
     if (!r) {
-      const reason = loadFailures().find((f) => f.id === lang.id)?.reason ?? "parse failed";
+      const reason = loadFailures().find((f) => f.id === lang!.id)?.reason ?? "parse failed";
       fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], parserUnavailable: reason };
     } else {
       fc = {
@@ -362,7 +390,7 @@ export function coverageOf(snap: Snapshot): Coverage {
   };
 }
 
-function renderCoverage(c: Coverage): string[] {
+export function renderCoverage(c: Coverage): string[] {
   const out = [`coverage: ${c.summary}`];
   for (const e of c.parseErrors.slice(0, 10)) out.push(`  syntax error: ${e.file}:${e.line}${e.message ? ` — ${e.message}` : ""}`);
   if (c.parseErrors.length > 10) out.push(`  … ${c.parseErrors.length - 10} more files with syntax errors (format:"json" lists all)`);
@@ -386,7 +414,7 @@ export interface ListArgs {
 }
 
 /** A path filter: substring, or a glob when it has `*`. */
-function fileMatcher(pattern?: string): (rel: string) => boolean {
+export function fileMatcher(pattern?: string): (rel: string) => boolean {
   if (!pattern) return () => true;
   const p = pattern.replace(/\\/g, "/").replace(/^\.\//, "");
   if (!p.includes("*")) return (rel) => rel.includes(p);
@@ -413,11 +441,11 @@ function nameMatcher(pattern?: string): (name: string) => boolean {
   return (n) => n.toLowerCase().includes(lower);
 }
 
-function sortKey(r: FnRecord): string {
+export function sortKey(r: FnRecord): string {
   return `${r.file}\u0000${String(r.start).padStart(8, "0")}\u0000${r.id}`;
 }
 
-function flags(r: FnRecord): string {
+export function flags(r: FnRecord): string {
   return [
     r.kind,
     r.exported === true ? "exported" : r.exported === false && !r.visibility ? "not exported" : "",
@@ -428,7 +456,7 @@ function flags(r: FnRecord): string {
 }
 
 /** `12-40`, or `3:39-3:76` when columns matter (more than one function on a line). */
-function span(r: FnRecord): string {
+export function span(r: FnRecord): string {
   return r.startColumn > 1 || r.start === r.end
     ? `${r.start}:${r.startColumn}-${r.end}:${r.endColumn}`
     : `${r.start}-${r.end}`;
@@ -544,31 +572,46 @@ export interface FindArgs {
 const BODY_ONLY_MIN_CAP = 25;
 const BODY_ONLY_SHARE = 0.1;
 
-const NOT_TRANSLATED =
-  "NOTE: non-English words are matched as written (diacritics optional: phí = phi), NOT translated. " +
-  "A Vietnamese query finds code, names and comments that use those words; it will not find " +
-  "`calculateShippingFee` from \"tính phí vận chuyển\". To find English-named code, add English keywords " +
-  "as a separate query (e.g. \"shipping fee\") — mixing both languages in one query makes each half " +
-  "count against the other.";
+const TRANSLATION_NOTE =
+  "NOTE: Vietnamese words are matched as written (diacritics optional: phí = phi), and words written WITH " +
+  "diacritics are also matched through a small built-in Vietnamese→English dictionary of common domain " +
+  "terms (shown under `translated`). Anything outside that dictionary is NOT translated: if the code is " +
+  "English-named, add English keywords — or run a second, English query.";
 
 export async function findFunctions(args: FindArgs): Promise<string> {
-  const q = queryTokens(args.query);
+  const { words: q, terms, translated } = parseQuery(args.query);
   if (!q.length) throw new Error(`The query "${args.query}" has no searchable words. Use words from the behaviour you need, e.g. "calculate order fee".`);
   const snap = await snapshot(args.services);
   const fileOk = fileMatcher(args.file);
   const useBody = args.searchBodies ?? true;
 
+  // One pass: every function's term matches, and how many functions each
+  // term matches outside a body — its document frequency, for rarity weights.
   let considered = 0;
-  type Hit = { rec: FnRecord; score: number; matched: number; reasons: string[]; bodyOnly?: boolean };
-  let hits: Hit[] = [];
+  const df = terms.map(() => 0);
+  const needed = Math.max(1, Math.ceil(terms.length / 2));
+  const pending: Array<{ rec: FnRecord; matches: Array<TermMatch | undefined> }> = [];
   for (const fc of snap.files) {
     if (!fileOk(fc.entry.rel)) continue;
     if (args.language && fc.entry.language !== args.language.toLowerCase()) continue;
     for (const f of fc.functions) {
       considered++;
-      const s = scoreDoc(q, f.search, useBody);
-      if (s) hits.push({ rec: f.rec, ...s });
+      const matches = matchTerms(terms, f.search, useBody);
+      let n = 0;
+      matches.forEach((m, i) => {
+        if (!m) return;
+        n++;
+        if (m.field !== "body") df[i]++;
+      });
+      if (n >= needed) pending.push({ rec: f.rec, matches });
     }
+  }
+  const weights = idfWeights(df, Math.max(considered, 1));
+  type Hit = { rec: FnRecord; score: number; matched: number; reasons: string[]; bodyOnly?: boolean; callsOnly?: boolean };
+  let hits: Hit[] = [];
+  for (const p of pending) {
+    const s = scoreMatches(terms, p.matches, weights);
+    if (s) hits.push({ rec: p.rec, ...s });
   }
   // Words found in the bodies of a large share of functions are local-variable
   // vocabulary, not a description of any one of them: withhold those matches
@@ -576,9 +619,10 @@ export async function findFunctions(args: FindArgs): Promise<string> {
   const bodyOnlyCount = hits.filter((h) => h.bodyOnly).length;
   const bodyOnlyWithheld = bodyOnlyCount > Math.max(BODY_ONLY_MIN_CAP, considered * BODY_ONLY_SHARE) ? bodyOnlyCount : 0;
   if (bodyOnlyWithheld) hits = hits.filter((h) => !h.bodyOnly);
-  // A match by name, signature or doc outranks any match found only in a body.
-  hits.sort((a, b) =>
-    Number(!!a.bodyOnly) - Number(!!b.bodyOnly) || b.score - a.score || (sortKey(a.rec) < sortKey(b.rec) ? -1 : 1));
+  // Direct matches (name, signature, doc…) first, then matches through what
+  // a function calls, then matches only in a body.
+  const tier = (h: Hit) => (h.bodyOnly ? 2 : h.callsOnly ? 1 : 0);
+  hits.sort((a, b) => tier(a) - tier(b) || b.score - a.score || (sortKey(a.rec) < sortKey(b.rec) ? -1 : 1));
   const nonEnglish = q.filter((w) => /[^\x00-\x7f]/.test(w));
 
   const qHash = paramsHash({ ...args, cursor: undefined, format: undefined, limit: undefined });
@@ -589,7 +633,7 @@ export async function findFunctions(args: FindArgs): Promise<string> {
     const r = h.rec;
     const alt = alternativesNote(r);
     return [
-      `#${i + 1}  score ${h.score}${h.bodyOnly ? " [body only]" : ""}  ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
+      `#${i + 1}  score ${h.score}${h.bodyOnly ? " [body only]" : h.callsOnly ? " [via calls]" : ""}  ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
       `    [${flags(r)}] ${r.name}`,
       `    sig: ${r.signature}`,
       `    id:  ${r.id}`,
@@ -603,11 +647,17 @@ export async function findFunctions(args: FindArgs): Promise<string> {
   const nextCursor = complete ? undefined : encodeCursor({ t: "find", q: qHash, p: page.end, f: cur.fingerprint });
   const coverage = coverageOf(snap);
   const services = [...new Set(hits.map((h) => h.rec.service))];
+  const rarity = terms.length > 1
+    ? terms.map((t, i) => `${t.label} ×${weights[i].toFixed(2)}`).join(", ")
+    : undefined;
 
   if (args.format === "json") {
     return JSON.stringify({
       query: args.query,
       words: q,
+      terms: terms.map((t) => t.label),
+      translated: translated.length ? translated : undefined,
+      termWeights: terms.length > 1 ? Object.fromEntries(terms.map((t, i) => [t.label, Math.round(weights[i] * 100) / 100])) : undefined,
       ranked: true,
       functionsConsidered: considered,
       totalCandidates: hits.length,
@@ -616,9 +666,10 @@ export async function findFunctions(args: FindArgs): Promise<string> {
       nextCursor,
       changedSinceFirstPage: cur.changedSinceFirstPage || undefined,
       servicesWithCandidates: services,
+      callsOnlyCandidates: hits.filter((h) => h.callsOnly).length,
       bodyOnlyCandidates: hits.filter((h) => h.bodyOnly).length,
       bodyOnlyWithheld: bodyOnlyWithheld || undefined,
-      notTranslated: nonEnglish.length ? NOT_TRANSLATED : undefined,
+      translationNote: nonEnglish.length ? TRANSLATION_NOTE : undefined,
       coverage,
       candidates: hits.slice(start, page.end).map((h) => ({
         ...h.rec,
@@ -626,15 +677,20 @@ export async function findFunctions(args: FindArgs): Promise<string> {
         matchedWords: h.matched,
         why: h.reasons,
         ...(h.bodyOnly ? { bodyOnly: true } : {}),
+        ...(h.callsOnly ? { callsOnly: true } : {}),
       })),
     });
   }
   return [
-    `query: "${args.query}" → words: ${q.join(", ")}`,
+    `query: "${args.query}" → terms: ${terms.map((t) => t.label).join(", ")}` + (rarity ? `  (rarity weights: ${rarity})` : ""),
+    ...(translated.length ? [`translated (built-in dictionary): ${translated.join("; ")}`] : []),
     `RANKED LEXICAL CANDIDATES, not a complete answer: ${hits.length} of ${considered} catalogued functions matched ` +
-      `at least half the words (by name, class/module, signature, doc, path${useBody ? ", body" : ""}). ` +
-      `Matching is by words, stems, prefixes and a few common verb synonyms — a function doing the same ` +
-      `job under different words will not appear. Try other wording, or browse spec_nav_functions.`,
+      `at least half the terms (by name, class/module, signature, doc, path, what it calls${useBody ? ", body" : ""}). ` +
+      `Matching is by words, stems, abbreviations, prefixes, common verb synonyms and domain concepts; rarer ` +
+      `words weigh more. A function doing the same job under unrelated words can still be missed — try ` +
+      `other wording, spec_nav_similar_functions on a candidate or a draft, or browse spec_nav_functions.`,
+    `Functions matching only through what they call need every term and are marked [via calls]: they ` +
+      `call something with those words (often a wrapper or a caller of the real implementation).`,
     ...(useBody
       ? [`Functions matching only in their body need every word, are marked [body only] and ranked after the rest.` +
           (bodyOnlyWithheld
@@ -642,7 +698,7 @@ export async function findFunctions(args: FindArgs): Promise<string> {
               `tell anything apart — add a more specific word.`
             : "")]
       : []),
-    ...(nonEnglish.length ? [NOT_TRANSLATED] : []),
+    ...(nonEnglish.length ? [TRANSLATION_NOTE] : []),
     ...(services.length ? [`services with candidates: ${services.join(", ")}`] : []),
     hits.length
       ? `showing ${start + 1}-${page.end}` +
@@ -707,13 +763,13 @@ function parseId(id: string): { file: string; name: string; hash: string } {
   return { file: id.slice(0, sep), name: id.slice(sep + 2, at), hash: id.slice(at + 1) };
 }
 
-class StaleIdError extends Error {}
+export class StaleIdError extends Error {}
 
 function idName(ix: Indexed): string {
   return ix.rec.id.slice(ix.rec.id.indexOf("::") + 2, ix.rec.id.lastIndexOf("@"));
 }
 
-async function resolveFunction(args: ReadArgs): Promise<{ fc: FileCatalog; ix: Indexed }> {
+export async function resolveFunction(args: ReadArgs): Promise<{ fc: FileCatalog; ix: Indexed }> {
   if (args.id) {
     const { file, name, hash } = parseId(args.id);
     const { fc } = await fileCatalog(file);
@@ -847,8 +903,9 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
 
   let imports: string[];
   let importsNote: string;
-  if (r.language === "typescript" || r.language === "javascript") {
-    imports = tsImportsUsed(parseSource(fc.entry.abs, text, fc.entry.ext), bodyText);
+  if (isTsFamily(r.language)) {
+    const view = tsParseView(fc.entry.ext, text);
+    imports = tsImportsUsed(parseSource(fc.entry.abs, view.text, view.ext), bodyText);
     importsNote = "imports whose bound names appear in this function";
   } else {
     const g = genericImports(fc, lines, bodyText);

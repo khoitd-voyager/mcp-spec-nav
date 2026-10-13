@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { scanRepo, filterFiles, fingerprint, REPO_ROOT, SourceEntry } from "./project.js";
+import { scanRepo, filterFiles, fingerprint, isTsFamily, REPO_ROOT, SourceEntry } from "./project.js";
 import { languageById } from "./languages.js";
 import { loadFailures } from "./treesitter.js";
 import { catalogFile, labelRanges, snapshot, coverageOf } from "./catalog.js";
@@ -117,10 +117,7 @@ export async function mapPattern(
       continue;
     }
     if (!re.test(text)) continue;
-    const noise =
-      entry.language === "typescript" || entry.language === "javascript"
-        ? TS_NOISE
-        : languageById(entry.language)!.noise;
+    const noise = isTsFamily(entry.language) ? TS_NOISE : languageById(entry.language)!.noise;
     const matched = matchingLines(text, re, noise, includeComments);
     if (!matched.length) continue;
     languagesSeen.add(entry.language);

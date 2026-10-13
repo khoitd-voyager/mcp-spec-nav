@@ -15,8 +15,19 @@ export interface LangSpec {
   id: string;
   /** File extensions, lower case, including the dot. */
   extensions: string[];
-  /** The npm package path of the grammar's prebuilt .wasm. */
-  wasm: string;
+  /** The npm package path of the grammar's prebuilt .wasm (tree-sitter languages). */
+  wasm?: string;
+  /**
+   * "brace": read by the structural scanner in bracelang.ts instead of a
+   * tree-sitter grammar (Kotlin, Swift — see there for why).
+   */
+  engine?: "brace";
+  /**
+   * Languages whose code can call each other directly (Kotlin calls Java,
+   * C++ calls C). A call site is only matched against declarations in the
+   * same family.
+   */
+  family?: string;
   /**
    * Node types that are a named function, method or constructor — the things
    * worth reporting as "the code this line belongs to".
@@ -129,6 +140,7 @@ export const LANGUAGES: LangSpec[] = [
     importsNameIdentifiers: true,
     constructorNodes: ["constructor_declaration"],
     returnFields: ["type"],
+    family: "jvm",
   },
   {
     id: "ruby",
@@ -181,6 +193,7 @@ export const LANGUAGES: LangSpec[] = [
     importLine: /^\s*#\s*(include|import)\b.+/,
     importsNameIdentifiers: false,
     returnFields: ["type"],
+    family: "c",
   },
   {
     id: "cpp",
@@ -194,6 +207,7 @@ export const LANGUAGES: LangSpec[] = [
     importLine: /^\s*(#\s*(include|import)\b.+|using\s+.+;|import\s+.+;)/,
     importsNameIdentifiers: false,
     returnFields: ["type"],
+    family: "c",
   },
   {
     id: "scala",
@@ -206,6 +220,7 @@ export const LANGUAGES: LangSpec[] = [
     importLine: /^\s*import\s+.+/,
     importsNameIdentifiers: true,
     returnFields: ["return_type"],
+    family: "jvm",
   },
   {
     id: "elixir",
@@ -253,6 +268,30 @@ export const LANGUAGES: LangSpec[] = [
     constructorNodes: ["constructor_declaration"],
     returnFields: ["returns", "type"],
   },
+  {
+    id: "kotlin",
+    extensions: [".kt", ".kts"],
+    engine: "brace",
+    functionNodes: [],
+    containerNodes: [],
+    noise: /^\s*(\/\/|\/\*|\*|import\s|package\s|@\w+\s*$)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*import\s+.+/,
+    importsNameIdentifiers: true,
+    family: "jvm",
+  },
+  {
+    id: "swift",
+    extensions: [".swift"],
+    engine: "brace",
+    functionNodes: [],
+    containerNodes: [],
+    noise: /^\s*(\/\/|\/\*|\*|import\s|@\w+\s*$)/,
+    commentLine: /^\s*(\/\/|\/\*|\*)/,
+    importLine: /^\s*(@testable\s+)?import\s+.+/,
+    importsNameIdentifiers: false,
+    constructorNames: ["init"],
+  },
 ];
 
 const BY_EXT = new Map<string, LangSpec>();
@@ -265,7 +304,7 @@ export function languageForExt(ext: string): LangSpec | undefined {
   return BY_EXT.get(ext.toLowerCase());
 }
 
-/** Every extension tree-sitter can label, for the file walker. */
+/** Every extension tree-sitter or the brace scanner can label, for the file walker. */
 export const PARSEABLE_EXTENSIONS: string[] = LANGUAGES.flatMap((l) => l.extensions);
 
 export function languageById(id: string): LangSpec | undefined {

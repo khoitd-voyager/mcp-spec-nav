@@ -1,7 +1,7 @@
 {
   "name": "mcp-spec-nav",
-  "version": "0.2.0",
-  "description": "MCP server that catalogs the functions across a polyglot monorepo and reads code structurally — find existing functions to reuse, read them in full, resolve TypeScript/JavaScript callers, and survey every match for a pattern with the function it sits in",
+  "version": "0.3.0",
+  "description": "MCP server that catalogs the functions across a polyglot monorepo and reads code structurally — find existing functions to reuse (by words, what they call, or behavioural similarity), read them in full, find callers in TS/JS (type-checked) and 13 other languages (evidence-based), and survey every match for a pattern with the function it sits in",
   "type": "module",
   "license": "MIT",
   "bin": {
@@ -31,12 +31,17 @@
     "rust",
     "php",
     "csharp",
+    "kotlin",
+    "swift",
+    "vue",
+    "svelte",
     "polyglot"
   ],
   "scripts": {
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test test/*.test.mjs",
+    "bench": "npm run build && node bench/run.mjs",
     "pack:mcpb": "npm run build && node scripts/pack-mcpb.mjs"
   },
   "dependencies": {

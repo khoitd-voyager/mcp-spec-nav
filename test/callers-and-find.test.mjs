@@ -78,7 +78,9 @@ test("same-named methods on different classes are told apart", async () => {
   // untyped JS receiver: reported, not guessed
   assert.deepEqual(where(r.unresolved), ["services/web/src/legacy.js:1"]);
   assert.equal(r.exhaustive, false);
-  assert.deepEqual(r.notAnalyzedOtherLanguages.files, ["services/py/totals.py"]);
+  // Python is analysed now: totals.py only declares an unrelated `total`, so it adds no site.
+  assert.equal(r.notAnalyzedOtherLanguages.count, 0);
+  assert.ok(![...r.sites, ...r.likely, ...r.ambiguous].some((x) => x.file.endsWith(".py")));
   assert.ok(r.notes.some((n) => /NOT a complete list/.test(n)));
 
   const cart = await s.json("spec_nav_callers", { symbol: "total", className: "Cart" });

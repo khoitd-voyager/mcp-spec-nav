@@ -3,6 +3,7 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
 import { languageForExt, PARSEABLE_EXTENSIONS } from "./languages.js";
+import { SFC_EXTENSIONS, sfcLanguage } from "./sfc.js";
 
 /** Root the `service` arguments resolve against; from env, else cwd. */
 export const REPO_ROOT = process.env.SPEC_NAV_ROOT
@@ -125,14 +126,23 @@ export const TS_EXTENSIONS = new Set([".ts", ".tsx", ".mts", ".cts"]);
 export const JS_EXTENSIONS = new Set([".js", ".jsx", ".mjs", ".cjs"]);
 
 /** Every extension we can attach a function name to. */
-export const SCANNABLE = new Set<string>([...TS_EXTENSIONS, ...JS_EXTENSIONS, ...PARSEABLE_EXTENSIONS]);
+export const SCANNABLE = new Set<string>([...TS_EXTENSIONS, ...JS_EXTENSIONS, ...SFC_EXTENSIONS, ...PARSEABLE_EXTENSIONS]);
+
+/**
+ * Languages read by the TypeScript parser: TS, JS, and the script blocks of
+ * Vue/Svelte/Astro components.
+ */
+export const TS_FAMILY = new Set(["typescript", "javascript", "vue", "svelte", "astro"]);
+export function isTsFamily(language: string): boolean {
+  return TS_FAMILY.has(language);
+}
 
 /**
  * Extensions of source code we cannot parse. Counted and reported so that "no
  * match" in a repo full of .vue or .kt files is not mistaken for "absent".
  */
 const UNSUPPORTED_SOURCE = new Set([
-  ".vue", ".svelte", ".astro", ".swift", ".kt", ".kts", ".lua", ".dart", ".m", ".mm",
+  ".lua", ".dart", ".m", ".mm",
   ".sql", ".pl", ".pm", ".r", ".clj", ".cljs", ".hs", ".fs", ".fsx", ".vb", ".groovy",
   ".erl", ".ml", ".zig", ".nim", ".jl", ".cr", ".sol", ".erb", ".ejs", ".hbs", ".twig",
   ".coffee", ".mdx", ".graphql", ".gql", ".proto",
@@ -148,7 +158,7 @@ export interface SourceEntry {
   /** The innermost project containing the file, or "." for the root. */
   service: string;
   ext: string;
-  /** "typescript", "javascript", or a tree-sitter language id. */
+  /** "typescript", "javascript", "vue", "svelte", "astro", or a tree-sitter/brace language id. */
   language: string;
   size: number;
   /** Changes whenever the file's content can have changed. */
@@ -192,7 +202,7 @@ function toPosix(p: string): string {
 function languageOf(ext: string): string | undefined {
   if (TS_EXTENSIONS.has(ext)) return "typescript";
   if (JS_EXTENSIONS.has(ext)) return "javascript";
-  return languageForExt(ext)?.id;
+  return sfcLanguage(ext) ?? languageForExt(ext)?.id;
 }
 
 /**

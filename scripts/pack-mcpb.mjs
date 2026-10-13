@@ -24,13 +24,13 @@ const manifest = {
   display_name: "Spec Nav",
   version: pkg.version,
   description:
-    "Find existing functions to reuse, read them in full, resolve TS/JS callers and survey every match for a pattern across a local repository.",
+    "Find existing functions to reuse (by words or by behaviour), read them in full, find callers across languages and survey every match for a pattern across a local repository.",
   long_description: pkg.description,
   author: { name: "khoitd-voyager", url: "https://github.com/khoitd-voyager" },
   repository: { type: "git", url: "https://github.com/khoitd-voyager/mcp-spec-nav" },
   homepage: "https://github.com/khoitd-voyager/mcp-spec-nav",
   license: pkg.license,
-  keywords: ["code-navigation", "monorepo", "ast", "tree-sitter", "typescript"],
+  keywords: ["code-navigation", "monorepo", "ast", "tree-sitter", "typescript", "kotlin", "swift", "vue"],
   server: {
     type: "node",
     entry_point: "dist/index.cjs",
@@ -45,7 +45,8 @@ const manifest = {
     { name: "spec_nav_find_functions", description: "Rank existing functions that may already do what you need." },
     { name: "spec_nav_read_function", description: "Read one function exactly, with signature, docs and related imports." },
     { name: "spec_nav_functions", description: "Browse the function catalog with filters and paging." },
-    { name: "spec_nav_callers", description: "Resolve TS/JS callers and references, and report unresolved calls." },
+    { name: "spec_nav_similar_functions", description: "Find functions that behave like a given one or a draft, whatever they are named." },
+    { name: "spec_nav_callers", description: "Find callers: type-checked in TS/JS/Vue, evidence-based in 13 other languages; dynamic uses listed." },
     { name: "spec_nav_map", description: "Every line matching a regex, tagged with the function it sits in." },
   ],
   user_config: {

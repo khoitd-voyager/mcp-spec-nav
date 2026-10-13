@@ -6,8 +6,9 @@ import { REPO_ROOT } from "./project.js";
 import { mapPattern, renderMap, listServices } from "./tools.js";
 import { listFunctions, findFunctions, readFunction } from "./catalog.js";
 import { findCallers } from "./callers.js";
+import { similarFunctions } from "./similar.js";
 
-const server = new McpServer({ name: "spec-nav", version: "0.2.0" });
+const server = new McpServer({ name: "spec-nav", version: "0.3.0" });
 
 function text(t: string, isError = false) {
   return { content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) };
@@ -39,7 +40,8 @@ server.registerTool(
   {
     description:
       "Survey a change: every line matching a regex across EVERY project under the root, in " +
-      "TypeScript, JavaScript, Python, Go, Java, C#, Ruby, Rust, PHP, C, C++, Scala, Elixir and Bash, " +
+      "TypeScript, JavaScript, Vue/Svelte/Astro, Python, Go, Java, Kotlin, Swift, C#, Ruby, Rust, PHP, C, C++, " +
+      "Scala, Elixir and Bash, " +
       "each tagged with the function or method it sits in. One wide pattern beats many narrow " +
       "greps. Large results are paged, not cut: the header says COMPLETE or gives a cursor for " +
       "the next page, and when there are more pages the first one lists every file with its hit " +
@@ -72,15 +74,16 @@ server.registerTool(
     description:
       "BEFORE WRITING NEW LOGIC: search every catalogued function in the repo, across all services, for one " +
       "that already does the job. Describe the behaviour in words (\"calculate order fee\"); names " +
-      "are split on camelCase/snake_case and matched by word, stem, prefix and a few common verb " +
-      "synonyms (calculate/compute, get/fetch…) against name, export aliases, class/module, signature, " +
-      "doc comment, path and (by default) body. Returns ranked candidates with why each matched, and " +
-      "an id to read with spec_nav_read_function. A function matching only in its body must match " +
-      "every word, is marked bodyOnly and ranked after the rest. Words in any script are kept whole " +
-      "(Vietnamese \"tính phí\" matches tinhPhi, with or without diacritics), but nothing is " +
-      "TRANSLATED: to find English-named code from a Vietnamese description, run a second query " +
-      "with English keywords. Lexical only: a function doing the same thing under different words " +
-      "can be missed — try other wordings, or browse spec_nav_functions.",
+      "are split on camelCase/snake_case and matched by word, stem, abbreviation (amt/amount), prefix, " +
+      "common verb synonyms (calculate/compute, delete/remove…) and domain concepts (shipping/delivery, " +
+      "email/mail…) against name, export aliases, class/module, signature, doc comment, path, the names " +
+      "the function CALLS, and (by default) its body. Rare words weigh more than common ones. Returns " +
+      "ranked candidates with why each matched, and an id to read with spec_nav_read_function. Matches " +
+      "only through calls are marked [via calls], only in the body [body only]; both need every word and " +
+      "rank after direct matches. Vietnamese written with diacritics is also matched through a small " +
+      "built-in dictionary (phí→fee, vận chuyển→shipping); other words are not translated. Still " +
+      "lexical: when nothing fits, run spec_nav_similar_functions on a near candidate or on a draft " +
+      "of the code you were about to write.",
     inputSchema: {
       query: z.string().describe('What the function does, in words. E.g. "calculate order fees"'),
       services: servicesArg,
@@ -98,6 +101,42 @@ server.registerTool(
   async (args) => {
     try {
       return text(await findFunctions(args));
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  "spec_nav_similar_functions",
+  {
+    description:
+      "Find functions that BEHAVE like a given one, whatever they are named: compares what each function " +
+      "calls and the vocabulary of its body (syntax and its own name removed), with rare calls/words " +
+      "weighted up. Use it (1) on a draft before adding it — pass `code` — to catch an existing " +
+      "implementation under a different name, (2) on a search candidate to find its siblings and " +
+      "duplicates across services, (3) before changing logic, to find copies that need the same change. " +
+      "Identify the subject by `id`, `file`+`name`, or `code`. Returns ranked candidates with the calls " +
+      "and words they share. Similar code is not necessarily interchangeable: read both.",
+    inputSchema: {
+      id: z.string().optional().describe("Function id from another spec_nav tool."),
+      file: z.string().optional().describe("File of the subject function, relative to the root."),
+      name: z.string().optional().describe("Name of the subject function in `file`."),
+      line: z.number().int().positive().optional().describe("A line inside the subject, to disambiguate."),
+      code: z.string().optional().describe("Source of a draft or external function to compare instead."),
+      services: servicesArg,
+      inFile: z.string().optional().describe("Only candidates in files whose path contains this (or matches it, with * globs)."),
+      language: z.string().optional(),
+      minScore: z.number().min(0).max(1).optional().describe("Lowest similarity listed (default 0.2)."),
+      limit: z.number().int().positive().optional().describe("Candidates per page (default 10, max 100)."),
+      cursor: cursorArg,
+      format: formatArg,
+    },
+  },
+  async (args) => {
+    try {
+      const r = await similarFunctions(args);
+      return text(r.text, r.isError);
     } catch (err) {
       return fail(err);
     }
@@ -202,14 +241,17 @@ server.registerTool(
   "spec_nav_callers",
   {
     description:
-      "Call sites of a TypeScript/JavaScript function or method across the repo, resolved with the " +
-      "TypeScript type checker — a same-named method on another class is excluded, and calls through " +
-      "import aliases, re-exports and default imports are found. Each site has its ENCLOSING function " +
-      "and that function's parameters, and the argument count: use before changing a signature. Also " +
-      "lists uses as a value (passed as a callback), calls bound to an interface/base method, and calls " +
-      "it could NOT resolve (untyped receivers) — `exhaustive` is true only when nothing was left " +
-      "unresolved. Narrow with \"Class.method\", `className` or `file`. Other languages are not analysed; " +
-      "files in them that mention the name are listed.",
+      "Call sites of a function or method across the repo, before changing its signature or behaviour. " +
+      "TypeScript/JavaScript (and Vue/Svelte/Astro scripts and templates) are resolved with the TypeScript " +
+      "type checker: a same-named method on another class is excluded; calls through import aliases, " +
+      "re-exports, default imports, obj[\"name\"](), f.call()/apply() are found. Python, Go, Java, Kotlin, " +
+      "Swift, C#, Ruby, Rust, PHP, C/C++, Scala, Elixir and Bash are bound by EVIDENCE, not types — same " +
+      "file/class, qualifier, import or alias, package, or a receiver declared with the class's type — " +
+      "and each site's `reason` says which; `likely` (only declaration of the name, binding unproven) and " +
+      "`ambiguous` (several could match) are listed apart. The name used as a string or symbol " +
+      "(getattr, send(:x), reflection, event names) is listed under `dynamic`. Each site has its " +
+      "ENCLOSING function, its parameters and the argument count. `exhaustive` is true only for " +
+      "type-checked targets with nothing left open. Narrow with \"Class.method\", `className` or `file`.",
     inputSchema: {
       symbol: z.string().describe('Function or method name, e.g. "recordHistory" or "OrderService.recordHistory"'),
       service: z
@@ -226,7 +268,7 @@ server.registerTool(
   },
   async (args) => {
     try {
-      return text(findCallers(args));
+      return text(await findCallers(args));
     } catch (err) {
       return fail(err);
     }
