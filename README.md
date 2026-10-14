@@ -6,11 +6,11 @@ Giúp AI tìm hàm có sẵn trước khi viết code mới, đọc implementati
 
 **Example:** Before adding an order fee calculation, ask your agent to find and read existing fee functions. Before changing a function's parameters, ask it to find callers and report any unresolved references.
 
-**Benchmarks:** See the [benchmark methodology and limitations](bench/README.md) and [recorded results](bench/results/) for comparisons with a Grep/Read/Edit baseline. These benchmarks use deterministic agent policies, not live LLM sessions.
+**Benchmarks:** See the [benchmark methodology and limitations](bench/README.en.md) ([Tiếng Việt](bench/README.md) · [简体中文](bench/README.zh-CN.md)) and [recorded results](bench/results/) for comparisons with a Grep/Read/Edit baseline. These benchmarks use deterministic agent policies, not live LLM sessions.
 
 **Get started:** [Claude Code setup](#option-1-quick-start-with-claude-code) · [Claude Desktop extension](#option-2-install-as-a-claude-desktop-extension)
 
-**[English](#english) · [Tiếng Việt](#tiếng-việt)**
+**[English](#english) · [Tiếng Việt](#tiếng-việt) · [简体中文](README.zh-CN.md)**
 
 ### How it helps your coding agent
 
@@ -529,9 +529,9 @@ Callers được **kiểm tra bằng type checker cho TS/JS/Vue/Svelte/Astro** v
 
 ## Benchmark
 
-Two simulated agents ran the same tasks — one with only Grep/Read/Edit (like Claude Code's built-in tools), one with spec-nav plus Read/Edit. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file involved. Agents are deterministic policies, not an LLM; the baseline is given an LLM's synonym knowledge and the same generous "if it was read, it was recognised" rule. Method, assumptions and limits: [bench/README.md](bench/README.md). Full reports: [bench/results/](bench/results/).
+Two simulated agents ran the same tasks — one with only Grep/Read/Edit (like Claude Code's built-in tools), one with spec-nav plus Read/Edit. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file involved. Agents are deterministic policies, not an LLM; the baseline is given an LLM's synonym knowledge and the same generous "if it was read, it was recognised" rule. Method, assumptions and limits: [bench/README.en.md](bench/README.en.md). Full reports: [bench/results/](bench/results/).
 
-Hai agent mô phỏng chạy cùng task — một bên chỉ có Grep/Read/Edit, một bên có thêm spec-nav. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Agent là chính sách tất định, không phải LLM; phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng.
+Hai agent mô phỏng chạy cùng task — một bên chỉ có Grep/Read/Edit, một bên có thêm spec-nav. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Agent là chính sách tất định, không phải LLM; phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng. Phương pháp, giả định và giới hạn: [bench/README.md](bench/README.md).
 
 | | Synthetic, 100 sessions | Synthetic, 50 large sessions | immich (real), 20 sessions | immich (real), 10 large sessions |
 |---|---:|---:|---:|---:|

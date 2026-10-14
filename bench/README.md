@@ -1,5 +1,7 @@
 # Benchmark: có MCP vs không MCP
 
+**[English](README.en.md) · Tiếng Việt · [简体中文](README.zh-CN.md)**
+
 So sánh một agent **không có MCP** (chỉ Grep/Read/Edit như tool built-in của Claude Code) với một agent **có MCP** (spec-nav + Read/Edit) trên cùng các task, ở ba chỗ:
 
 | Script | Repo | Đáp án lấy từ đâu |
