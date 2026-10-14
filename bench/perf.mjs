@@ -49,8 +49,21 @@ await client.close();
 
 const files = services.details.reduce((a, d) => a + d.files, 0);
 const functions = services.details.reduce((a, d) => a + d.functions, 0);
-console.log(`\n## Hiệu năng trên ${repo.split("/").pop()}\n`);
-console.log(`- ${files.toLocaleString("en-US")} file được đọc, ${functions.toLocaleString("en-US")} hàm trong catalog, ${services.services.length} project.`);
-console.log(`- Coverage: ${services.coverage}\n`);
-console.log("| Thao tác | Thời gian | RAM server | Output |\n|---|---:|---:|---:|");
-for (const r of rows) console.log(`| ${r.label} | ${r.ms.toLocaleString("en-US")} ms | ${r.rssMb ?? "?"} MB | ${r.outChars.toLocaleString("en-US")} ký tự${r.isError ? " (lỗi)" : ""} |`);
+const name = repo.split("/").pop();
+const n = (x) => x.toLocaleString("en-US");
+const LOCALES = [
+  { heading: "English", title: `Performance on ${name}`, summary: `${n(files)} files read, ${n(functions)} functions in the catalog, ${services.services.length} projects.`,
+    columns: "| Operation | Time | Server RAM | Output |", chars: "chars", error: "error" },
+  { heading: "Tiếng Việt", title: `Hiệu năng trên ${name}`, summary: `${n(files)} file được đọc, ${n(functions)} hàm trong catalog, ${services.services.length} project.`,
+    columns: "| Thao tác | Thời gian | RAM server | Output |", chars: "ký tự", error: "lỗi" },
+  { heading: "简体中文", title: `${name} 上的性能`, summary: `读取 ${n(files)} 个文件，目录中 ${n(functions)} 个函数，${services.services.length} 个项目。`,
+    columns: "| 操作 | 耗时 | Server 内存 | 输出 |", chars: "字符", error: "错误" },
+];
+console.log(`\n**[English](#english) · [Tiếng Việt](#tiếng-việt) · [简体中文](#简体中文)**`);
+for (const t of LOCALES) {
+  console.log(`\n## ${t.heading}\n\n### ${t.title}\n`);
+  console.log(`- ${t.summary}`);
+  console.log(`- Coverage: ${services.coverage}\n`);
+  console.log(`${t.columns}\n|---|---:|---:|---:|`);
+  for (const r of rows) console.log(`| ${r.label} | ${n(r.ms)} ms | ${r.rssMb ?? "?"} MB | ${n(r.outChars)} ${t.chars}${r.isError ? ` (${t.error})` : ""} |`);
+}

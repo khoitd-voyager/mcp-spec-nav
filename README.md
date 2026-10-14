@@ -4,13 +4,15 @@
 
 Giúp AI tìm hàm có sẵn trước khi viết code mới, đọc implementation và tìm các nơi gọi hàm trước khi sửa code trong repo.
 
+帮助 AI 在编写新代码之前查找已有函数，阅读实现，并在修改代码之前找出仓库中的调用方。
+
 **Example:** Before adding an order fee calculation, ask your agent to find and read existing fee functions. Before changing a function's parameters, ask it to find callers and report any unresolved references.
 
-**Benchmarks:** See the [benchmark methodology and limitations](bench/README.en.md) ([Tiếng Việt](bench/README.md) · [简体中文](bench/README.zh-CN.md)) and [recorded results](bench/results/) for comparisons with a Grep/Read/Edit baseline. These benchmarks use deterministic agent policies, not live LLM sessions.
+**Benchmarks:** See the [benchmark methodology and limitations](bench/README.md#english) ([Tiếng Việt](bench/README.md#tiếng-việt) · [简体中文](bench/README.md#简体中文)) and [recorded results](bench/results/) for comparisons with a Grep/Read/Edit baseline. These benchmarks use deterministic agent policies, not live LLM sessions.
 
 **Get started:** [Claude Code setup](#option-1-quick-start-with-claude-code) · [Claude Desktop extension](#option-2-install-as-a-claude-desktop-extension)
 
-**[English](#english) · [Tiếng Việt](#tiếng-việt) · [简体中文](README.zh-CN.md)**
+**[English](#english) · [Tiếng Việt](#tiếng-việt) · [简体中文](#简体中文)**
 
 ### How it helps your coding agent
 
@@ -29,6 +31,15 @@ Giúp AI tìm hàm có sẵn trước khi viết code mới, đọc implementati
 | Muốn tái sử dụng hàm thay vì viết lại | Cao, nếu truy vấn tìm đúng ứng viên. |
 | Sửa tham số hàm, cần tìm callers | Hữu ích. |
 | Sửa đơn giản trong một file | Lợi ích ít, có thể thêm lượt gọi tool. |
+
+### MCP 对编码代理有什么帮助？
+
+| 场景 | MCP 的价值 |
+|---|---|
+| 逻辑分散在多个服务中 | 高：搜索范围广，减少遗漏。 |
+| 想复用已有函数而不是重写 | 高，前提是查询能找到正确的候选。 |
+| 修改函数参数，需要找出调用方 | 有用。 |
+| 在单个文件内做简单修改 | 收益有限，可能增加工具调用次数。 |
 
 ## English
 
@@ -469,7 +480,7 @@ Ví dụ tham số cho agent gọi tool — không phải lệnh terminal:
 | `spec_nav_read_function` | `{ "file": "services/billing/src/fees.ts", "name": "calculateFee" }` |
 | `spec_nav_functions` | `{ "services": ["services/api"], "name": "fee", "limit": 100 }` |
 | `spec_nav_callers` | `{ "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }` |
-| `spec_nav_map` | `{ "pattern": "handling_fee|handlingFee|HANDLING_FEE" }` |
+| `spec_nav_map` | `{ "pattern": "handling_fee\|handlingFee\|HANDLING_FEE" }` |
 
 Thay đường dẫn và tên hàm ví dụ bằng kết quả thực tế từ repo của bạn. Đọc hàm cũng có thể dùng `id` do tool trả về.
 
@@ -497,9 +508,224 @@ Thay đường dẫn và tên hàm ví dụ bằng kết quả thực tế từ 
 | Extension trên Claude Desktop không chạy | Kiểm tra đã chọn **Repository to scan** và đã bật extension trong **Settings → Extensions**; xem log MCP ở **Settings → Developer**. |
 | Claude Desktop quét sai repo | Đổi **Repository to scan** trong cài đặt extension rồi mở chat mới. |
 
+## 简体中文
+
+### 它做什么？
+
+`mcp-spec-nav` 是供 Claude Code 等编码代理使用的本地 MCP server。它读取你指定仓库中的源代码，并提供以下工具：
+
+- 跨服务和共享包查找已有函数——按关键词、按它调用的函数，或按与草稿代码的行为相似度。
+- 读取函数源码、签名、文档以及相关 import。
+- 修改函数前查找调用方：TypeScript/JavaScript/Vue 经类型检查器确认；Python、Go、Java、Kotlin、Swift 等其他语言基于证据（import、限定符、接收者类型…）判断；动态调用单独列出。
+- 在受支持的源文件中按正则搜索，并给出每个匹配所在的函数。
+
+**示例：** 你让 Claude 新增订单费用计算。Claude 不会立刻再写一个实现，而是先在 billing 服务和共享包中查找已有的费用函数，阅读之后再判断是否可以复用。
+
+MCP 负责读取代码并提供信息；由编码代理决定复用什么并完成修改。它不保证能找到所有相关函数。
+
+### 选择安装方式
+
+| | 方式一：`.mcp.json` | 方式二：Claude Desktop 扩展（`.mcpb`） |
+|---|---|---|
+| 客户端 | Claude Code（以及其他读取 `.mcp.json` 的客户端） | Claude Desktop |
+| 需要 | Node.js 18+、npm/npx、Git | 只需 Claude Desktop——扩展使用其内置的 Node.js 运行 |
+| 指定要扫描的仓库 | 配置文件中的 `SPEC_NAV_ROOT` | 扩展设置中的文件夹选择器 |
+| 适合 | 写代码：Claude 在仓库中阅读、规划并修改代码 | 了解代码：在对话中查找、阅读和检查函数 |
+
+两种方式运行的是同一个 server、同一套工具，可以同时使用。
+
+### 方式一：用 Claude Code 快速开始
+
+**需要：** Node.js 18 或更高版本、npm/npx、Git，以及要扫描的仓库的本地副本。首次安装需要联网。
+
+#### 1. 添加 MCP 配置
+
+在目标仓库根目录创建 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "spec-nav": {
+      "command": "npx",
+      "args": ["-y", "github:khoitd-voyager/mcp-spec-nav"],
+      "env": {
+        "SPEC_NAV_ROOT": "/Users/you/code/your-repo"
+      }
+    }
+  }
+}
+```
+
+**把 `/Users/you/code/your-repo` 替换为要扫描的代码的绝对路径。** 想覆盖多个服务时，指向 monorepo 根目录。这里填的是你的目标仓库，而不是 `mcp-spec-nav` 的安装目录。
+
+如果已有 `.mcp.json`，把 `spec-nav` 加到现有的 `mcpServers` 对象里，保留其他 MCP 配置。
+
+#### 2. 检查连接
+
+在该仓库中打开 Claude Code，重启会话并运行：
+
+```text
+/mcp
+```
+
+确认 `spec-nav` 已连接。如果客户端要求批准配置，请完成批准。
+
+然后发送给 Claude：
+
+```text
+使用 spec-nav 列出这个仓库中的服务。
+显示实际扫描的仓库根目录，以及无法扫描的文件。
+```
+
+确认根目录和服务列表与项目一致后再继续。
+
+#### 3. 在真实任务上试用
+
+你不需要自己调用工具。把下面任意一段复制到 Claude Code：
+
+**查找可复用的代码**
+
+```text
+在实现订单费用计算之前，使用 spec-nav 在所有服务和共享包中搜索已有函数。
+可同时使用英文关键词，例如 calculate order fees。阅读最相关的候选，
+说明是否有可以复用的。导入之前检查依赖关系和服务边界。
+```
+
+**修改前检查调用方**
+
+```text
+我想给 calculateFee 增加一个参数。使用 spec-nav 找到它的声明，
+阅读实现并检查所有调用方，然后再规划修改。
+报告无法解析的调用方。
+```
+
+**跨服务梳理一项变更**
+
+```text
+我想修改 handling fee。使用 spec-nav 梳理整个仓库中相关的常量、函数和用法，
+包括不同的拼写方式。在声称梳理完整之前，检查覆盖率是否不完整以及是否还有剩余分页。
+```
+
+### 方式二：安装为 Claude Desktop 扩展
+
+**需要：** Claude Desktop，以及要扫描的仓库的本地副本。不需要安装 Node.js。
+
+#### 1. 获取 `.mcpb` 文件
+
+从 [Releases](https://github.com/khoitd-voyager/mcp-spec-nav/releases) 页面下载 `mcp-spec-nav-<version>.mcpb`，或自行构建：
+
+```bash
+git clone https://github.com/khoitd-voyager/mcp-spec-nav.git
+cd mcp-spec-nav
+npm install
+npm run pack:mcpb
+```
+
+文件生成在 `build/mcp-spec-nav-<version>.mcpb`。
+
+#### 2. 安装
+
+双击 `.mcpb` 文件，或打开 Claude Desktop → **Settings → Extensions → Advanced settings → Install Extension…** 并选择该文件。查看扩展信息后点击 **Install**。
+
+#### 3. 选择仓库
+
+在扩展设置中，把 **Repository to scan** 设为要扫描的代码根目录（指向 monorepo 根目录即可覆盖所有服务），然后启用扩展。
+
+之后想扫描其他仓库，打开 **Settings → Extensions → Spec Nav → Configure** 选择另一个文件夹。扩展一次只扫描一个仓库。
+
+#### 4. 检查
+
+新建对话并发送：
+
+```text
+使用 spec-nav 列出这个仓库中的服务。
+显示实际扫描的仓库根目录，以及无法扫描的文件。
+```
+
+[在真实任务上试用](#3-在真实任务上试用) 中的提示词同样适用于 Claude Desktop。Claude Desktop 负责阅读和解释代码；要让 Claude 直接修改仓库中的代码，请使用 Claude Code。
+
+### 让 Claude 在日常编码中使用它
+
+安装 MCP 只是让工具可用，并不保证代理会去调用。把下面这段加入项目的 `CLAUDE.md`：
+
+```markdown
+## 编写新逻辑之前先查找已有代码
+
+对于新逻辑，或会影响其他函数的修改：
+
+1. 用 spec_nav_find_functions 在各服务中查找已有实现。
+   代码用英文命名时使用英文关键词；必要时换一种说法再试。
+2. 用 spec_nav_read_function 阅读最相关的候选。
+   避免把整个函数目录或所有函数体加载进上下文。
+   找不到合适的函数时，先写草稿，再交给 spec_nav_similar_functions。
+3. 复用前检查行为、导出、依赖和服务边界。
+   其他服务的函数并不一定可以直接导入。
+4. 修改函数签名或行为之前使用 spec_nav_callers。
+   手动检查标记为 likely、ambiguous、unresolved 或 dynamic 的位置。
+   涉及多个文件或服务的概念，用一个宽泛的正则配合 spec_nav_map。
+5. 查看覆盖率和未解析结果。需要完整结果时继续翻页（cursor）；
+   对不支持或缺失的部分，使用普通搜索和文件读取。
+6. 修改完成后，重新执行相关查询，并运行项目相应的检查。
+
+按任务规模取舍。小而独立的修改不需要用到每个工具。
+搜索结果只是候选，找不到并不能证明仓库里没有其他实现。
+```
+
+其他代理请把这段改写到各自的项目说明文件中，例如 `AGENTS.md`。
+
+### 工具参考
+
+| 工具 | 用途 |
+|---|---|
+| `spec_nav_services` | 检查扫描根目录、发现的项目、文件/函数数量和覆盖率。 |
+| `spec_nav_find_functions` | 跨服务查找可能满足需求的函数，排序并说明匹配原因。 |
+| `spec_nav_similar_functions` | 查找行为与某个函数或草稿相似的函数，即使名称完全不同。 |
+| `spec_nav_read_function` | 读取某个函数的精确源码，以及签名、文档和相关 import。 |
+| `spec_nav_functions` | 按条件筛选、分页浏览函数目录。 |
+| `spec_nav_callers` | 检查调用、引用、动态调用以及无法解析的用法。 |
+| `spec_nav_map` | 查找匹配正则的行，并给出所在函数。 |
+
+供代理调用工具的参数示例——不是终端命令：
+
+| 工具 | 参数示例 |
+|---|---|
+| `spec_nav_services` | `{}` |
+| `spec_nav_find_functions` | `{ "query": "calculate order fees", "limit": 20 }` |
+| `spec_nav_similar_functions` | `{ "code": "function shippingCost(order) { … }" }` 或 `{ "id": "<id>" }` |
+| `spec_nav_read_function` | `{ "file": "services/billing/src/fees.ts", "name": "calculateFee" }` |
+| `spec_nav_functions` | `{ "services": ["services/api"], "name": "fee", "limit": 100 }` |
+| `spec_nav_callers` | `{ "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }` |
+| `spec_nav_map` | `{ "pattern": "handl(e\|ing)_?fee\|handling_charge\|HANDLING_FEE" }` |
+
+请用你仓库中的实际结果替换示例路径和函数名。读取函数也可以使用工具返回的 `id`；函数较长时，把返回的 `nextCursor` 作为 `cursor` 继续读取。`spec_nav_callers` 可用限定名（如 `OrderService.calculateFee`）或声明所在文件消除歧义；`spec_nav_map` 不区分大小写，默认跳过注释和 import 行（`includeComments: true` 可包含它们）。
+
+### 理解结果
+
+- **MORE / nextCursor：** 还有更多结果。用同样的查询加上 cursor 再调用。分页取完不等于仓库中所有类型的文件都已受支持。
+- **PARTIAL / 覆盖率：** 有部分内容未能读取，例如语言不受支持、文件解析出错或被跳过。请用其他工具进一步检查。
+- **via calls / body only：** 候选仅通过它调用的函数名匹配，或仅在函数体中匹配；排序在名称/签名/文档匹配的候选之后。过于宽泛的结果可能被隐藏以减少噪声，工具会报告数量。
+- **相似度：** 代码看起来相像（相同的调用、相同的词汇），不代表可以互相替换。
+- **likely / ambiguous / dynamic / unresolved：** 依次表示：只有一个同名声明但尚未证实；可能匹配多个声明；名称以字符串/符号形式出现（动态调用）；无法确定。不要把它们视为已确认的调用方。即使 `exhaustive: true`（仅限经类型检查的目标），也不涵盖运行时拼接的名称、HTTP/RPC/队列调用或外部仓库。
+- **STALE ID：** 函数已被修改或不在原来的位置。重新查找并使用当前 ID 读取。
+
+`services: ["."]` 只选择根项目自身的文件。省略 `services` 则覆盖整个仓库。新增、修改、删除的文件会在后续调用中更新。
+
+### 故障排查
+
+| 现象 | 检查方法 |
+|---|---|
+| MCP 无法连接 | 检查 Node.js/npm/Git、配置是否有效，以及安装时能否访问 GitHub。 |
+| 服务不对或找不到源文件 | 让 Claude 调用 `spec_nav_services`，检查 `SPEC_NAV_ROOT` 和当前会话使用的配置文件。 |
+| 缺少某个函数 | 检查过滤条件、覆盖率、语言以及受支持的函数形式。 |
+| 搜索不到合适的函数 | 换用其他英文关键词、浏览函数目录，或使用普通搜索。 |
+| 读取函数时报告 stale | 重新查找该函数并使用当前 ID。 |
+| 修改了 MCP 源码但结果不变 | `npx github:` 使用已提交的包；开发时请使用下方的本地配置。 |
+| Claude Desktop 扩展无法运行 | 确认已设置 **Repository to scan** 并在 **Settings → Extensions** 中启用扩展；在 **Settings → Developer** 查看 MCP 日志。 |
+| Claude Desktop 扫描了错误的仓库 | 在扩展设置中修改 **Repository to scan**，然后新建对话。 |
+
 ## Supported languages / Ngôn ngữ hỗ trợ
 
-| Language / Ngôn ngữ | Extensions / Đuôi file |
+| Language / Ngôn ngữ / 语言 | Extensions / Đuôi file / 文件扩展名 |
 |---|---|
 | TypeScript | `.ts`, `.tsx`, `.mts`, `.cts` |
 | JavaScript | `.js`, `.jsx`, `.mjs`, `.cjs` |
@@ -527,11 +753,17 @@ TS/JS hỗ trợ declaration có tên, method, accessor, arrow/function expressi
 
 Callers được **kiểm tra bằng type checker cho TS/JS/Vue/Svelte/Astro** và **theo bằng chứng cho mọi ngôn ngữ còn lại**.
 
+TS/JS 支持具名声明、方法、访问器、保存在变量或属性中的箭头函数/函数表达式、受支持的赋值形式以及 CommonJS 导出；Vue/Svelte/Astro 组件按其 `<script>`（及 frontmatter）读取，行号保持不变。Kotlin 和 Swift 使用结构化扫描器读取（精确识别字符串、插值、嵌套注释和括号；识别 class、object、extension、`fun`/`func`、`init`/`constructor`、表达式函数体、闭包和计算属性），因为现有的 tree-sitter 语法在这里无法稳定解析它们。其他语言使用 tree-sitter。
+
+调用方分析在 **TS/JS/Vue/Svelte/Astro 中经类型检查**，在 **其他所有受支持语言中基于证据**。
+
 ## Benchmark
 
-Two simulated agents ran the same tasks — one with only Grep/Read/Edit (like Claude Code's built-in tools), one with spec-nav plus Read/Edit. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file involved. Agents are deterministic policies, not an LLM; the baseline is given an LLM's synonym knowledge and the same generous "if it was read, it was recognised" rule. Method, assumptions and limits: [bench/README.en.md](bench/README.en.md). Full reports: [bench/results/](bench/results/).
+Two simulated agents ran the same tasks — one with only Grep/Read/Edit (like Claude Code's built-in tools), one with spec-nav plus Read/Edit. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file involved. Agents are deterministic policies, not an LLM; the baseline is given an LLM's synonym knowledge and the same generous "if it was read, it was recognised" rule. Method, assumptions and limits: [bench/README.md](bench/README.md#english). Full reports: [bench/results/](bench/results/).
 
-Hai agent mô phỏng chạy cùng task — một bên chỉ có Grep/Read/Edit, một bên có thêm spec-nav. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Agent là chính sách tất định, không phải LLM; phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng. Phương pháp, giả định và giới hạn: [bench/README.md](bench/README.md).
+Hai agent mô phỏng chạy cùng task — một bên chỉ có Grep/Read/Edit, một bên có thêm spec-nav. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Agent là chính sách tất định, không phải LLM; phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng. Phương pháp, giả định và giới hạn: [bench/README.md](bench/README.md#tiếng-việt).
+
+两个模拟代理执行相同的任务——一个只有 Grep/Read/Edit，另一个额外有 spec-nav。每个会话是一个完整的功能需求：复用已有逻辑、修改一个函数的签名并更新所有调用方、在所有位置修改一个常量，然后阅读并修改每个文件。代理是确定性策略，不是 LLM；无 MCP 一侧预先获得了 LLM 式的同义词知识，并采用同样宽松的评分规则。方法、假设与局限：[bench/README.md](bench/README.md#简体中文)。
 
 | | Synthetic, 100 sessions | Synthetic, 50 large sessions | immich (real), 20 sessions | immich (real), 10 large sessions |
 |---|---:|---:|---:|---:|
@@ -549,7 +781,11 @@ Reading what you will edit costs the same either way; the saving is in the searc
 
 Phần đọc file để sửa tốn như nhau; khoản tiết kiệm nằm ở pha tìm kiếm. Với thay đổi nhỏ, một khái niệm, lợi ích ít — và mỗi lượt có MCP mang thêm ~3,8k token định nghĩa tool. Chất lượng tăng nhờ tìm được code dù tên khác (reuse) và không sửa nhầm lời gọi trùng tên ở class khác (callers).
 
-**Large repository / Repo rất lớn** — VS Code (14,306 files, ~4.5M lines, 154k catalogued functions), Apple M4: first index 31 s, then `find_functions` 2.6–4.3 s, `map` 0.5–1.8 s, `similar_functions` 0.9 s, `read_function` 0.15 s; `callers` 16 s for an ordinary function, 90 s and 3 GB RAM for a name mentioned in 822 files (`readFile`). Server memory 0.7–0.9 GB outside `callers`. Details: [bench/results/perf-vscode.md](bench/results/perf-vscode.md).
+无论哪种方式，读取要修改的文件成本相同；节省来自搜索阶段。对于小型、单一概念的修改收益很小——而且每个有 MCP 的轮次都会多带约 3.8k token 的工具定义。质量提升来自于找到名称不同的代码（复用），以及不误改其他类上同名方法的调用（调用方）。
+
+**Large repository / Repo rất lớn / 超大仓库** — VS Code (14,306 files, ~4.5M lines, 154k catalogued functions), Apple M4: first index 31 s, then `find_functions` 2.6–4.3 s, `map` 0.5–1.8 s, `similar_functions` 0.9 s, `read_function` 0.15 s; `callers` 16 s for an ordinary function, 90 s and 3 GB RAM for a name mentioned in 822 files (`readFile`). Server memory 0.7–0.9 GB outside `callers`. Details: [bench/results/perf-vscode.md](bench/results/perf-vscode.md).
+
+VS Code（14,306 个文件，约 450 万行，154k 个函数入目录），Apple M4：首次索引 31 s，之后 `find_functions` 2.6–4.3 s、`map` 0.5–1.8 s、`similar_functions` 0.9 s、`read_function` 0.15 s；普通函数的 `callers` 16 s，对在 822 个文件中出现的名称（`readFile`）需要 90 s 和 3 GB 内存。`callers` 之外 server 内存为 0.7–0.9 GB。
 
 ```bash
 npm run bench                                   # synthetic: 100 + 50 large sessions
@@ -559,29 +795,33 @@ node bench/perf.mjs --repo /path/to/huge/repo   # timings and memory
 
 ## Limits / Giới hạn
 
-| Area / Phần | English | Tiếng Việt |
-|---|---|---|
-| Search | Words, called names, abbreviations, synonym and concept lists, IDF — still lexical. `spec_nav_similar_functions` finds same-behaviour code under unrelated names only when it shares calls or vocabulary; two implementations written with nothing in common are missed. | Tìm theo từ, tên hàm được gọi, viết tắt, đồng nghĩa, khái niệm, IDF — vẫn là từ vựng. `spec_nav_similar_functions` tìm được code cùng hành vi khác tên khi chúng có chung lời gọi/từ vựng; hai cách viết không chung gì thì vẫn sót. |
-| Translation | Vietnamese written with diacritics is matched through a built-in dictionary of ~100 common domain terms; other words are not translated. | Tiếng Việt có dấu được dịch qua từ điển ~100 thuật ngữ phổ biến; từ ngoài từ điển không được dịch. |
-| Reuse | Check exports, behavior and package/service dependencies yourself. | Cần kiểm tra export, hành vi và dependency trước khi tái sử dụng. |
-| Callers | Outside TS/JS, binding is by evidence (imports, qualifiers, declared receiver types), not a type checker: inferred types, inheritance and overloads can leave sites `likely`/`ambiguous`. Names built at runtime, HTTP/RPC/queue calls and external repositories are not traced. | Ngoài TS/JS, gắn lời gọi theo bằng chứng (import, qualifier, kiểu receiver được khai báo), không có type checker: kiểu suy luận, kế thừa, overload có thể để lại `likely`/`ambiguous`. Tên ghép lúc chạy, gọi qua HTTP/RPC/queue và repo ngoài không được lần theo. |
-| Anonymous callbacks | Inline anonymous callbacks are not individually catalogued; JS/TS counts them in coverage. | Callback anonymous không có mục riêng; coverage đếm chúng trong JS/TS. |
-| Function forms | JS/TS destructuring assignments, dynamic property assignments, factory-created functions, `Object.assign`/`Object.defineProperty` and some chained assignments are not fully covered. Other-language assigned lambdas/closures are not catalogued. | Chưa bao phủ đầy đủ assignment qua destructuring/property động, hàm từ factory, `Object.assign`/`Object.defineProperty` và một số gán nối. Lambda/closure gán biến ở ngôn ngữ khác chưa có trong danh mục. |
-| Unsupported files | Dart, Lua, Objective-C, SQL and other unsupported source types are not parsed (they are counted in coverage). | Không parse Dart, Lua, Objective-C, SQL và các loại nguồn chưa hỗ trợ (có đếm trong coverage). |
-| Exclusions | Dependency/build directories, hidden directories, virtualenvs, declaration files, minified JS and supported files over 1.5 MB are excluded. | Bỏ qua dependency/build, thư mục ẩn, virtualenv, file declaration, JS minified và file hỗ trợ lớn hơn 1,5 MB. |
-| Types | Return types are reported when explicitly written; they are not inferred by the catalog. | Danh mục lấy kiểu trả về được khai báo, không suy luận kiểu. |
-| Large repos | Measured on VS Code (14k files): first index ~31 s, searches seconds. TS/JS callers type-check only files that mention the name, in batches, following imports two steps; for a very common name this takes minutes and ~3 GB, and calls whose receiver type lies further away are reported `unresolved`. | Đo trên VS Code (14k file): index lần đầu ~31 s, tìm kiếm vài giây. Callers TS/JS chỉ type-check file nhắc tới tên, theo lô, lần import 2 bước; tên rất phổ biến tốn vài phút và ~3 GB, lời gọi có kiểu receiver nằm xa hơn được báo `unresolved`. |
-| Dependencies | TS/JS type resolution is best with dependencies installed (`node_modules`); without them, library types are unknown and more calls end up `unresolved`. | Resolve kiểu TS/JS tốt nhất khi đã cài dependency (`node_modules`); thiếu thì kiểu thư viện không có và nhiều lời gọi thành `unresolved`. |
+| Area / Phần | English | Tiếng Việt | 简体中文 |
+|---|---|---|---|
+| Search | Words, called names, abbreviations, synonym and concept lists, IDF — still lexical. `spec_nav_similar_functions` finds same-behaviour code under unrelated names only when it shares calls or vocabulary; two implementations written with nothing in common are missed. | Tìm theo từ, tên hàm được gọi, viết tắt, đồng nghĩa, khái niệm, IDF — vẫn là từ vựng. `spec_nav_similar_functions` tìm được code cùng hành vi khác tên khi chúng có chung lời gọi/từ vựng; hai cách viết không chung gì thì vẫn sót. | 基于词、被调用名称、缩写、同义词和概念列表、IDF——本质仍是词汇匹配。`spec_nav_similar_functions` 只有在代码共享调用或词汇时，才能找到名称无关但行为相同的代码；两段毫无共同点的实现仍会遗漏。 |
+| Translation | Vietnamese written with diacritics is matched through a built-in dictionary of ~100 common domain terms; other words are not translated. | Tiếng Việt có dấu được dịch qua từ điển ~100 thuật ngữ phổ biến; từ ngoài từ điển không được dịch. | 带声调的越南语通过内置的约 100 个常用领域术语词典进行匹配；其他词不翻译。中文查询不会被翻译，请使用英文关键词。 |
+| Reuse | Check exports, behavior and package/service dependencies yourself. | Cần kiểm tra export, hành vi và dependency trước khi tái sử dụng. | 请自行检查导出、行为以及包/服务依赖。 |
+| Callers | Outside TS/JS, binding is by evidence (imports, qualifiers, declared receiver types), not a type checker: inferred types, inheritance and overloads can leave sites `likely`/`ambiguous`. Names built at runtime, HTTP/RPC/queue calls and external repositories are not traced. | Ngoài TS/JS, gắn lời gọi theo bằng chứng (import, qualifier, kiểu receiver được khai báo), không có type checker: kiểu suy luận, kế thừa, overload có thể để lại `likely`/`ambiguous`. Tên ghép lúc chạy, gọi qua HTTP/RPC/queue và repo ngoài không được lần theo. | 在 TS/JS 之外，绑定依据证据（import、限定符、声明的接收者类型），而非类型检查器：推断类型、继承和重载可能使位置停留在 `likely`/`ambiguous`。运行时拼接的名称、HTTP/RPC/队列调用和外部仓库不会被追踪。 |
+| Anonymous callbacks | Inline anonymous callbacks are not individually catalogued; JS/TS counts them in coverage. | Callback anonymous không có mục riêng; coverage đếm chúng trong JS/TS. | 内联匿名回调不会单独入目录；JS/TS 会在覆盖率中统计它们。 |
+| Function forms | JS/TS destructuring assignments, dynamic property assignments, factory-created functions, `Object.assign`/`Object.defineProperty` and some chained assignments are not fully covered. Other-language assigned lambdas/closures are not catalogued. | Chưa bao phủ đầy đủ assignment qua destructuring/property động, hàm từ factory, `Object.assign`/`Object.defineProperty` và một số gán nối. Lambda/closure gán biến ở ngôn ngữ khác chưa có trong danh mục. | JS/TS 的解构赋值、动态属性赋值、工厂创建的函数、`Object.assign`/`Object.defineProperty` 以及部分链式赋值尚未完全覆盖。其他语言中赋值给变量的 lambda/闭包不会入目录。 |
+| Unsupported files | Dart, Lua, Objective-C, SQL and other unsupported source types are not parsed (they are counted in coverage). | Không parse Dart, Lua, Objective-C, SQL và các loại nguồn chưa hỗ trợ (có đếm trong coverage). | Dart、Lua、Objective-C、SQL 等不受支持的源文件类型不会被解析（但计入覆盖率统计）。 |
+| Exclusions | Dependency/build directories, hidden directories, virtualenvs, declaration files, minified JS and supported files over 1.5 MB are excluded. | Bỏ qua dependency/build, thư mục ẩn, virtualenv, file declaration, JS minified và file hỗ trợ lớn hơn 1,5 MB. | 排除依赖/构建目录、隐藏目录、虚拟环境、声明文件、压缩过的 JS，以及超过 1.5 MB 的受支持文件。 |
+| Types | Return types are reported when explicitly written; they are not inferred by the catalog. | Danh mục lấy kiểu trả về được khai báo, không suy luận kiểu. | 只报告显式书写的返回类型；目录不做类型推断。 |
+| Large repos | Measured on VS Code (14k files): first index ~31 s, searches seconds. TS/JS callers type-check only files that mention the name, in batches, following imports two steps; for a very common name this takes minutes and ~3 GB, and calls whose receiver type lies further away are reported `unresolved`. | Đo trên VS Code (14k file): index lần đầu ~31 s, tìm kiếm vài giây. Callers TS/JS chỉ type-check file nhắc tới tên, theo lô, lần import 2 bước; tên rất phổ biến tốn vài phút và ~3 GB, lời gọi có kiểu receiver nằm xa hơn được báo `unresolved`. | 在 VS Code（14k 个文件）上测得：首次索引约 31 s，搜索数秒。TS/JS 调用方分析只对提及该名称的文件分批做类型检查，沿 import 追踪两层；对于非常常见的名称需要数分钟和约 3 GB 内存，接收者类型位于更远处的调用会报告为 `unresolved`。 |
+| Dependencies | TS/JS type resolution is best with dependencies installed (`node_modules`); without them, library types are unknown and more calls end up `unresolved`. | Resolve kiểu TS/JS tốt nhất khi đã cài dependency (`node_modules`); thiếu thì kiểu thư viện không có và nhiều lời gọi thành `unresolved`. | 已安装依赖（`node_modules`）时 TS/JS 类型解析效果最好；未安装时库类型未知，更多调用会变成 `unresolved`。 |
 
 The server reads the current local checkout. No search API key is required, and its search does not send code to an external search service. Results are returned to your connected coding agent; that client's model/data handling settings still apply.
 
 Server đọc checkout local hiện tại. Không cần API key tìm kiếm và phần tìm kiếm không gửi code tới dịch vụ search bên ngoài. Kết quả được trả cho coding agent đã kết nối; cách client/model xử lý dữ liệu vẫn theo cấu hình của bạn.
+
+server 读取当前的本地代码副本。不需要搜索 API 密钥，搜索过程也不会把代码发送到外部搜索服务。结果返回给已连接的编码代理；该客户端对模型和数据的处理仍遵循你的配置。
 
 ## Local installation / Cài từ source
 
 Use this when developing the MCP or testing changes before pushing them.
 
 Dùng cách này khi phát triển MCP hoặc thử thay đổi chưa push.
+
+在开发本 MCP 或测试尚未推送的修改时使用。
 
 ```bash
 git clone https://github.com/khoitd-voyager/mcp-spec-nav.git
@@ -590,7 +830,7 @@ npm install
 npm run build
 ```
 
-Configure `.mcp.json` with absolute paths / Cấu hình `.mcp.json` bằng đường dẫn tuyệt đối:
+Configure `.mcp.json` with absolute paths / Cấu hình `.mcp.json` bằng đường dẫn tuyệt đối / 用绝对路径配置 `.mcp.json`：
 
 ```json
 {
@@ -610,6 +850,8 @@ Configure `.mcp.json` with absolute paths / Cấu hình `.mcp.json` bằng đư�
 
 `args` trỏ tới bản cài MCP; `SPEC_NAV_ROOT` trỏ tới code cần quét. Sau khi sửa source MCP, build lại và khởi động lại session client.
 
+`args` 指向 MCP 的安装位置；`SPEC_NAV_ROOT` 指向要扫描的代码。修改 MCP 源码后，重新构建并重启客户端会话。
+
 ## Development / Phát triển
 
 ```bash
@@ -621,7 +863,9 @@ npm test
 
 `npm test` build bundle rồi kiểm thử qua MCP stdio trên các repo mẫu.
 
-### Package the Claude Desktop extension / Đóng gói extension cho Claude Desktop
+`npm test` 会构建 bundle，并在示例仓库上通过 MCP stdio 进行测试。
+
+### Package the Claude Desktop extension / Đóng gói extension cho Claude Desktop / 打包 Claude Desktop 扩展
 
 ```bash
 npm run pack:mcpb
@@ -631,7 +875,9 @@ This builds `dist/index.cjs`, stages it under `build/mcpb/` with `manifest.json`
 
 Lệnh này build `dist/index.cjs`, gom vào `build/mcpb/` cùng `manifest.json`, `web-tree-sitter` và chỉ các file `.wasm` của grammar, kiểm tra manifest rồi tạo `build/mcp-spec-nav-<version>.mcpb`. Manifest được sinh từ [scripts/pack-mcpb.mjs](scripts/pack-mcpb.mjs), version lấy từ `package.json`. Muốn phát hành thì đính kèm file `.mcpb` vào GitHub release.
 
-To run the tests against the packed extension instead of `dist/` / Chạy test trên bản extension đã đóng gói thay vì `dist/`:
+该命令构建 `dist/index.cjs`，将其连同 `manifest.json`、`web-tree-sitter` 和语法的 `.wasm` 文件放入 `build/mcpb/`，校验 manifest，并生成 `build/mcp-spec-nav-<version>.mcpb`。manifest 由 [scripts/pack-mcpb.mjs](scripts/pack-mcpb.mjs) 生成，版本号取自 `package.json`。发布时把 `.mcpb` 文件附加到 GitHub release。
+
+To run the tests against the packed extension instead of `dist/` / Chạy test trên bản extension đã đóng gói thay vì `dist/` / 针对打包后的扩展（而非 `dist/`）运行测试：
 
 ```bash
 unzip -q build/mcp-spec-nav-<version>.mcpb -d /tmp/spec-nav-mcpb
@@ -642,6 +888,8 @@ These checks validate the tested scenarios. They do not establish that an agent 
 
 Các kiểm tra xác nhận tình huống đã test, không chứng minh AI sẽ code tốt hơn trong mọi task. Xem [Benchmark](#benchmark) để biết số đo có/không MCP, và chạy `bench/real.mjs` trên repo của bạn.
 
+这些检查验证的是已测试的场景，并不能证明代理在每个任务上都会写出更好的代码。有/无 MCP 的对比数据见 [Benchmark](#benchmark)，也可以在你自己的仓库上运行 `bench/real.mjs`。
+
 ## License / Giấy phép
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). / MIT，见 [LICENSE](LICENSE)。

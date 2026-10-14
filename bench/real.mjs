@@ -280,7 +280,7 @@ async function main() {
     console.error(`[${String(i + 1).padStart(3)}/${sessions.length}] ${s.id.padEnd(11)} no-MCP ${f(row.baseline)} | MCP ${f(row.mcp)} ${row.mcp.toolMs} ms ${row.mcp.serverRssMb ?? "?"} MB`);
   }
   const payload = {
-    meta: { repoLabel: `${label} (repo thật; đáp án: findReferences của TypeScript, doc comment, ripgrep)`, files: files.length, lines, schemaTokens, baseContext: 0, charsPerToken: CHARS_PER_TOKEN, headLimit: HEAD_LIMIT, perLarge, date: new Date().toISOString() },
+    meta: { repoLabel: label, realRepo: true, files: files.length, lines, schemaTokens, baseContext: 0, charsPerToken: CHARS_PER_TOKEN, headLimit: HEAD_LIMIT, perLarge, date: new Date().toISOString() },
     results,
   };
   writeFileSync(join(outDir, `real-${stamp}.json`), JSON.stringify(payload, null, 2));
