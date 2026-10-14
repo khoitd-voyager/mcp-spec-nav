@@ -46,7 +46,7 @@ head=re.search(r'<head>(.*?)</head>',source,re.S).group(1)
 head=re.sub(r'<meta charset="utf-8">','',head)
 head=re.sub(r'<title>.*?</title>','',head,flags=re.S)
 head=re.sub(r'<meta\b[^>]*\b(?:name|property)="(?:description|robots|twitter:[^"]+|og:[^"]+)"[^>]*>','',head)
-head=re.sub(r'<link\b[^>]*\brel="(?:canonical|alternate)"[^>]*>','',head)
+head=re.sub(r'<link\b[^>]*\brel="(?:canonical|alternate|icon|apple-touch-icon)"[^>]*>','',head)
 head=re.sub(r'<script type="application/ld\+json">.*?</script>','',head,flags=re.S)
 size=(DOCS/'assets/social-preview.png').read_bytes()[16:24];width,height=struct.unpack('>II',size)
 class Localize(HTMLParser):
@@ -72,6 +72,9 @@ for locale,url in URLS.items():
  metadata=f'<title>{escape(TITLES[locale])}</title><meta name="description" content="{escape(DESCRIPTIONS[locale],quote=True)}"><meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href="{url}">'
  for lang,target in URLS.items():metadata+=f'<link rel="alternate" hreflang="{LANG[lang]}" href="{target}">'
  metadata+=f'<link rel="alternate" hreflang="x-default" href="{BASE}">'
+ # Relative icon paths work both on Pages and when a page is previewed as a file.
+ assets='assets/' if locale=='en' else '../assets/'
+ metadata+=f'<link rel="icon" href="{assets}favicon.svg" type="image/svg+xml"><link rel="icon" href="{assets}favicon-96.png" type="image/png" sizes="96x96"><link rel="apple-touch-icon" href="{assets}apple-touch-icon.png">'
  props={'og:type':'website','og:title':TITLES[locale],'og:description':DESCRIPTIONS[locale],'og:url':url,'og:site_name':'mcp-spec-nav','og:locale':LOCALES[locale],'og:image':BASE+'assets/social-preview.png','og:image:width':str(width),'og:image:height':str(height),'og:image:type':'image/png','og:image:alt':'mcp-spec-nav — Give your agent a map of your code.'}
  for name,value in props.items():metadata+=f'<meta property="{name}" content="{escape(value,quote=True)}">'
  for lang,value in LOCALES.items():
