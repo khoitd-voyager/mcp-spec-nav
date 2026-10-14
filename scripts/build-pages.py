@@ -21,6 +21,7 @@ translations=json.loads(m.group(1))
 translations.update({'Reuse code':{'vi':'Dùng lại code','zh':'复用代码'},'Check callers':{'vi':'Kiểm tra callers','zh':'检查调用方'},'Survey a change':{'vi':'Khảo sát thay đổi','zh':'梳理修改范围'}})
 source=source[:m.start(1)]+json.dumps(translations,ensure_ascii=False)+source[m.end(1):]
 source=re.sub(r' selected(?=[ >])','',source)
+source=source.replace('<option value="real-large"','<option value="real-large" selected',1)
 source=re.sub(r' aria-current="page"','',source)
 # Language URLs determine the initial locale. A preview opened as a file still switches in place.
 source=re.sub(r"let siteLanguage='en';try\{.*?\}catch\{\}","let siteLanguage=document.documentElement.lang.startsWith('zh')?'zh':document.documentElement.lang==='vi'?'vi':'en';",source,count=1)
@@ -32,14 +33,14 @@ links='<div class="locale-links" aria-label="Available languages">'+ ' · '.join
 if 'class="locale-links"' not in source:source=source.replace('<footer>','<footer>'+links,1)
 if '.locale-links{' not in source:source=source.replace('</style>','.locale-links{text-align:center;font-size:12px;padding:0 15px 16px}.locale-links a{padding:4px 8px}.locale-links a[aria-current="page"]{color:var(--accent);font-weight:700}</style>',1)
 # Pre-render chart values so the results are readable without JavaScript.
-benchmark=json.loads(re.search(r'const benchmarkData=(.*?);\s*let benchmarkVisible=',source,re.S).group(1))['real-standard']
-for key in ['correct','reuse','search','context']:
+benchmark=json.loads(re.search(r'const benchmarkData=(.*?);\s*let benchmarkVisible=',source,re.S).group(1))['real-large']
+for key in ['correct','reuse','search','context','wrongEdits','toolCalls']:
  percentage=key in ['correct','reuse']
  for mode in ['baseline','mcp']:
   val=benchmark['metrics'][mode][key]
-  label=f'{val:.0f}%' if percentage else f'{val:,.0f}'
+  label=f'{val:.0f}%' if percentage else f'{val:.1f}' if key in ['wrongEdits','toolCalls'] else f'{val:,.0f}'
   source=re.sub(r'(<span class="bar-number" id="value-'+key+'-'+mode+r'">).*?(</span>)',lambda m:m[1]+label+m[2],source)
-source=re.sub(r'(<p class="bench-context" id="bench-context">).*?(</p>)',r'\g<1>immich@cc7fd67 · 20 standard sessions · Recorded 2026-10-13\g<2>',source)
+source=re.sub(r'(<p class="bench-context" id="bench-context">).*?(</p>)',r'\g<1>immich@cc7fd67 · 10 large sessions · Recorded 2026-10-13\g<2>',source)
 # Only replace metadata we own; keep styles and the functional script intact.
 head=re.search(r'<head>(.*?)</head>',source,re.S).group(1)
 head=re.sub(r'<meta charset="utf-8">','',head)
@@ -85,7 +86,15 @@ for locale,url in URLS.items():
  page=re.sub(r'(<option value="'+locale+'")',r'\1 selected',page,count=1)
  page=page.replace(f'data-locale="{locale}"',f'data-locale="{locale}" aria-current="page"')
  if locale!='en':
-  page=page.replace('20 standard sessions · Recorded','20 '+translations['standard sessions'][locale]+' · '+translations['Recorded'][locale])
+  page=page.replace('10 large sessions · Recorded','10 '+translations['large sessions'][locale]+' · '+translations['Recorded'][locale])
+ prefix='https://github.com/khoitd-voyager/mcp-spec-nav/blob/main/'
+ targets={
+ 'en':{'readme':'README.md#english','tools':'README.md#tool-reference','desktop':'README.md#option-2-install-as-a-claude-desktop-extension','languages':'README.md#supported-languages--ngôn-ngữ-hỗ-trợ','benchmark':'bench/README.en.md'},
+ 'vi':{'readme':'README.md#tiếng-việt','tools':'README.md#các-tool-dùng-để-làm-gì','desktop':'README.md#cách-2-cài-thành-extension-cho-claude-desktop','languages':'README.md#supported-languages--ngôn-ngữ-hỗ-trợ','benchmark':'bench/README.md'},
+ 'zh':{'readme':'README.zh-CN.md','tools':'README.zh-CN.md#工具参考','desktop':'README.zh-CN.md#方式二安装为-claude-desktop-扩展','languages':'README.zh-CN.md#支持的语言','benchmark':'bench/README.zh-CN.md'}}
+ page=re.sub(r'(id="bench-source" href=")[^"]*(")',lambda m:m[1]+benchmark['sources'][locale]+m[2],page)
+ for key,target in targets[locale].items():
+  page=re.sub(r'(data-doc="'+key+r'" href=")[^"]*(")',lambda m:m[1]+prefix+target+m[2],page)
  dest=DOCS/'index.html' if locale=='en' else DOCS/locale/'index.html';dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(page)
 # Sitemap includes reciprocal locale alternates.
 ET.register_namespace('','http://www.sitemaps.org/schemas/sitemap/0.9');ET.register_namespace('xhtml','http://www.w3.org/1999/xhtml')
