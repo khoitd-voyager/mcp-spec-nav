@@ -1,8 +1,14 @@
-# mcp-spec-nav
+# mcp-spec-nav — MCP Server for AI Code Search and Navigation
 
-Help your coding agent find existing functions before writing new code, and check what a change affects across your repository.
+`mcp-spec-nav` is a local MCP server for AI coding agents to search code, discover reusable functions, and find callers before making changes. Use it with Claude Code to explore logic across services and shared packages in your repository.
 
-Giúp AI tìm hàm có sẵn trước khi viết code mới và kiểm tra các phần liên quan khi sửa code trong repo.
+Giúp AI tìm hàm có sẵn trước khi viết code mới, đọc implementation và tìm các nơi gọi hàm trước khi sửa code trong repo.
+
+**Example:** Before adding an order fee calculation, ask your agent to find and read existing fee functions. Before changing a function's parameters, ask it to find callers and report any unresolved references.
+
+**Benchmarks:** See the [benchmark methodology and limitations](bench/README.md) and [recorded results](bench/results/) for comparisons with a Grep/Read/Edit baseline. These benchmarks use deterministic agent policies, not live LLM sessions.
+
+**Get started:** [Claude Code setup](#option-1-quick-start-with-claude-code) · [Claude Desktop extension](#option-2-install-as-a-claude-desktop-extension)
 
 **[English](#english) · [Tiếng Việt](#tiếng-việt)**
 

@@ -1,0 +1,6 @@
+# Crawlers read robots.txt at the domain root, not a project subdirectory.
+# Copy these directives to https://khoitd-voyager.github.io/robots.txt to activate.
+User-agent: *
+Allow: /mcp-spec-nav/
+
+Sitemap: https://khoitd-voyager.github.io/mcp-spec-nav/sitemap.xml
