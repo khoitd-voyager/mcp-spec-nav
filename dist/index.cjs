@@ -296046,7 +296046,7 @@ async function traceFlow(args) {
 }
 
 // src/index.ts
-var server2 = new McpServer({ name: "spec-nav", version: "0.3.0" });
+var server2 = new McpServer({ name: "spec-nav", version: "0.4.0" });
 function text(t, isError = false) {
   return { content: [{ type: "text", text: t }], ...isError ? { isError: true } : {} };
 }
