@@ -83,7 +83,7 @@ function nearestConfig(file: string): string | undefined {
   }
 }
 
-function optionsFor(file: string): ts.CompilerOptions {
+export function optionsFor(file: string): ts.CompilerOptions {
   const cfg = nearestConfig(file);
   if (!cfg) return DEFAULT_OPTIONS;
   const cached = configCache.get(cfg);
@@ -107,6 +107,11 @@ function optionsFor(file: string): ts.CompilerOptions {
   return opts;
 }
 
+/** tsconfig files can change between calls; forget what was read. */
+export function clearConfigCache(): void {
+  configCache.clear();
+}
+
 const SOURCE_EXTS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
 
 function extensionOf(file: string): ts.Extension {
@@ -120,7 +125,7 @@ function extensionOf(file: string): ts.Extension {
 }
 
 /** Workspace packages by name → directory, from every package.json in a project dir. */
-function workspacePackages(scan: RepoScan): Map<string, string> {
+export function workspacePackages(scan: RepoScan): Map<string, string> {
   const out = new Map<string, string>();
   for (const s of scan.services) {
     const pj = path.join(REPO_ROOT, s, "package.json");
@@ -135,7 +140,7 @@ function workspacePackages(scan: RepoScan): Map<string, string> {
   return out;
 }
 
-function firstExisting(base: string): string | undefined {
+export function firstExisting(base: string): string | undefined {
   if (existsSync(base) && SOURCE_EXTS.includes(path.extname(base)) && !base.endsWith(".d.ts")) return base;
   const stripped = base.replace(/\.(js|mjs|cjs|jsx)$/, "");
   for (const ext of SOURCE_EXTS) if (existsSync(stripped + ext)) return stripped + ext;
@@ -144,7 +149,7 @@ function firstExisting(base: string): string | undefined {
 }
 
 /** `@repo/shared` or `@repo/shared/x` → a source file in that package, if one exists. */
-function resolveWorkspace(spec: string, pkgs: Map<string, string>): string | undefined {
+export function resolveWorkspace(spec: string, pkgs: Map<string, string>): string | undefined {
   for (const [name, dir] of pkgs) {
     if (spec !== name && !spec.startsWith(name + "/")) continue;
     const sub = spec.slice(name.length + 1);

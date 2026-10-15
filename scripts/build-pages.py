@@ -92,9 +92,9 @@ for locale,url in URLS.items():
   page=page.replace('10 large sessions · Recorded','10 '+translations['large sessions'][locale]+' · '+translations['Recorded'][locale])
  prefix='https://github.com/khoitd-voyager/mcp-spec-nav/blob/main/'
  targets={
- 'en':{'readme':'README.md#english','tools':'README.md#tool-reference','desktop':'README.md#option-2-install-as-a-claude-desktop-extension','languages':'README.md#supported-languages--ngôn-ngữ-hỗ-trợ','benchmark':'bench/README.md#english'},
- 'vi':{'readme':'README.md#tiếng-việt','tools':'README.md#các-tool-dùng-để-làm-gì','desktop':'README.md#cách-2-cài-thành-extension-cho-claude-desktop','languages':'README.md#supported-languages--ngôn-ngữ-hỗ-trợ','benchmark':'bench/README.md#tiếng-việt'},
- 'zh':{'readme':'README.md#简体中文','tools':'README.md#工具参考','desktop':'README.md#方式二安装为-claude-desktop-扩展','languages':'README.md#supported-languages--ngôn-ngữ-hỗ-trợ','benchmark':'bench/README.md#简体中文'}}
+ 'en':{'readme':'README.md','tools':'docs/guide/tools.md','desktop':'docs/guide/installation.md#claude-desktop-extension','languages':'docs/guide/languages.md','benchmark':'bench/README.md#english'},
+ 'vi':{'readme':'README.vi.md','tools':'docs/guide/tools.vi.md','desktop':'docs/guide/installation.vi.md#extension-cho-claude-desktop','languages':'docs/guide/languages.vi.md','benchmark':'bench/README.md#tiếng-việt'},
+ 'zh':{'readme':'README.zh-CN.md','tools':'docs/guide/tools.zh-CN.md','desktop':'docs/guide/installation.zh-CN.md#claude-desktop-扩展','languages':'docs/guide/languages.zh-CN.md','benchmark':'bench/README.md#简体中文'}}
  page=re.sub(r'(id="bench-source" href=")[^"]*(")',lambda m:m[1]+benchmark['sources'][locale]+m[2],page)
  for key,target in targets[locale].items():
   page=re.sub(r'(data-doc="'+key+r'" href=")[^"]*(")',lambda m:m[1]+prefix+target+m[2],page)

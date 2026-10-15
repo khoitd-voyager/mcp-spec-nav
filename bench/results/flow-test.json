@@ -1,0 +1,107 @@
+{
+ "split": "test",
+ "seeds": [
+  101,
+  102,
+  103,
+  104,
+  105
+ ],
+ "services": 14,
+ "summary": {
+  "specNav": {
+   "sites": 598,
+   "expectedLinks": 382,
+   "reportedLinks": 321,
+   "correctLinks": 321,
+   "wrongLinks": 0,
+   "precision": 1,
+   "recall": 0.8403141361256544,
+   "wrongSamples": []
+  },
+  "nameOnly": {
+   "sites": 598,
+   "expectedLinks": 382,
+   "reportedLinks": 470,
+   "correctLinks": 334,
+   "wrongLinks": 136,
+   "precision": 0.7106382978723405,
+   "recall": 0.8743455497382199,
+   "wrongSamples": [
+    "services/ticket-svc/src/clients.ts:14 [http compose/wrapper] expected resolved services/payout-svc/app/main.py::twin_warehouse_get2_6 got services/parcel-svc/app/routes.py::handle_warehouse_get2",
+    "services/ticket-svc/src/clients.ts:20 [http compose/instance] expected resolved services/profile-svc/app.py::twin_seat_get0_7 got services/lease-svc/src/handlers.ts::handleSeatGet0",
+    "services/ticket-svc/src/clients.ts:23 [http relative/instance] expected ambiguous - got services/slot-svc/src/routes.ts::handleWarehouseGet0",
+    "services/driver-svc/src/clients.ts:21 [http relative/wrapper] expected ambiguous - got services/slot-svc/src/routes.ts::handleDriverGet4",
+    "services/slot-svc/src/clients.ts:5 [http relative/concat] expected ambiguous - got services/review-svc/src/review.controller.ts::ReviewController.handleTicketPost3",
+    "services/slot-svc/src/clients.ts:8 [http compose/template] expected resolved services/quote-svc/app/main.py::twin_profile_post0_11 got services/shipment-svc/src/handlers.ts::handleProfilePost0"
+   ]
+  }
+ },
+ "perSeed": [
+  {
+   "seed": 101,
+   "files": 99,
+   "sites": 120,
+   "firstCallMs": 106,
+   "warmCallMs": 2,
+   "pages": 5,
+   "wholeInventoryMs": 9,
+   "flowMs": 3,
+   "rssMb": 252
+  },
+  {
+   "seed": 102,
+   "files": 82,
+   "sites": 114,
+   "firstCallMs": 94,
+   "warmCallMs": 1,
+   "pages": 4,
+   "wholeInventoryMs": 5,
+   "flowMs": 3,
+   "rssMb": 231
+  },
+  {
+   "seed": 103,
+   "files": 94,
+   "sites": 120,
+   "firstCallMs": 105,
+   "warmCallMs": 1,
+   "pages": 5,
+   "wholeInventoryMs": 7,
+   "flowMs": 4,
+   "rssMb": 241
+  },
+  {
+   "seed": 104,
+   "files": 101,
+   "sites": 130,
+   "firstCallMs": 112,
+   "warmCallMs": 1,
+   "pages": 5,
+   "wholeInventoryMs": 8,
+   "flowMs": 6,
+   "rssMb": 254
+  },
+  {
+   "seed": 105,
+   "files": 85,
+   "sites": 114,
+   "firstCallMs": 96,
+   "warmCallMs": 1,
+   "pages": 4,
+   "wholeInventoryMs": 5,
+   "flowMs": 5,
+   "rssMb": 235
+  }
+ ],
+ "scale": {
+  "services": 150,
+  "files": 998,
+  "firstCallMs": 607,
+  "warmCallMs": 8,
+  "pages": 90,
+  "wholeInventoryMs": 762,
+  "flowMs": 22,
+  "rssMb": 472
+ }
+}
