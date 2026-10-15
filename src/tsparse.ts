@@ -203,7 +203,7 @@ function exportAliases(sf: ts.SourceFile): Map<string, string[]> {
  * refers to, so `handler = …` inside a function is told apart from a
  * same-named variable elsewhere.
  */
-function fileChecker(sf: ts.SourceFile): ts.TypeChecker {
+export function fileChecker(sf: ts.SourceFile): ts.TypeChecker {
   const options: ts.CompilerOptions = { noLib: true, noResolve: true, allowJs: true, noEmit: true, types: [] };
   const host: ts.CompilerHost = {
     getSourceFile: (n) => (n === sf.fileName ? sf : undefined),

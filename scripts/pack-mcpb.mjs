@@ -24,7 +24,7 @@ const manifest = {
   display_name: "Spec Nav",
   version: pkg.version,
   description:
-    "Find existing functions to reuse (by words or by behaviour), read them in full, find callers across languages and survey every match for a pattern across a local repository.",
+    "Find existing functions to reuse (by words or by behaviour), read them in full, find callers across languages, survey every match for a pattern, and trace HTTP/RPC/event flows between services across a local repository.",
   long_description: pkg.description,
   author: { name: "khoitd-voyager", url: "https://github.com/khoitd-voyager" },
   repository: { type: "git", url: "https://github.com/khoitd-voyager/mcp-spec-nav" },
@@ -48,6 +48,7 @@ const manifest = {
     { name: "spec_nav_similar_functions", description: "Find functions that behave like a given one or a draft, whatever they are named." },
     { name: "spec_nav_callers", description: "Find callers: type-checked in TS/JS/Vue, evidence-based in 13 other languages; dynamic uses listed." },
     { name: "spec_nav_map", description: "Every line matching a regex, tagged with the function it sits in." },
+    { name: "spec_nav_trace_flow", description: "Trace HTTP, RPC and event flows across services statically, with evidence, confidence and unresolved links." },
   ],
   user_config: {
     repo_root: {

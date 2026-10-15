@@ -11,6 +11,7 @@ Compares an agent **without MCP** (only Grep/Read/Edit, like Claude Code's built
 | `bench/run.mjs` | Synthetic monorepo, ~2,800 files, ~205k lines, 10 languages; 100 regular + 50 large sessions | Recorded by the generator as it plants the code |
 | `bench/real.mjs` | Any real repository (run on immich) | Independent oracles: TypeScript's `findReferences`, doc comments, ripgrep |
 | `bench/perf.mjs` | A very large repository (run on VS Code) | — measures time and RAM only |
+| `bench/flow.mjs` | Generated multi-service repositories (TypeScript + Python) | Recorded by `bench/flow-generate.mjs` from its own route table — measures `spec_nav_trace_flow` links, no agents |
 
 ```bash
 npm run build
@@ -18,6 +19,7 @@ node bench/run.mjs                                   # 100 regular + 50 large se
 node bench/run.mjs --sessions 20 --large-sessions 5  # faster
 node bench/real.mjs --repo ~/code/your-repo --sessions 20 --large-sessions 10
 node bench/perf.mjs --repo ~/code/huge-repo --symbols "SomeClass.someMethod"
+node bench/flow.mjs --out bench/results/flow-test.md   # cross-service links, held-out seeds 101-105
 node bench/report.mjs bench/results/<file>.json      # print a report again
 ```
 
@@ -74,7 +76,7 @@ Note when reading the immich results: the repository was cloned without installi
 
 ### What is measured
 
-- Tokens: estimated at 3.5 characters/token, equally on both sides; each tool call adds 25 tokens of envelope. The definitions of the 7 MCP tools (~3.7k tokens) are added to **every turn** on the MCP side — the fixed cost of installing the MCP.
+- Tokens: estimated at 3.5 characters/token, equally on both sides; each tool call adds 25 tokens of envelope. The definitions of the 7 MCP tools (~3.8k tokens) are added to **every turn** on the MCP side — the fixed cost of installing the MCP.
   - *final context*: everything that entered the session's context.
   - *cumulative input*: every turn resends the entire context (no cache).
   - *with prompt caching*: previously sent tokens read from cache ×0.1, newly written cache ×1.25.
@@ -91,6 +93,20 @@ Note when reading the immich results: the repository was cloned without installi
 
 To measure with a real model: use the same repository and `.bench-tasks.json`, run `claude -p "<session prompt>"` with and without `--mcp-config`, take `usage` from `--output-format json`, and score against the answers in the task file. That costs money per session; this benchmark is free and repeatable.
 
+### Cross-service flows (`bench/flow.mjs`)
+
+Measures `spec_nav_trace_flow` link by link — no agent, no LLM. `bench/flow-generate.mjs` generates a repository of 14 services from a seed: Express, NestJS, Fastify (TypeScript) and FastAPI, Flask (Python) servers with mounts and prefixes; fetch, axios (and `axios.create` instances), requests and httpx clients calling each other through docker-compose host names, `localhost:<port>`, relative URLs or environment variables, with URLs written as templates, concatenation, constants in another file or client base URLs; kafkajs producers and consumers on one or two clusters; NestJS microservice patterns. It also plants traps: the same method and path in two services, the same topic on another cluster, the same RPC pattern in two services, computed URLs, external hosts, paths a pinned service does not serve.
+
+The expected outcome of every call site — which handler(s), or that it must be `ambiguous`, `partial`, `unresolved` or `unmatched` — is computed by the generator from the route table it wrote, not from the tool's output. About 15% of client calls go through a wrapper function or `urljoin`, which the adapters do not follow, so recall shows what such code costs.
+
+The vocabulary, mount prefixes and URL shapes differ from the fixtures in `test/flow-fixtures.mjs`, which were used during development. Seeds 1–2 (`--split dev`) were used to check the generator; the reported numbers are seeds 101–105 (`--split test`), run after the code was written. The baseline "name only" links a call on method + path, topic or pattern alone (first match), ignoring hosts and brokers — what linking by a matching name would do.
+
+The generator and the adapters were written by the same author in the same session, so the code it writes uses shapes that author anticipated: read the numbers as a check of the linking rules (does it ever link wrongly, does it say when it cannot tell), not as coverage of real code. On a real repository, run the inventory (`spec_nav_trace_flow` with no start) and read its `gaps` line.
+
+After the first test run, two changes came from trying the tool on a real repository (not from the test split): file-based routes (Next.js, Medusa, SvelteKit) were added, and matching a URL with an unknown base on the tail of a route was tightened (it had produced nonsense candidates on route parameters). The test split was re-run afterwards; the numbers did not change.
+
+Results: [bench/results/flow-test.md](results/flow-test.md).
+
 ## Tiếng Việt
 
 So sánh một agent **không có MCP** (chỉ Grep/Read/Edit như tool built-in của Claude Code) với một agent **có MCP** (spec-nav + Read/Edit) trên cùng các task, ở ba chỗ:
@@ -100,6 +116,7 @@ So sánh một agent **không có MCP** (chỉ Grep/Read/Edit như tool built-in
 | `bench/run.mjs` | Monorepo giả lập ~2.800 file, ~205k dòng, 10 ngôn ngữ; 100 session thường + 50 session lớn | Generator ghi lại khi cài code |
 | `bench/real.mjs` | Repo thật bất kỳ (đã chạy trên immich) | Oracle độc lập: `findReferences` của TypeScript, doc comment, ripgrep |
 | `bench/perf.mjs` | Repo rất lớn (đã chạy trên VS Code) | — chỉ đo thời gian và RAM |
+| `bench/flow.mjs` | Repo nhiều service được sinh tự động (TypeScript + Python) | Do `bench/flow-generate.mjs` ghi từ chính bảng route nó sinh — đo link của `spec_nav_trace_flow`, không có agent |
 
 ```bash
 npm run build
@@ -107,6 +124,7 @@ node bench/run.mjs                                   # 100 session thường + 5
 node bench/run.mjs --sessions 20 --large-sessions 5  # nhanh hơn
 node bench/real.mjs --repo ~/code/your-repo --sessions 20 --large-sessions 10
 node bench/perf.mjs --repo ~/code/huge-repo --symbols "SomeClass.someMethod"
+node bench/flow.mjs --out bench/results/flow-test.md   # link giữa các service, seed 101-105 (tập kiểm tra)
 node bench/report.mjs bench/results/<file>.json      # in lại báo cáo
 ```
 
@@ -163,7 +181,7 @@ Lưu ý khi đọc kết quả immich: repo được clone không cài `node_mod
 
 ### Đo gì
 
-- Token: ước lượng 3,5 ký tự/token, như nhau hai bên; mỗi tool call cộng 25 token vỏ bọc. Định nghĩa 7 tool MCP (~3,7k token) được cộng vào **mỗi lượt** của phía có MCP — chi phí cố định của việc cài MCP.
+- Token: ước lượng 3,5 ký tự/token, như nhau hai bên; mỗi tool call cộng 25 token vỏ bọc. Định nghĩa 7 tool MCP (~3,8k token) được cộng vào **mỗi lượt** của phía có MCP — chi phí cố định của việc cài MCP.
   - *context cuối*: tổng mọi thứ đã vào context của session.
   - *input tích lũy*: mỗi lượt gửi lại toàn bộ context (không cache).
   - *quy đổi có prompt cache*: phần đã gửi đọc từ cache ×0,1, phần mới ghi cache ×1,25.
@@ -180,6 +198,20 @@ Lưu ý khi đọc kết quả immich: repo được clone không cài `node_mod
 
 Muốn đo bằng model thật: dùng cùng repo và `.bench-tasks.json`, chạy `claude -p "<prompt của session>"` có và không có `--mcp-config`, lấy `usage` từ `--output-format json`, chấm theo đáp án trong file task. Cách đó tốn phí theo số session; benchmark này thì miễn phí và chạy lại được.
 
+### Luồng giữa các service (`bench/flow.mjs`)
+
+Đo `spec_nav_trace_flow` theo từng link — không có agent, không có LLM. `bench/flow-generate.mjs` sinh một repo 14 service từ seed: server Express, NestJS, Fastify (TypeScript) và FastAPI, Flask (Python) có mount và prefix; client fetch, axios (kể cả instance `axios.create`), requests và httpx gọi nhau qua tên host trong docker-compose, `localhost:<port>`, URL tương đối hoặc biến môi trường; URL viết bằng template, nối chuỗi, hằng số ở file khác hoặc base URL của client; producer/consumer kafkajs trên một hoặc hai cluster; pattern NestJS microservices. Bộ sinh cũng cài bẫy: cùng method và path ở hai service, cùng topic ở cluster khác, cùng pattern RPC ở hai service, URL tính lúc chạy, host bên ngoài, path mà service đã xác định không phục vụ.
+
+Kết quả mong đợi của từng điểm gọi — handler nào, hay phải là `ambiguous`, `partial`, `unresolved`, `unmatched` — do bộ sinh tính từ chính bảng route nó đã viết, không dựa vào output của tool. Khoảng 15% lời gọi client đi qua hàm wrapper hoặc `urljoin`, mà adapter không lần theo, nên recall cho thấy cái giá của dạng code đó.
+
+Từ vựng, prefix mount và cách dựng URL khác với fixture trong `test/flow-fixtures.mjs` (dùng khi phát triển). Seed 1–2 (`--split dev`) dùng để kiểm tra bộ sinh; số liệu báo cáo là seed 101–105 (`--split test`), chạy sau khi code đã viết xong. Baseline "chỉ theo tên" nối một lời gọi chỉ bằng method + path, topic hoặc pattern (lấy kết quả đầu tiên), bỏ qua host và broker — đúng như cách nối theo tên trùng.
+
+Bộ sinh và adapter do cùng một tác giả viết trong cùng một phiên, nên code sinh ra dùng những dạng tác giả đã nghĩ tới: hãy đọc số liệu như phép kiểm tra luật nối (có bao giờ nối sai không, có báo khi không xác định được không), không phải độ phủ trên code thật. Với repo thật, chạy inventory (`spec_nav_trace_flow` không có điểm bắt đầu) và đọc dòng `gaps`.
+
+Sau lần chạy test đầu tiên, có hai thay đổi đến từ việc chạy thử tool trên một repo thật (không phải từ split test): thêm route theo file (Next.js, Medusa, SvelteKit), và siết việc khớp URL có base không rõ với đuôi của route (trước đó sinh ứng viên vô nghĩa trên tham số route). Split test được chạy lại sau đó; số liệu không đổi.
+
+Kết quả: [bench/results/flow-test.md](results/flow-test.md#tiếng-việt).
+
 ## 简体中文
 
 在相同任务上对比 **无 MCP** 的代理（只有 Grep/Read/Edit，类似 Claude Code 的内置工具）与 **有 MCP** 的代理（spec-nav + Read/Edit），共三种场景：
@@ -189,6 +221,7 @@ Muốn đo bằng model thật: dùng cùng repo và `.bench-tasks.json`, chạy
 | `bench/run.mjs` | 合成 monorepo，约 2,800 个文件、约 205k 行、10 种语言；100 个普通会话 + 50 个大会话 | 生成器在植入代码时记录 |
 | `bench/real.mjs` | 任意真实仓库（已在 immich 上运行） | 独立 oracle：TypeScript 的 `findReferences`、文档注释、ripgrep |
 | `bench/perf.mjs` | 超大仓库（已在 VS Code 上运行） | ——只测量耗时和内存 |
+| `bench/flow.mjs` | 自动生成的多服务仓库（TypeScript + Python） | 由 `bench/flow-generate.mjs` 根据自己生成的路由表记录——衡量 `spec_nav_trace_flow` 的连接，不涉及代理 |
 
 ```bash
 npm run build
@@ -196,6 +229,7 @@ node bench/run.mjs                                   # 100 个普通会话 + 50 
 node bench/run.mjs --sessions 20 --large-sessions 5  # 更快
 node bench/real.mjs --repo ~/code/your-repo --sessions 20 --large-sessions 10
 node bench/perf.mjs --repo ~/code/huge-repo --symbols "SomeClass.someMethod"
+node bench/flow.mjs --out bench/results/flow-test.md   # 跨服务连接，保留种子 101-105
 node bench/report.mjs bench/results/<file>.json      # 重新打印报告
 ```
 
@@ -252,7 +286,7 @@ node bench/report.mjs bench/results/<file>.json      # 重新打印报告
 
 ### 测量内容
 
-- Token：两侧都按 3.5 字符/token 估算；每次工具调用额外加 25 token 的封装开销。7 个 MCP 工具的定义（约 3.7k token）被计入 MCP 一侧的 **每一轮**——这是安装 MCP 的固定成本。
+- Token：两侧都按 3.5 字符/token 估算；每次工具调用额外加 25 token 的封装开销。7 个 MCP 工具的定义（约 3.8k token）被计入 MCP 一侧的 **每一轮**——这是安装 MCP 的固定成本。
   - *最终上下文*：进入该会话上下文的全部内容。
   - *累计输入*：每一轮都重新发送完整上下文（无缓存）。
   - *启用提示缓存折算*：已发送部分从缓存读取 ×0.1，新写入缓存部分 ×1.25。
@@ -268,3 +302,17 @@ node bench/report.mjs bench/results/<file>.json      # 重新打印报告
 - 无 MCP 一侧的同义词知识是固定列表；真实 LLM 可能想到更多或更少。
 
 想用真实模型测量：使用同一仓库和 `.bench-tasks.json`，分别带与不带 `--mcp-config` 运行 `claude -p "<会话提示词>"`，从 `--output-format json` 中取 `usage`，并按任务文件中的答案评分。这种方式按会话数量计费；本基准测试免费且可重复运行。
+
+### 跨服务调用链（`bench/flow.mjs`）
+
+逐条连接衡量 `spec_nav_trace_flow`——不涉及代理和 LLM。`bench/flow-generate.mjs` 按种子生成一个 14 个服务的仓库：带挂载和前缀的 Express、NestJS、Fastify（TypeScript）以及 FastAPI、Flask（Python）服务端；fetch、axios（包括 `axios.create` 实例）、requests 和 httpx 客户端通过 docker-compose 主机名、`localhost:<port>`、相对 URL 或环境变量相互调用，URL 以模板、字符串拼接、其他文件中的常量或客户端 base URL 的形式书写；一个或两个集群上的 kafkajs 生产者与消费者；NestJS 微服务 pattern。生成器还埋设了陷阱：两个服务中相同的 method 与 path、另一集群上的同名 topic、两个服务中相同的 RPC pattern、运行时计算的 URL、外部主机、被确定的服务并不提供的 path。
+
+每个调用点的预期结果——指向哪个（些）handler，或必须为 `ambiguous`、`partial`、`unresolved`、`unmatched`——由生成器根据自己写出的路由表计算，而非来自工具输出。约 15% 的客户端调用经过封装函数或 `urljoin`，适配器不会跟踪，因此 recall 反映了这类代码的代价。
+
+词汇、挂载前缀和 URL 写法都与开发时使用的 `test/flow-fixtures.mjs` 不同。种子 1–2（`--split dev`）用于检查生成器；报告的数据来自种子 101–105（`--split test`），在代码完成后运行。基线"仅按名称"只按 method + path、topic 或 pattern 连接（取第一个匹配），忽略主机和 broker——即按同名连接的做法。
+
+生成器与适配器由同一作者在同一会话中编写，因此生成的代码采用的是作者预料到的写法：请把这些数字看作对连接规则的检验（是否会错误连接、无法判断时是否明确说明），而不是对真实代码的覆盖率。在真实仓库上，请运行 inventory（不带起点调用 `spec_nav_trace_flow`）并查看其 `gaps` 行。
+
+首次运行测试集之后，有两处改动来自在真实仓库上试用工具（而非来自测试集）：新增基于文件的路由（Next.js、Medusa、SvelteKit），并收紧了 base 未知的 URL 与路由尾部的匹配（此前会在路由参数上产生无意义的候选）。之后重新运行了测试集，数据没有变化。
+
+结果：[bench/results/flow-test.md](results/flow-test.md#简体中文)。

@@ -1,0 +1,12 @@
+# Miniature multi-service example used by the website walkthrough and README.
+services:
+  storefront:
+    build: ./services/storefront
+  checkout:
+    build: ./services/checkout
+    ports:
+      - "3000:3000"
+  invoicing:
+    build: ./services/invoicing
+  kafka:
+    image: bitnami/kafka

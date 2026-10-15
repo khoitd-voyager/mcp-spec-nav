@@ -7,6 +7,7 @@ import { mapPattern, renderMap, listServices } from "./tools.js";
 import { listFunctions, findFunctions, readFunction } from "./catalog.js";
 import { findCallers } from "./callers.js";
 import { similarFunctions } from "./similar.js";
+import { traceFlow } from "./flow/trace.js";
 
 const server = new McpServer({ name: "spec-nav", version: "0.3.0" });
 
@@ -269,6 +270,44 @@ server.registerTool(
   async (args) => {
     try {
       return text(await findCallers(args));
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  "spec_nav_trace_flow",
+  {
+    description:
+      "Trace a flow ACROSS SERVICES, statically from source: HTTP client → route → handler, RPC call → handler, " +
+      "event/topic → consumers, plus direct calls inside each service. Start from a function (`id` or `file`+`name`), " +
+      "an `endpoint` or a `topic`; no start lists every link found. Each step gives the sending line, the receiving " +
+      "function, evidence (method+path+host, pattern, topic+broker), a confidence and a status: resolved, partial " +
+      "(part of the key is configuration), ambiguous (candidates, not followed), unresolved (computed key) or unmatched. " +
+      "Adapters: Express, Fastify, koa-router, NestJS, file routes (Next.js, Medusa, SvelteKit), fetch, axios, kafkajs; " +
+      "FastAPI, Flask, requests, httpx, aiohttp. " +
+      "Other stacks are reported as not traced. Not part of spec_nav_callers.",
+    inputSchema: {
+      id: z.string().optional().describe("Start function id."),
+      file: z.string().optional().describe("Start function's file (with `name`)."),
+      name: z.string().optional(),
+      line: z.number().int().positive().optional(),
+      endpoint: z.string().optional().describe('"GET /api/orders/:id" or "/orders/42".'),
+      topic: z.string().optional().describe('Event, topic or RPC pattern: "order.created", "{ cmd: \'sum\' }".'),
+      direction: z.enum(["downstream", "upstream", "both"]).optional().describe("Default downstream."),
+      maxDepth: z.number().int().positive().optional().describe("Default 6, max 20."),
+      followCalls: z.boolean().optional().describe("Follow direct calls inside a service (default true)."),
+      includePartial: z.boolean().optional().describe("Follow partial links (default true)."),
+      limit: z.number().int().positive().optional().describe("Steps per page (default 30)."),
+      cursor: cursorArg,
+      format: formatArg,
+    },
+  },
+  async (args) => {
+    try {
+      const r = await traceFlow(args);
+      return text(r.text, r.isError);
     } catch (err) {
       return fail(err);
     }
