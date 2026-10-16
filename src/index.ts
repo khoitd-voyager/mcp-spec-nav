@@ -9,7 +9,7 @@ import { findCallers } from "./callers.js";
 import { similarFunctions } from "./similar.js";
 import { traceFlow } from "./flow/trace.js";
 
-const server = new McpServer({ name: "spec-nav", version: "0.4.0" });
+const server = new McpServer({ name: "spec-nav", version: "0.5.0" });
 
 function text(t: string, isError = false) {
   return { content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) };

@@ -1,6 +1,6 @@
 {
   "name": "mcp-spec-nav",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "MCP server that catalogs the functions across a polyglot monorepo and reads code structurally — find existing functions to reuse (by words, what they call, or behavioural similarity), read them in full, find callers in TS/JS (type-checked) and 13 other languages (evidence-based), survey every match for a pattern with the function it sits in, and trace HTTP/RPC/event flows between services statically (Express, Fastify, NestJS, FastAPI, Flask, fetch, axios, requests, httpx, kafkajs)",
   "type": "module",
   "license": "MIT",

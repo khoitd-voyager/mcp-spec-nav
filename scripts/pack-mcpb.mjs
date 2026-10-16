@@ -43,7 +43,7 @@ const manifest = {
   tools: [
     { name: "spec_nav_services", description: "Show the scanned root, its projects, file/function counts and coverage." },
     { name: "spec_nav_find_functions", description: "Rank existing functions that may already do what you need." },
-    { name: "spec_nav_read_function", description: "Read one function exactly, with signature, docs and related imports." },
+    { name: "spec_nav_read_function", description: "Read up to 10 functions in one call, each exactly, with signature, docs and related imports." },
     { name: "spec_nav_functions", description: "Browse the function catalog with filters and paging." },
     { name: "spec_nav_similar_functions", description: "Find functions that behave like a given one or a draft, whatever they are named." },
     { name: "spec_nav_callers", description: "Find callers: type-checked in TS/JS/Vue, evidence-based in 13 other languages; dynamic uses listed." },
