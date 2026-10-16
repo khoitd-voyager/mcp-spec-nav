@@ -9,7 +9,25 @@ import { findCallers } from "./callers.js";
 import { similarFunctions } from "./similar.js";
 import { traceFlow } from "./flow/trace.js";
 
-const server = new McpServer({ name: "spec-nav", version: "0.5.0" });
+/**
+ * Sent once, in the client's system prompt. Unlike tool descriptions it is
+ * visible even when the client lists the tools by name only (Claude Code
+ * defers MCP schemas), so it carries the triggers: when to reach for which
+ * tool instead of Grep/Read — and, so the rest is believed, when not to.
+ */
+const INSTRUCTIONS = `spec-nav indexes every function in every service under the root, from syntax trees rather than text. If its tools are listed by name only (deferred), load them with ToolSearch before calling.
+
+Use spec-nav instead of Grep/Read when:
+- About to write a new function or helper → spec_nav_find_functions first, describing the behaviour in words. Existing code is often named differently from the name you would grep for. Nothing fits → spec_nav_similar_functions with your draft as \`code\`.
+- Changing a function's signature or behaviour → spec_nav_callers, not a grep for its name: it drops same-named methods on other classes and finds calls through aliases and re-exports.
+- A concept spread across files or services (a field, fee, status, flag) → one broad spec_nav_map regex instead of several greps; each hit names its enclosing function.
+- Reading functions you will NOT edit (candidates, callers, siblings) → spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file.
+- A change touches an endpoint, RPC call or event → spec_nav_trace_flow (upstream: who reaches it; downstream: what it reaches).
+- Seeing what a file or service defines → spec_nav_functions. Unsure of the root or service names → spec_nav_services.
+
+Grep/Read remain the right tools for an exact string you already know, non-code files (config, YAML, JSON, Markdown), and a file you are about to Edit (Edit requires a Read).`;
+
+const server = new McpServer({ name: "spec-nav", version: "0.5.1" }, { instructions: INSTRUCTIONS });
 
 function text(t: string, isError = false) {
   return { content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) };
@@ -40,6 +58,8 @@ server.registerTool(
   "spec_nav_map",
   {
     description:
+      "Use INSTEAD OF several Grep calls when a concept (a field, fee, status, flag) may appear in many " +
+      "files or services. For an exact string in non-code files (config, YAML, JSON, Markdown), use Grep. " +
       "Survey a change: every line matching a regex across EVERY project under the root, in " +
       "TypeScript, JavaScript, Vue/Svelte/Astro, Python, Go, Java, Kotlin, Swift, C#, Ruby, Rust, PHP, C, C++, " +
       "Scala, Elixir and Bash, " +
@@ -74,7 +94,8 @@ server.registerTool(
   {
     description:
       "BEFORE WRITING NEW LOGIC: search every catalogued function in the repo, across all services, for one " +
-      "that already does the job. Describe the behaviour in words (\"calculate order fee\"); names " +
+      "that already does the job. Use INSTEAD OF grepping for a name you guessed: existing code is often " +
+      "named differently. Describe the behaviour in words (\"calculate order fee\"); names " +
       "are split on camelCase/snake_case and matched by word, stem, abbreviation (amt/amount), prefix, " +
       "common verb synonyms (calculate/compute, delete/remove…) and domain concepts (shipping/delivery, " +
       "email/mail…) against name, export aliases, class/module, signature, doc comment, path, the names " +
@@ -112,6 +133,8 @@ server.registerTool(
   "spec_nav_similar_functions",
   {
     description:
+      "Use when spec_nav_find_functions found nothing that fits, before adding new code, or before changing " +
+      "logic that may be copied elsewhere — Grep cannot match code by behaviour. " +
       "Find functions that BEHAVE like a given one, whatever they are named: compares what each function " +
       "calls and the vocabulary of its body (syntax and its own name removed), with rare calls/words " +
       "weighted up. Use it (1) on a draft before adding it — pass `code` — to catch an existing " +
@@ -148,6 +171,8 @@ server.registerTool(
   "spec_nav_functions",
   {
     description:
+      "Use INSTEAD OF reading whole files to see what a file, directory or service defines: names, " +
+      "signatures and line ranges, without the bodies. " +
       "The function catalog, read from each file's syntax tree: every named function, method, " +
       "constructor, accessor and named arrow/function expression — in JS/TS also functions assigned " +
       "to a variable or property after declaration (`x = () => …`, `obj.k = function …`, " +
@@ -186,6 +211,8 @@ server.registerTool(
   "spec_nav_read_function",
   {
     description:
+      "Use INSTEAD OF Read for functions you will NOT edit — search candidates, callers, siblings — so " +
+      "you load the functions, not whole files. To edit a file, Read it (Edit requires that). " +
       "Read functions in full — up to 10 in one call with `functions`, instead of one Read per file: " +
       "signature, whole doc comment, the imports it uses, and its exact " +
       "source with line numbers — from the column it starts at to the column it ends at, so a " +
@@ -244,7 +271,8 @@ server.registerTool(
     description:
       "The projects under the root (any depth), as `service` values the other tools accept, with " +
       "file and function counts per project and a coverage summary. Call when unsure what to pass, " +
-      "or to check SPEC_NAV_ROOT points at the right repo.",
+      "or to check SPEC_NAV_ROOT points at the right repo. Not needed before every task: the other " +
+      "tools cover the whole repo by default.",
     inputSchema: {},
   },
   async () => {
@@ -261,6 +289,8 @@ server.registerTool(
   {
     description:
       "Call sites of a function or method across the repo, before changing its signature or behaviour. " +
+      "Use INSTEAD OF grepping for its name: a grep also hits same-named methods on other classes, " +
+      "comments and strings, and misses calls through aliases and re-exports. " +
       "TypeScript/JavaScript (and Vue/Svelte/Astro scripts and templates) are resolved with the TypeScript " +
       "type checker: a same-named method on another class is excluded; calls through import aliases, " +
       "re-exports, default imports, obj[\"name\"](), f.call()/apply() are found. Python, Go, Java, Kotlin, " +
@@ -298,6 +328,8 @@ server.registerTool(
   "spec_nav_trace_flow",
   {
     description:
+      "Use INSTEAD OF grepping for a URL path or topic string when a change touches an endpoint, RPC call " +
+      "or event: it finds who reaches it from other services and what it reaches. " +
       "Trace a flow ACROSS SERVICES, statically from source: HTTP client → route → handler, RPC call → handler, " +
       "event/topic → consumers, plus direct calls inside each service. Start from a function (`id` or `file`+`name`), " +
       "an `endpoint` or a `topic`; no start lists every link found. Each step gives the sending line, the receiving " +
