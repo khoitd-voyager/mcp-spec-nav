@@ -144,9 +144,7 @@ npm run pack:mcpb
 
 1. 用 spec_nav_find_functions 在各服务中查找已有实现。
    代码用英文命名时使用英文关键词；必要时换一种说法再试。
-2. 用 spec_nav_read_function 阅读最相关的候选，每次调用可读多项（`functions`）。
-   不打算修改的代码：读函数，或读类（file + 类名）而不是整个文件；只传 `file`
-   可代替 `cat` 读取整个文件。
+2. 用 spec_nav_read_function 阅读最相关的候选。
    避免把整个函数目录或所有函数体加载进上下文。
    找不到合适的函数时，先写草稿，再交给 spec_nav_similar_functions。
 3. 复用前检查行为、导出、依赖和服务边界。

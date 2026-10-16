@@ -11,7 +11,7 @@
 | `spec_nav_services` | Kiểm tra đường dẫn quét, các project, số lượng file/hàm và coverage. |
 | `spec_nav_find_functions` | Tìm các hàm có thể đáp ứng yêu cầu, xếp hạng và giải thích vì sao khớp. |
 | `spec_nav_similar_functions` | Tìm hàm có hành vi giống một hàm hoặc một bản nháp, dù tên khác hẳn. |
-| `spec_nav_read_function` | Đọc code chính xác của hàm, nguyên class hoặc nguyên file — tối đa 10 mục mỗi lần gọi — kèm signature, tài liệu và import liên quan. |
+| `spec_nav_read_function` | Đọc code chính xác của một hàm (hoặc tối đa 10 hàm mỗi lần gọi), kèm signature, tài liệu và import liên quan. |
 | `spec_nav_functions` | Xem danh mục hàm, lọc và lấy từng trang. |
 | `spec_nav_callers` | Kiểm tra lời gọi, references, lời gọi động và những trường hợp chưa resolve được. |
 | `spec_nav_map` | Tìm dòng khớp regex, kèm tên hàm chứa dòng đó. |
@@ -71,23 +71,6 @@ Hàm dài được chia phần: đọc tiếp bằng `nextCursor` trả về, tr
 ```
 
 Các hàm dùng chung một trang: mỗi hàm nhận phần đều của dung lượng còn lại, nên hàm ngắn chừa chỗ cho hàm dài. Hàm không vừa sẽ kết thúc bằng `nextCursor` riêng, đọc tiếp bằng một lần gọi đơn (`{ "cursor": "…" }`). Hàm không tìm thấy, trùng tên hoặc STALE được báo ngay tại vị trí của nó; các hàm khác vẫn được đọc.
-
-**Cả class hoặc cả file.** Truyền tên class vào `name` để đọc nguyên class, hoặc chỉ `file` để đọc cả file. Cả hai dùng được làm phần tử của `functions`, trộn với đọc hàm — một lần gọi thay cho `cat a b c`:
-
-```json
-{ "functions": [
-  { "file": "services/billing/src/order-service.ts", "name": "OrderService" },
-  { "file": "services/billing/src/fees.ts" },
-  { "file": "services/billing/src/money.ts", "name": "toCents" }
-] }
-```
-
-- **Class** (`file` + tên class): class/interface/struct/enum/impl/module/object kèm doc comment, decorator hoặc annotation, header, field, property và mọi method — cộng các method khai báo ngoài thân: method có receiver trong Go, khối `impl` của Rust, extension của Swift, extension function của Kotlin, `X.prototype.y = …`. Các dòng không thuộc class hiện thành `⋮ lines a-b: not part of X`. Import được lọc còn những cái class dùng. Nếu `name` cũng là tên chính xác của một hàm thì đọc hàm; thêm `line` để chọn giữa các class trùng tên.
-- **File** (chỉ `file`): mọi dòng của file trừ các câu import, được liệt kê một lần ở header, mỗi câu một dòng (`⋮ lines 1-7: imports, listed above` đánh dấu chỗ của chúng).
-
-Class và file dài được chia phần như hàm: `nextCursor` (bám theo code nếu có dòng thêm phía trên, trả STALE nếu chính code đó đổi) hoặc `fromLine`; `maxLines` mặc định 1000 ở chế độ này. Với `format: "json"`, kết quả còn liệt kê các type trong file và các hàm trong phần đọc, kèm id.
-
-Tiết kiệm ở đâu: đọc class chỉ ra đúng class đó, và một batch thay nhiều lần Read bằng một lần gọi. Đọc cả file thì cỡ bằng Read file đó (đã gồm số dòng) — hơi lớn hơn `cat` thuần; nếu chỉ cần class hay vài hàm thì đọc chúng thôi.
 
 ## `spec_nav_functions`
 

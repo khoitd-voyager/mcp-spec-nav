@@ -232,26 +232,8 @@ export interface RawFunction {
   doc?: string;
 }
 
-/**
- * A class, interface, struct, impl block, module… — whatever its language
- * groups members in — by its whole extent, so it can be read as one unit.
- */
-export interface RawType {
-  name: string;
-  /** Enclosing scopes, outermost first, as for functions. */
-  qualifier: string[];
-  /** `class`, `interface`, `struct`, `impl`, `module`, … */
-  kind: string;
-  /** 1-indexed, inclusive; decorators, annotations and modifiers included, the doc comment above not. */
-  start: number;
-  end: number;
-  startOffset: number;
-  endOffset: number;
-}
-
 export interface TreeSitterResult {
   functions: RawFunction[];
-  types: RawType[];
   /** Line of the first syntax error, if the file did not parse cleanly. */
   errorLine?: number;
 }
@@ -361,43 +343,35 @@ function visibilityOf(node: TSNode, name: string, lang: LangSpec, keyword?: stri
  * body, not the method), but "the lines right above it" never does.
  */
 export function docAbove(lines: string[], startLine: number, commentLine: RegExp): string | undefined {
-  const { from, to } = docLines(lines, startLine, commentLine);
-  const out = lines.slice(from, to);
+  const out: string[] = [];
+  let i = startLine - 2; // 0-indexed line above
+  // Attributes and annotations sit between a doc comment and its function.
+  while (i >= 0 && /^\s*(#\[|@\w+(\(.*\))?\s*$|\[\w)/.test(lines[i]) && !commentLine.test(lines[i])) i--;
+  let inBlock = false;
+  while (i >= 0) {
+    const l = lines[i];
+    if (!inBlock && /\*\/\s*$/.test(l) && !/^\s*\/\*/.test(l)) {
+      inBlock = true;
+      out.unshift(l);
+      i--;
+      continue;
+    }
+    if (inBlock) {
+      out.unshift(l);
+      if (/^\s*\/\*/.test(l)) inBlock = false;
+      i--;
+      continue;
+    }
+    if (!commentLine.test(l)) break;
+    out.unshift(l);
+    i--;
+  }
   if (!out.length) return undefined;
   const cleaned = out
     .map((l) => l.replace(/^\s*(\/\*\*?|\*\/|\*|\/\/\/?|#+|--)\s?/, "").replace(/\s*\*\/\s*$/, ""))
     .join("\n")
     .trim();
   return cleaned || undefined;
-}
-
-/**
- * The comment block directly above `startLine` (1-indexed), as 0-indexed
- * lines [from, to); empty when there is none. Annotations between the
- * comment and the declaration are stepped over, not included.
- */
-export function docLines(lines: string[], startLine: number, commentLine: RegExp): { from: number; to: number } {
-  let i = startLine - 2; // 0-indexed line above
-  // Attributes and annotations sit between a doc comment and its function.
-  while (i >= 0 && /^\s*(#\[|@\w+(\(.*\))?\s*$|\[\w)/.test(lines[i]) && !commentLine.test(lines[i])) i--;
-  const to = i + 1;
-  let inBlock = false;
-  while (i >= 0) {
-    const l = lines[i];
-    if (!inBlock && /\*\/\s*$/.test(l) && !/^\s*\/\*/.test(l)) {
-      inBlock = true;
-      i--;
-      continue;
-    }
-    if (inBlock) {
-      if (/^\s*\/\*/.test(l)) inBlock = false;
-      i--;
-      continue;
-    }
-    if (!commentLine.test(l)) break;
-    i--;
-  }
-  return { from: i + 1, to };
 }
 
 /** A Python docstring: the first statement of the body, when it is a string. */
@@ -454,7 +428,7 @@ export async function extractFunctions(text: string, lang: LangSpec): Promise<Tr
   }
   if (!tree) return undefined;
   try {
-    return { ...walkFunctions(tree.rootNode, lang, text), errorLine: firstErrorLine(tree.rootNode) };
+    return { functions: walkFunctions(tree.rootNode, lang, text), errorLine: firstErrorLine(tree.rootNode) };
   } finally {
     // Trees live in WASM memory, which the JS garbage collector never sees.
     // Not deleting them leaks a little per file, which on a big repo is a lot.
@@ -462,46 +436,14 @@ export async function extractFunctions(text: string, lang: LangSpec): Promise<Tr
   }
 }
 
-/** `class_declaration` → class, `impl_item` → impl, Go `type_spec` → struct/interface/type. */
-function typeKind(node: TSNode): string {
-  if (node.type === "type_spec") {
-    const t = node.childForFieldName("type")?.type;
-    return t === "struct_type" || t === "interface_type" ? t.replace(/_type$/, "") : "type";
-  }
-  return node.type.replace(/_(declaration|definition|item|specifier)$/, "");
-}
-
-function walkFunctions(root: TSNode, lang: LangSpec, text: string): { functions: RawFunction[]; types: RawType[] } {
+function walkFunctions(root: TSNode, lang: LangSpec, text: string): RawFunction[] {
   const fnTypes = new Set(lang.functionNodes);
   const containerTypes = new Set(lang.containerNodes);
-  const typeOnly = new Set(lang.typeNodes ?? []);
   const out: RawFunction[] = [];
-  const types: RawType[] = [];
   const lines = text.split("\n");
   const callDef = lang.callDefinition;
 
   type Scope = { name: string; isFunction: boolean };
-
-  const recordType = (node: TSNode, name: string, scope: Scope[], kind = typeKind(node)) => {
-    // C/C++ `struct Foo x;` names a type without declaring it.
-    if (/_specifier$/.test(node.type) && !node.childForFieldName("body")) return;
-    let outer = node.parent?.type === "decorated_definition" ? node.parent : node;
-    // Go `type Order struct {…}`: the `type` keyword belongs to it, unless it is one of a group.
-    if (node.type === "type_spec" && node.parent?.type === "type_declaration") {
-      let specs = 0;
-      for (let i = 0; i < node.parent.namedChildCount; i++) if (node.parent.namedChild(i)?.type === "type_spec") specs++;
-      if (specs === 1) outer = node.parent;
-    }
-    types.push({
-      name,
-      qualifier: scope.map((s) => s.name),
-      kind,
-      start: outer.startPosition.row + 1,
-      end: node.endPosition.row + 1,
-      startOffset: outer.startIndex,
-      endOffset: node.endIndex,
-    });
-  };
 
   const record = (node: TSNode, name: string, scope: Scope[], keyword?: string, receiver?: string) => {
     const qualifier = scope.map((s) => s.name);
@@ -565,7 +507,6 @@ function walkFunctions(root: TSNode, lang: LangSpec, text: string): { functions:
       const parts = callDefinitionParts(node);
       if (parts) {
         if (callDef.containerKeywords.includes(parts.keyword)) {
-          recordType(node, parts.name, scope, parts.keyword.replace(/^def/, ""));
           nextScope = [...scope, { name: parts.name, isFunction: false }];
         } else if (callDef.functionKeywords.includes(parts.keyword)) {
           record(node, parts.name, scope, parts.keyword);
@@ -577,15 +518,7 @@ function walkFunctions(root: TSNode, lang: LangSpec, text: string): { functions:
       // An anonymous container (`impl Trait for T` with no simple type, a
       // bare `module`) adds nothing a reader can act on, so it is skipped
       // rather than inserted as a placeholder.
-      if (name) {
-        recordType(node, name, scope);
-        nextScope = [...scope, { name, isFunction: false }];
-      }
-    } else if (typeOnly.has(node.type)) {
-      // A type that holds no functions itself (a Rust struct, a Go type):
-      // recorded so it can be read with the methods declared elsewhere.
-      const name = nodeName(node, lang);
-      if (name) recordType(node, name, scope);
+      if (name) nextScope = [...scope, { name, isFunction: false }];
     } else if (fnTypes.has(node.type)) {
       const name = lang.declaratorNodes?.includes(node.type)
         ? declaratorName(node)
@@ -607,5 +540,5 @@ function walkFunctions(root: TSNode, lang: LangSpec, text: string): { functions:
   };
 
   walk(root, []);
-  return { functions: out, types };
+  return out;
 }

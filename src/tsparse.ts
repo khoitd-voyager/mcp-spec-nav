@@ -1,5 +1,5 @@
 import { ts } from "ts-morph";
-import type { RawFunction, RawType } from "./treesitter.js";
+import type { RawFunction } from "./treesitter.js";
 
 /**
  * Functions in a TypeScript or JavaScript file, read with the TypeScript
@@ -13,7 +13,6 @@ import type { RawFunction, RawType } from "./treesitter.js";
 
 export interface TsExtract {
   functions: RawFunction[];
-  types: RawType[];
   /** Function expressions with nothing naming them (inline callbacks). */
   anonymous: Array<{ start: number; end: number }>;
   errorLine?: number;
@@ -224,7 +223,6 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
   const sf = parseSource(fileName, text, ext);
   const aliases = exportAliases(sf);
   const functions: RawFunction[] = [];
-  const types: RawType[] = [];
   const anonymous: TsExtract["anonymous"] = [];
   const claimed = new Set<ts.Node>();
   let checker: ts.TypeChecker | undefined;
@@ -287,21 +285,6 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
     });
   };
 
-  /** A class, interface, enum, type alias, namespace or named object literal, by its whole extent. */
-  const addType = (anchor: ts.Node, name: string, scope: Scope[], kind: string) => {
-    const startOffset = anchor.getStart(sf);
-    const endOffset = anchor.getEnd();
-    types.push({
-      name,
-      qualifier: scope.map((s) => s.name),
-      kind,
-      start: lineOf(sf, startOffset),
-      end: lineOf(sf, endOffset),
-      startOffset,
-      endOffset,
-    });
-  };
-
   const memberVisibility = (m: ts.Node): string | undefined => {
     if (hasModifier(m, ts.SyntaxKind.PrivateKeyword)) return "private";
     if (hasModifier(m, ts.SyntaxKind.ProtectedKeyword)) return "protected";
@@ -310,9 +293,7 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
     return "public";
   };
 
-  /** `anchor`: what the class's extent starts at — the statement, for `const X = class {…}`. */
-  const visitClass = (cls: ts.ClassLikeDeclaration, name: string, scope: Scope[], exported: boolean, anchor: ts.Node = cls) => {
-    addType(anchor, name, scope, "class");
+  const visitClass = (cls: ts.ClassLikeDeclaration, name: string, scope: Scope[], exported: boolean) => {
     const inner: Scope[] = [...scope, { name, isFunction: false, exported, node: cls }];
     for (const m of cls.members) {
       const vis = memberVisibility(m);
@@ -401,13 +382,9 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
       visitClass(node, name ?? "<anonymous class>", scope, exported);
       return;
     }
-    if (ts.isInterfaceDeclaration(node) || ts.isEnumDeclaration(node) || ts.isTypeAliasDeclaration(node)) {
-      addType(node, node.name.text, scope, ts.isInterfaceDeclaration(node) ? "interface" : ts.isEnumDeclaration(node) ? "enum" : "type");
-    }
     if (ts.isModuleDeclaration(node) && node.body) {
       const name = propName(node.name as ts.Identifier, sf) ?? "<module>";
       const exported = hasModifier(node, ts.SyntaxKind.ExportKeyword);
-      addType(node, name, scope, "namespace");
       visit(node.body, [...scope, { name, isFunction: false, exported }]);
       return;
     }
@@ -437,10 +414,9 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
         } else if (d.initializer) {
           const inner = unwrap(d.initializer);
           if (ts.isObjectLiteralExpression(inner) && name) {
-            addType(anchor, name, scope, "object");
             visitObjectLiteral(inner, [...scope, { name, isFunction: false, exported }], exported);
           } else if (ts.isClassExpression(inner)) {
-            visitClass(inner, inner.name?.text ?? name ?? "<anonymous class>", scope, exported, anchor);
+            visitClass(inner, inner.name?.text ?? name ?? "<anonymous class>", scope, exported);
           } else {
             visit(d.initializer, scope);
           }
@@ -505,7 +481,7 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
         return true;
       }
       if (ts.isClassExpression(value)) {
-        visitClass(value, value.name?.text ?? "module.exports", scope, true, anchor);
+        visitClass(value, value.name?.text ?? "module.exports", scope, true);
         return true;
       }
       if (!fv) return false;
@@ -582,7 +558,6 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
   const first = diags[0];
   return {
     functions,
-    types,
     anonymous,
     errorLine: first ? lineOf(sf, first.start) : undefined,
     errorMessage: first ? ts.flattenDiagnosticMessageText(first.messageText, " ") : undefined,
@@ -595,22 +570,7 @@ export function extractTsFunctions(fileName: string, text: string, ext: string):
  */
 export function tsImportsUsed(sf: ts.SourceFile, bodyText: string): string[] {
   const used = new Set(bodyText.match(/[A-Za-z_$][\w$]*/g) ?? []);
-  return tsImports(sf).filter((i) => i.names.some((n) => used.has(n))).map((i) => i.text);
-}
-
-/** A top-level import statement: its lines (1-indexed, inclusive), its text on one line, the names it binds. */
-export interface ImportStmt {
-  start: number;
-  end: number;
-  text: string;
-  names: string[];
-}
-
-/** The file's import declarations and `require` statements, in order. */
-export function tsImports(sf: ts.SourceFile): ImportStmt[] {
-  const out: ImportStmt[] = [];
-  const push = (st: ts.Statement, names: string[]) =>
-    out.push({ start: lineOf(sf, st.getStart(sf)), end: lineOf(sf, st.getEnd()), text: collapse(st.getText(sf)), names });
+  const out: string[] = [];
   for (const st of sf.statements) {
     if (ts.isImportDeclaration(st)) {
       const clause = st.importClause;
@@ -620,15 +580,15 @@ export function tsImports(sf: ts.SourceFile): ImportStmt[] {
         if (ts.isNamespaceImport(clause.namedBindings)) names.push(clause.namedBindings.name.text);
         else for (const el of clause.namedBindings.elements) names.push(el.name.text);
       }
-      push(st, names);
-    } else if (ts.isImportEqualsDeclaration(st)) {
-      push(st, [st.name.text]);
+      if (names.some((n) => used.has(n))) out.push(collapse(st.getText(sf)));
     } else if (ts.isVariableStatement(st)) {
       // const x = require("y"), const { a, b } = require("y")
       const t = st.getText(sf);
       if (!/\brequire\s*\(/.test(t)) continue;
-      const names = (t.match(/[A-Za-z_$][\w$]*/g) ?? []).filter((n) => n !== "require" && n !== "const" && n !== "let" && n !== "var");
-      push(st, names);
+      const names = t.match(/[A-Za-z_$][\w$]*/g) ?? [];
+      if (names.some((n) => n !== "require" && n !== "const" && n !== "let" && n !== "var" && used.has(n))) {
+        out.push(collapse(t));
+      }
     }
   }
   return out;

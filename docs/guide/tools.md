@@ -11,7 +11,7 @@ These are MCP tool arguments, not terminal commands. Your agent calls them for y
 | `spec_nav_services` | Check the scan root, discovered projects, counts and coverage. |
 | `spec_nav_find_functions` | Find ranked candidates for existing logic across services. |
 | `spec_nav_similar_functions` | Find functions that behave like a candidate or a draft, whatever they are named. |
-| `spec_nav_read_function` | Read the exact source and context of functions, whole classes or whole files — up to 10 in one call. |
+| `spec_nav_read_function` | Read the exact source and context of one candidate, or up to 10 in one call. |
 | `spec_nav_functions` | Browse the function catalog with filters and pagination. |
 | `spec_nav_callers` | Inspect calls, references, dynamic uses and unresolved usages before a change. |
 | `spec_nav_map` | Find regex matches with the enclosing function. |
@@ -71,23 +71,6 @@ Read up to 10 functions in one call with `functions`:
 ```
 
 The functions share one page: each gets an even share of what is left, so short ones leave room for longer ones. A function that does not fit ends with its own `nextCursor`, read on with a single-function call (`{ "cursor": "…" }`). One that is not found, is ambiguous or is stale is reported in its place; the others are still read.
-
-**A whole class or a whole file.** Pass a class name as `name` to read the class whole, or `file` alone to read the whole file. Both also work as items in `functions`, mixed with function reads — one call instead of `cat a b c`:
-
-```json
-{ "functions": [
-  { "file": "services/billing/src/order-service.ts", "name": "OrderService" },
-  { "file": "services/billing/src/fees.ts" },
-  { "file": "services/billing/src/money.ts", "name": "toCents" }
-] }
-```
-
-- **Class** (`file` + class name): the class/interface/struct/enum/impl/module/object with its doc comment, decorators or annotations, header, fields, properties and every method — plus methods declared outside its body: Go receiver methods, Rust `impl` blocks, Swift extensions, Kotlin extension functions, `X.prototype.y = …`. Lines that are not part of it are shown as `⋮ lines a-b: not part of X`. Imports are narrowed to those the class uses. If `name` is also the exact name of a function, the function is read; add `line` to pick among same-named classes.
-- **File** (`file` alone): every line of the file except its import statements, which are listed once in the header, one per line (`⋮ lines 1-7: imports, listed above` marks where they were).
-
-Long classes and files come in parts like functions: `nextCursor` (follows the code if lines are added above it, answers STALE if the code changed) or `fromLine`; `maxLines` defaults to 1000 here. With `format: "json"` the result also lists the file's types and the functions in the read, with their ids.
-
-What it saves: a class read is only that class, and a batch replaces several Reads with one call. A whole-file read is about the size of a Read of the file (line numbers included) — slightly larger than plain `cat`; read the class or the functions you need when that is enough.
 
 ## `spec_nav_functions`
 

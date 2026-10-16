@@ -75364,9 +75364,9 @@ ${lanes.join("\n")}
         function getTypeAliasInstantiation(symbol, typeArguments, aliasSymbol, aliasTypeArguments) {
           const type = getDeclaredTypeOfSymbol(symbol);
           if (type === intrinsicMarkerType) {
-            const typeKind2 = intrinsicTypeKinds.get(symbol.escapedName);
-            if (typeKind2 !== void 0 && typeArguments && typeArguments.length === 1) {
-              return typeKind2 === 4 ? getNoInferType(typeArguments[0]) : getStringMappingType(symbol, typeArguments[0]);
+            const typeKind = intrinsicTypeKinds.get(symbol.escapedName);
+            if (typeKind !== void 0 && typeArguments && typeArguments.length === 1) {
+              return typeKind === 4 ? getNoInferType(typeArguments[0]) : getStringMappingType(symbol, typeArguments[0]);
             }
           }
           const links = getSymbolLinks(symbol);
@@ -100353,12 +100353,12 @@ ${lanes.join("\n")}
           }
           return false;
         }
-        function getIterationTypeOfIterable(use, typeKind2, inputType, errorNode) {
+        function getIterationTypeOfIterable(use, typeKind, inputType, errorNode) {
           if (isTypeAny(inputType)) {
             return void 0;
           }
           const iterationTypes = getIterationTypesOfIterable(inputType, use, errorNode);
-          return iterationTypes && iterationTypes[getIterationTypesKeyFromIterationTypeKind(typeKind2)];
+          return iterationTypes && iterationTypes[getIterationTypesKeyFromIterationTypeKind(typeKind)];
         }
         function createIterationTypes(yieldType = neverType2, returnType = neverType2, nextType = unknownType2) {
           if (yieldType.flags & 67359327 && returnType.flags & (1 | 131072 | 2 | 16384 | 32768) && nextType.flags & (1 | 131072 | 2 | 16384 | 32768)) {
@@ -107047,8 +107047,8 @@ ${lanes.join("\n")}
         JsxNames2.IntrinsicClassAttributes = "IntrinsicClassAttributes";
         JsxNames2.LibraryManagedAttributes = "LibraryManagedAttributes";
       })(JsxNames || (JsxNames = {}));
-      function getIterationTypesKeyFromIterationTypeKind(typeKind2) {
-        switch (typeKind2) {
+      function getIterationTypesKeyFromIterationTypeKind(typeKind) {
+        switch (typeKind) {
           case 0:
             return "yieldType";
           case 1:
@@ -287663,7 +287663,6 @@ var LANGUAGES = [
     wasm: "tree-sitter-go/tree-sitter-go.wasm",
     functionNodes: ["function_declaration", "method_declaration", "func_literal"],
     containerNodes: ["type_declaration"],
-    typeNodes: ["type_spec"],
     receiverNodes: ["method_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|")/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
@@ -287678,7 +287677,6 @@ var LANGUAGES = [
     wasm: "tree-sitter-java/tree-sitter-java.wasm",
     functionNodes: ["method_declaration", "constructor_declaration"],
     containerNodes: ["class_declaration", "interface_declaration", "enum_declaration", "record_declaration"],
-    typeNodes: ["annotation_type_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|package\s|@\w+\s*$)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
     importLine: /^\s*import\s+.+;/,
@@ -287705,7 +287703,6 @@ var LANGUAGES = [
     wasm: "tree-sitter-rust/tree-sitter-rust.wasm",
     functionNodes: ["function_item", "closure_expression"],
     containerNodes: ["impl_item", "trait_item", "mod_item"],
-    typeNodes: ["struct_item", "enum_item", "union_item"],
     // An `impl Order` names its type in `type`, not `name`.
     containerNameField: { impl_item: "type" },
     noise: /^\s*(\/\/|\/\*|\*|use\s|#\[)/,
@@ -287720,7 +287717,6 @@ var LANGUAGES = [
     wasm: "tree-sitter-php/tree-sitter-php.wasm",
     functionNodes: ["function_definition", "method_declaration"],
     containerNodes: ["class_declaration", "interface_declaration", "trait_declaration"],
-    typeNodes: ["enum_declaration"],
     noise: /^\s*(\/\/|#|\/\*|\*|use\s|namespace\s|require\s|include\s)/,
     commentLine: /^\s*(\/\/|#(?!\[)|\/\*|\*)/,
     importLine: /^\s*(use\s+.+;|(require|include)(_once)?\b.+;)/,
@@ -287734,7 +287730,6 @@ var LANGUAGES = [
     wasm: "tree-sitter-c/tree-sitter-c.wasm",
     functionNodes: ["function_definition"],
     containerNodes: [],
-    typeNodes: ["struct_specifier", "enum_specifier", "union_specifier"],
     declaratorNodes: ["function_definition"],
     noise: /^\s*(\/\/|\/\*|\*|#include|#import)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
@@ -287749,7 +287744,6 @@ var LANGUAGES = [
     wasm: "tree-sitter-cpp/tree-sitter-cpp.wasm",
     functionNodes: ["function_definition"],
     containerNodes: ["class_specifier", "struct_specifier", "namespace_definition"],
-    typeNodes: ["enum_specifier", "union_specifier"],
     declaratorNodes: ["function_definition"],
     noise: /^\s*(\/\/|\/\*|\*|#include|#import|using\s)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
@@ -287810,7 +287804,6 @@ var LANGUAGES = [
       "local_function_statement"
     ],
     containerNodes: ["class_declaration", "struct_declaration", "interface_declaration", "record_declaration"],
-    typeNodes: ["enum_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|using\s|namespace\s|\[\w+)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
     importLine: /^\s*(global\s+)?using\s+[^(]+;/,
@@ -288415,33 +288408,31 @@ function visibilityOf(node, name, lang, keyword) {
   return { visibility: m?.[1], isStatic };
 }
 function docAbove(lines, startLine, commentLine) {
-  const { from, to } = docLines(lines, startLine, commentLine);
-  const out = lines.slice(from, to);
-  if (!out.length) return void 0;
-  const cleaned = out.map((l) => l.replace(/^\s*(\/\*\*?|\*\/|\*|\/\/\/?|#+|--)\s?/, "").replace(/\s*\*\/\s*$/, "")).join("\n").trim();
-  return cleaned || void 0;
-}
-function docLines(lines, startLine, commentLine) {
+  const out = [];
   let i = startLine - 2;
   while (i >= 0 && /^\s*(#\[|@\w+(\(.*\))?\s*$|\[\w)/.test(lines[i]) && !commentLine.test(lines[i])) i--;
-  const to = i + 1;
   let inBlock = false;
   while (i >= 0) {
     const l = lines[i];
     if (!inBlock && /\*\/\s*$/.test(l) && !/^\s*\/\*/.test(l)) {
       inBlock = true;
+      out.unshift(l);
       i--;
       continue;
     }
     if (inBlock) {
+      out.unshift(l);
       if (/^\s*\/\*/.test(l)) inBlock = false;
       i--;
       continue;
     }
     if (!commentLine.test(l)) break;
+    out.unshift(l);
     i--;
   }
-  return { from: i + 1, to };
+  if (!out.length) return void 0;
+  const cleaned = out.map((l) => l.replace(/^\s*(\/\*\*?|\*\/|\*|\/\/\/?|#+|--)\s?/, "").replace(/\s*\*\/\s*$/, "")).join("\n").trim();
+  return cleaned || void 0;
 }
 function pythonDocstring(node) {
   const body = node.childForFieldName("body");
@@ -288481,44 +288472,17 @@ async function extractFunctions(text2, lang) {
   }
   if (!tree) return void 0;
   try {
-    return { ...walkFunctions(tree.rootNode, lang, text2), errorLine: firstErrorLine(tree.rootNode) };
+    return { functions: walkFunctions(tree.rootNode, lang, text2), errorLine: firstErrorLine(tree.rootNode) };
   } finally {
     tree.delete();
   }
 }
-function typeKind(node) {
-  if (node.type === "type_spec") {
-    const t = node.childForFieldName("type")?.type;
-    return t === "struct_type" || t === "interface_type" ? t.replace(/_type$/, "") : "type";
-  }
-  return node.type.replace(/_(declaration|definition|item|specifier)$/, "");
-}
 function walkFunctions(root, lang, text2) {
   const fnTypes = new Set(lang.functionNodes);
   const containerTypes = new Set(lang.containerNodes);
-  const typeOnly = new Set(lang.typeNodes ?? []);
   const out = [];
-  const types = [];
   const lines = text2.split("\n");
   const callDef = lang.callDefinition;
-  const recordType2 = (node, name, scope, kind = typeKind(node)) => {
-    if (/_specifier$/.test(node.type) && !node.childForFieldName("body")) return;
-    let outer = node.parent?.type === "decorated_definition" ? node.parent : node;
-    if (node.type === "type_spec" && node.parent?.type === "type_declaration") {
-      let specs = 0;
-      for (let i = 0; i < node.parent.namedChildCount; i++) if (node.parent.namedChild(i)?.type === "type_spec") specs++;
-      if (specs === 1) outer = node.parent;
-    }
-    types.push({
-      name,
-      qualifier: scope.map((s) => s.name),
-      kind,
-      start: outer.startPosition.row + 1,
-      end: node.endPosition.row + 1,
-      startOffset: outer.startIndex,
-      endOffset: node.endIndex
-    });
-  };
   const record2 = (node, name, scope, keyword, receiver) => {
     const qualifier = scope.map((s) => s.name);
     if (receiver) qualifier.push(receiver);
@@ -288573,7 +288537,6 @@ function walkFunctions(root, lang, text2) {
       const parts = callDefinitionParts(node);
       if (parts) {
         if (callDef.containerKeywords.includes(parts.keyword)) {
-          recordType2(node, parts.name, scope, parts.keyword.replace(/^def/, ""));
           nextScope = [...scope, { name: parts.name, isFunction: false }];
         } else if (callDef.functionKeywords.includes(parts.keyword)) {
           record2(node, parts.name, scope, parts.keyword);
@@ -288582,13 +288545,7 @@ function walkFunctions(root, lang, text2) {
       }
     } else if (containerTypes.has(node.type)) {
       const name = nodeName(node, lang);
-      if (name) {
-        recordType2(node, name, scope);
-        nextScope = [...scope, { name, isFunction: false }];
-      }
-    } else if (typeOnly.has(node.type)) {
-      const name = nodeName(node, lang);
-      if (name) recordType2(node, name, scope);
+      if (name) nextScope = [...scope, { name, isFunction: false }];
     } else if (fnTypes.has(node.type)) {
       const name = lang.declaratorNodes?.includes(node.type) ? declaratorName(node) : nodeName(node, lang);
       if (name) {
@@ -288603,7 +288560,7 @@ function walkFunctions(root, lang, text2) {
     }
   };
   walk2(root, []);
-  return { functions: out, types };
+  return out;
 }
 
 // src/catalog.ts
@@ -288761,7 +288718,6 @@ function extractTsFunctions(fileName, text2, ext) {
   const sf = parseSource(fileName, text2, ext);
   const aliases = exportAliases(sf);
   const functions = [];
-  const types = [];
   const anonymous = [];
   const claimed = /* @__PURE__ */ new Set();
   let checker;
@@ -288806,19 +288762,6 @@ function extractTsFunctions(fileName, text2, ext) {
       ...extra
     });
   };
-  const addType = (anchor, name, scope, kind) => {
-    const startOffset = anchor.getStart(sf);
-    const endOffset = anchor.getEnd();
-    types.push({
-      name,
-      qualifier: scope.map((s) => s.name),
-      kind,
-      start: lineOf(sf, startOffset),
-      end: lineOf(sf, endOffset),
-      startOffset,
-      endOffset
-    });
-  };
   const memberVisibility = (m) => {
     if (hasModifier(m, import_ts_morph2.ts.SyntaxKind.PrivateKeyword)) return "private";
     if (hasModifier(m, import_ts_morph2.ts.SyntaxKind.ProtectedKeyword)) return "protected";
@@ -288826,8 +288769,7 @@ function extractTsFunctions(fileName, text2, ext) {
     if (n && import_ts_morph2.ts.isPrivateIdentifier(n)) return "#private";
     return "public";
   };
-  const visitClass = (cls, name, scope, exported, anchor = cls) => {
-    addType(anchor, name, scope, "class");
+  const visitClass = (cls, name, scope, exported) => {
     const inner = [...scope, { name, isFunction: false, exported, node: cls }];
     for (const m of cls.members) {
       const vis = memberVisibility(m);
@@ -288911,13 +288853,9 @@ function extractTsFunctions(fileName, text2, ext) {
       visitClass(node, name ?? "<anonymous class>", scope, exported);
       return;
     }
-    if (import_ts_morph2.ts.isInterfaceDeclaration(node) || import_ts_morph2.ts.isEnumDeclaration(node) || import_ts_morph2.ts.isTypeAliasDeclaration(node)) {
-      addType(node, node.name.text, scope, import_ts_morph2.ts.isInterfaceDeclaration(node) ? "interface" : import_ts_morph2.ts.isEnumDeclaration(node) ? "enum" : "type");
-    }
     if (import_ts_morph2.ts.isModuleDeclaration(node) && node.body) {
       const name = propName(node.name, sf) ?? "<module>";
       const exported = hasModifier(node, import_ts_morph2.ts.SyntaxKind.ExportKeyword);
-      addType(node, name, scope, "namespace");
       visit(node.body, [...scope, { name, isFunction: false, exported }]);
       return;
     }
@@ -288944,10 +288882,9 @@ function extractTsFunctions(fileName, text2, ext) {
         } else if (d.initializer) {
           const inner = unwrap(d.initializer);
           if (import_ts_morph2.ts.isObjectLiteralExpression(inner) && name) {
-            addType(anchor, name, scope, "object");
             visitObjectLiteral(inner, [...scope, { name, isFunction: false, exported }], exported);
           } else if (import_ts_morph2.ts.isClassExpression(inner)) {
-            visitClass(inner, inner.name?.text ?? name ?? "<anonymous class>", scope, exported, anchor);
+            visitClass(inner, inner.name?.text ?? name ?? "<anonymous class>", scope, exported);
           } else {
             visit(d.initializer, scope);
           }
@@ -288996,7 +288933,7 @@ function extractTsFunctions(fileName, text2, ext) {
         return true;
       }
       if (import_ts_morph2.ts.isClassExpression(value)) {
-        visitClass(value, value.name?.text ?? "module.exports", scope, true, anchor);
+        visitClass(value, value.name?.text ?? "module.exports", scope, true);
         return true;
       }
       if (!fv) return false;
@@ -289063,7 +289000,6 @@ function extractTsFunctions(fileName, text2, ext) {
   const first = diags[0];
   return {
     functions,
-    types,
     anonymous,
     errorLine: first ? lineOf(sf, first.start) : void 0,
     errorMessage: first ? import_ts_morph2.ts.flattenDiagnosticMessageText(first.messageText, " ") : void 0
@@ -289071,11 +289007,7 @@ function extractTsFunctions(fileName, text2, ext) {
 }
 function tsImportsUsed(sf, bodyText) {
   const used = new Set(bodyText.match(/[A-Za-z_$][\w$]*/g) ?? []);
-  return tsImports(sf).filter((i) => i.names.some((n) => used.has(n))).map((i) => i.text);
-}
-function tsImports(sf) {
   const out = [];
-  const push = (st, names) => out.push({ start: lineOf(sf, st.getStart(sf)), end: lineOf(sf, st.getEnd()), text: collapse2(st.getText(sf)), names });
   for (const st of sf.statements) {
     if (import_ts_morph2.ts.isImportDeclaration(st)) {
       const clause = st.importClause;
@@ -289085,14 +289017,14 @@ function tsImports(sf) {
         if (import_ts_morph2.ts.isNamespaceImport(clause.namedBindings)) names.push(clause.namedBindings.name.text);
         else for (const el of clause.namedBindings.elements) names.push(el.name.text);
       }
-      push(st, names);
-    } else if (import_ts_morph2.ts.isImportEqualsDeclaration(st)) {
-      push(st, [st.name.text]);
+      if (names.some((n) => used.has(n))) out.push(collapse2(st.getText(sf)));
     } else if (import_ts_morph2.ts.isVariableStatement(st)) {
       const t = st.getText(sf);
       if (!/\brequire\s*\(/.test(t)) continue;
-      const names = (t.match(/[A-Za-z_$][\w$]*/g) ?? []).filter((n) => n !== "require" && n !== "const" && n !== "let" && n !== "var");
-      push(st, names);
+      const names = t.match(/[A-Za-z_$][\w$]*/g) ?? [];
+      if (names.some((n) => n !== "require" && n !== "const" && n !== "let" && n !== "var" && used.has(n))) {
+        out.push(collapse2(t));
+      }
     }
   }
   return out;
@@ -289476,7 +289408,6 @@ function extractBraceFunctions(text2, lang) {
   if (stack.length) firstError ??= toks[stack[0]].s;
   const containers = lang === "kotlin" ? KOTLIN_CONTAINERS : SWIFT_CONTAINERS;
   const functions = [];
-  const types = [];
   const nameOffsets = /* @__PURE__ */ new Set();
   const isP = (k, v) => k < toks.length && toks[k].t === "p" && toks[k].v === v;
   const isId = (k, v) => k < toks.length && toks[k].t === "id" && (v === void 0 || toks[k].v === v);
@@ -289651,7 +289582,7 @@ function extractBraceFunctions(text2, lang) {
       const funInterface = lang === "kotlin" && v === "fun" && isId(k + 1, "interface");
       if (containers.has(v) && !isSwiftClassModifier || funInterface) {
         const kw = funInterface ? k + 1 : k;
-        const { start: declStart, mods } = prefixStart(k, from);
+        const { mods } = prefixStart(k, from);
         let j = kw + 1;
         let name;
         if (v === "object" && mods.has("companion")) name = isId(j) && !isP(j + 1, ".") && toks[j].v !== "Companion" ? toks[j++].v : "Companion";
@@ -289680,20 +289611,6 @@ function extractBraceFunctions(text2, lang) {
             const a = skipAngles(j);
             if (a > j) j = a - 1;
           }
-        }
-        const endTok = body >= 0 && match[body] > body ? match[body] : Math.min(j, to) - 1;
-        if (endTok > kw) {
-          const startOffset = toks[declStart].s;
-          const endOffset = toks[endTok].e;
-          types.push({
-            name,
-            qualifier: scope.map((f) => f.name),
-            kind: funInterface ? "fun interface" : v === "object" && mods.has("companion") ? "companion object" : v,
-            start: line(startOffset),
-            end: line(Math.max(startOffset, endOffset - 1)),
-            startOffset,
-            endOffset
-          });
         }
         if (body >= 0 && match[body] > body) {
           const isStatic = v === "object";
@@ -289867,7 +289784,7 @@ function extractBraceFunctions(text2, lang) {
   };
   walk2(0, toks.length, []);
   functions.sort((a, b) => a.startOffset - b.startOffset);
-  return { functions, types, errorLine: firstError !== void 0 ? line(firstError) : void 0, nameOffsets };
+  return { functions, errorLine: firstError !== void 0 ? line(firstError) : void 0, nameOffsets };
 }
 function braceSites(text2, lang, name, declOffsets) {
   const { toks } = lex(text2, lang);
@@ -290654,9 +290571,6 @@ function toIndexed(entry, raws, text2) {
   }
   return out;
 }
-function toTypes(raws) {
-  return raws.map((t) => ({ name: [...t.qualifier, t.name].join("."), shortName: t.name, kind: t.kind, start: t.start, end: t.end })).sort((a, b) => a.start - b.start || b.end - a.end);
-}
 async function catalogFile(entry) {
   const cached3 = cache.get(entry.abs);
   if (cached3 && cached3.stamp === entry.stamp) {
@@ -290670,7 +290584,7 @@ async function catalogFile(entry) {
   try {
     text2 = (0, import_node_fs2.readFileSync)(entry.abs, "utf8");
   } catch (err) {
-    const fc2 = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], readError: String(err) };
+    const fc2 = { stamp: entry.stamp, entry, functions: [], anonymous: [], readError: String(err) };
     cache.set(entry.abs, fc2);
     return fc2;
   }
@@ -290684,13 +290598,12 @@ async function catalogFile(entry) {
         stamp: entry.stamp,
         entry,
         functions: toIndexed(entry, r.functions, text2),
-        types: toTypes(r.types),
         anonymous: r.anonymous,
         errorLine: r.errorLine,
         errorMessage: r.errorMessage
       };
     } catch (err) {
-      fc = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], errorLine: 1, errorMessage: `parser crashed: ${err}` };
+      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], errorLine: 1, errorMessage: `parser crashed: ${err}` };
     }
   } else if (lang?.engine === "brace") {
     try {
@@ -290699,33 +290612,30 @@ async function catalogFile(entry) {
         stamp: entry.stamp,
         entry,
         functions: toIndexed(entry, r.functions, text2),
-        types: toTypes(r.types),
         anonymous: [],
         declOffsets: r.nameOffsets,
         errorLine: r.errorLine,
         errorMessage: r.errorLine ? "unbalanced brackets or unterminated string" : void 0
       };
     } catch (err) {
-      fc = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], errorLine: 1, errorMessage: `scanner crashed: ${err}` };
+      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], errorLine: 1, errorMessage: `scanner crashed: ${err}` };
     }
   } else {
     const r = await extractFunctions(text2, lang);
     if (!r) {
       const reason = loadFailures().find((f) => f.id === lang.id)?.reason ?? "parse failed";
-      fc = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], parserUnavailable: reason };
+      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], parserUnavailable: reason };
     } else {
       fc = {
         stamp: entry.stamp,
         entry,
         functions: toIndexed(entry, r.functions, text2),
-        types: toTypes(r.types),
         anonymous: [],
         errorLine: r.errorLine,
         errorMessage: r.errorLine ? "syntax error" : void 0
       };
     }
   }
-  fc.textHash = hashText(text2);
   cache.set(entry.abs, fc);
   return fc;
 }
@@ -291034,7 +290944,6 @@ function decodeReadCursor(cursor) {
   try {
     const c = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
     if (c.t === "read" && typeof c.id === "string" && typeof c.r === "number") return c;
-    if (c.t === "unit" && typeof c.f === "string" && typeof c.r === "number" && typeof c.h === "string") return c;
   } catch {
   }
   throw new Error("Invalid cursor. Pass the `nextCursor` from the previous part of spec_nav_read_function exactly as given.");
@@ -291074,9 +290983,12 @@ async function resolveFunction(args) {
       `STALE ID: no function ${name} in ${file} any more \u2014 it was renamed, moved or removed.` + (similar.length ? ` Same short name now: ${similar.map((s) => s.rec.id).join(", ")}.` : "") + ` Look it up again with spec_nav_functions { file: "${file}" }.`
     );
   }
-  if (!args.file || !args.name) {
-    throw new Error("Pass `id`, or `file` and `name` (optionally `line` to pick among same-named functions), or `file` alone for the whole file.");
+  if (args.file && !args.name) {
+    throw new Error(
+      `Pass \`name\` with \`file\`: this reads functions, not whole files. spec_nav_functions { file: "${args.file}" } lists the functions in it with their lines; to see or edit the whole file, use Read.`
+    );
   }
+  if (!args.file || !args.name) throw new Error("Pass `id`, or `file` and `name` (optionally `line` to pick among same-named functions).");
   const { fc } = await fileCatalog(args.file);
   if (!fc) throw new Error(`No scanned file "${args.file}". Paths are relative to the repo root; spec_nav_functions lists them.`);
   const want = args.name;
@@ -291093,9 +291005,8 @@ async function resolveFunction(args) {
   }
   if (!matches.length) {
     const names = fc.functions.map((f) => f.rec.name);
-    const typeNames = [...new Set(fc.types.map((t) => t.name))];
     throw new Error(
-      `No function or class "${want}" in ${fc.entry.rel}` + (names.length ? `. Functions there: ${names.slice(0, 40).join(", ")}${names.length > 40 ? ", \u2026" : ""}` : " (no functions catalogued in it).") + (typeNames.length ? ` Classes/types there: ${typeNames.slice(0, 20).join(", ")}${typeNames.length > 20 ? ", \u2026" : ""}.` : "")
+      `No function "${want}" in ${fc.entry.rel}` + (names.length ? `. Functions there: ${names.slice(0, 40).join(", ")}${names.length > 40 ? ", \u2026" : ""}` : " (no functions catalogued in it).")
     );
   }
   if (matches.length > 1) {
@@ -291106,22 +291017,11 @@ async function resolveFunction(args) {
   }
   return { fc, ix: matches[0] };
 }
-var IMPORT_KEYWORDS = /* @__PURE__ */ new Set(["import", "from", "use", "as", "pub", "alias", "require", "static", "crate", "self", "super", "only", "except"]);
-function genericImportStatements(fc, lines) {
+function genericImports(fc, lines, bodyText) {
   const lang = languageById(fc.entry.language);
-  const stmts = [];
-  const importLines2 = /* @__PURE__ */ new Set();
-  if (!lang) return { stmts, lines: importLines2 };
+  if (!lang) return { imports: [], narrowed: false };
   const inFunction = (i) => fc.functions.some((f) => f.rec.start <= i + 1 && i + 1 <= f.rec.end);
-  const push = (from, to, text2) => {
-    let names = text2.match(/[A-Za-z_$][\w$]*/g) ?? [];
-    if (lang.id === "go") {
-      const m = text2.match(/^(?:import\s+)?(\w+\s+)?"([^"]+)"/);
-      names = m ? [m[1]?.trim() || m[2].split("/").pop().replace(/^go-|\.v\d+$/g, "")] : names;
-    }
-    stmts.push({ start: from + 1, end: to + 1, text: text2, names: names.filter((w) => !IMPORT_KEYWORDS.has(w)) });
-    for (let k = from; k <= to; k++) importLines2.add(k);
-  };
+  const stmts = [];
   let inGoBlock = false;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
@@ -291129,23 +291029,20 @@ function genericImportStatements(fc, lines) {
     if (lang.id === "go") {
       if (/^\s*import\s*\($/.test(l)) {
         inGoBlock = true;
-        importLines2.add(i);
         continue;
       }
       if (inGoBlock) {
-        importLines2.add(i);
         if (/^\s*\)/.test(l)) {
           inGoBlock = false;
           continue;
         }
-        if (l.trim() && !/^\s*\/\//.test(l)) push(i, i, l.trim());
+        if (l.trim() && !/^\s*\/\//.test(l)) stmts.push(l.trim());
         continue;
       }
-      if (/^\s*import\s+/.test(l)) push(i, i, l.trim());
+      if (/^\s*import\s+/.test(l)) stmts.push(l.trim());
       continue;
     }
     if (!lang.importLine.test(l)) continue;
-    const from = i;
     let stmt = l.trim();
     if (stmt.includes("(") && !stmt.includes(")")) {
       while (++i < lines.length) {
@@ -291153,17 +291050,20 @@ function genericImportStatements(fc, lines) {
         if (lines[i].includes(")")) break;
       }
     }
-    push(from, Math.min(i, lines.length - 1), stmt);
+    stmts.push(stmt);
   }
-  return { stmts, lines: importLines2 };
-}
-function genericImports(fc, lines, bodyText) {
-  const lang = languageById(fc.entry.language);
-  if (!lang) return { imports: [], narrowed: false };
-  const { stmts } = genericImportStatements(fc, lines);
-  if (!lang.importsNameIdentifiers) return { imports: stmts.map((s) => s.text), narrowed: false };
+  if (!lang.importsNameIdentifiers) return { imports: stmts, narrowed: false };
   const used = new Set(bodyText.match(/[A-Za-z_$][\w$]*/g) ?? []);
-  return { imports: stmts.filter((s) => s.names.some((w) => used.has(w))).map((s) => s.text), narrowed: true };
+  const KEYWORDS = /* @__PURE__ */ new Set(["import", "from", "use", "as", "pub", "alias", "require", "static", "crate", "self", "super", "only", "except"]);
+  const keep = stmts.filter((s) => {
+    let words = s.match(/[A-Za-z_$][\w$]*/g) ?? [];
+    if (lang.id === "go") {
+      const m = s.match(/^(?:import\s+)?(\w+\s+)?"([^"]+)"/);
+      words = m ? [m[1]?.trim() || m[2].split("/").pop().replace(/^go-|\.v\d+$/g, "")] : words;
+    }
+    return words.some((w) => !KEYWORDS.has(w) && used.has(w));
+  });
+  return { imports: keep, narrowed: true };
 }
 var MAX_BATCH_READS = 10;
 var REUSE_ADVICE = (service) => `Before reusing this from another service: check that service already depends on (or may depend on) ${service === "." ? "the root project" : service}, how it is consumed elsewhere (spec_nav_callers), and that it does what you need in every branch.`;
@@ -291178,7 +291078,7 @@ async function readFunctions(targets, args) {
       "Pass either `functions` (several functions) or `id` / `file`+`name` / `cursor` (one function), not both. To continue a long function from a batch, call again with just its `cursor`."
     );
   }
-  if (!targets.length) throw new Error("`functions` is empty: name 1 to 10 functions, classes or files.");
+  if (!targets.length) throw new Error("`functions` is empty: name 1 to 10 functions.");
   if (targets.length > MAX_BATCH_READS) {
     throw new Error(`\`functions\` names ${targets.length} functions; at most ${MAX_BATCH_READS} per call.`);
   }
@@ -291201,8 +291101,7 @@ async function readFunctions(targets, args) {
     outcomes.push(o);
   }
   const failed2 = outcomes.filter((o) => o.isError).length;
-  const noun = targets.every((t) => t.id || t.name) ? "function" : "target";
-  const summary = `${targets.length} ${noun}${targets.length === 1 ? "" : "s"} requested: ${targets.length - failed2} read` + (failed2 ? `, ${failed2} failed (shown in place)` : "") + ".";
+  const summary = `${targets.length} function${targets.length === 1 ? "" : "s"} requested: ${targets.length - failed2} read` + (failed2 ? `, ${failed2} failed (shown in place)` : "") + ".";
   if (args.format === "json") {
     return {
       text: JSON.stringify({ summary, functions: outcomes.map((o) => o.json) }),
@@ -291224,17 +291123,7 @@ ${o.text}`),
 async function readOne(args, budget, inBatch) {
   const request = inBatch ? { id: args.id, file: args.file, name: args.name, line: args.line } : void 0;
   const failure = (text3) => ({ text: text3, isError: true, json: { request, error: text3 } });
-  const anyCursor = args.cursor ? decodeReadCursor(args.cursor) : void 0;
-  if (anyCursor?.t === "unit") return readUnit(args, anyCursor, budget, inBatch);
-  const cursor = anyCursor;
-  if (!cursor && !args.id && args.file) {
-    if (!args.name) return readUnit(args, void 0, budget, inBatch);
-    const { fc: fc2 } = await fileCatalog(args.file);
-    const want = args.name;
-    if (fc2 && !fc2.functions.some((f) => f.rec.name === want || idName(f) === want) && matchTypes(fc2, want, args.line)) {
-      return readUnit(args, void 0, budget, inBatch);
-    }
-  }
+  const cursor = args.cursor ? decodeReadCursor(args.cursor) : void 0;
   let resolved;
   try {
     resolved = await resolveFunction(cursor ? { ...args, id: cursor.id } : args);
@@ -291326,225 +291215,6 @@ async function readOne(args, budget, inBatch) {
       ...page.rendered,
       ...complete ? [] : [`\u2026 function continues at line ${lastShown + 1} (to ${r.end}). Prefer cursor="${nextCursor}": it follows the function if lines are added above it and refuses if the function itself changed; fromLine=${lastShown + 1} is a plain file line.`],
       ...inBatch ? [] : ["", REUSE_ADVICE(r.service)]
-    ].join("\n")
-  };
-}
-var bareType = (name) => name.replace(/<.*>$/, "");
-var qualifierOf = (r) => r.name.slice(0, Math.max(0, r.name.length - r.shortName.length - 1));
-function matchTypes(fc, want, line) {
-  const groups = /* @__PURE__ */ new Map();
-  for (const t of fc.types) {
-    const k = bareType(t.name);
-    groups.set(k, [...groups.get(k) ?? [], t]);
-  }
-  const w = bareType(want);
-  let keys = groups.has(w) ? [w] : [...groups.keys()].filter((k) => k.endsWith("." + w) || k.split(".").pop() === w);
-  if (line !== void 0) {
-    const around = (k) => groups.get(k).filter((t) => t.start <= line && line <= t.end);
-    keys = keys.filter((k) => around(k).length).sort((a, b) => Math.min(...around(a).map((t) => t.end - t.start)) - Math.min(...around(b).map((t) => t.end - t.start))).slice(0, 1);
-  }
-  if (!keys.length) return void 0;
-  if (keys.length > 1) return { ambiguous: keys };
-  return { name: keys[0], types: groups.get(keys[0]) };
-}
-function withDoc(lines, start, commentLine) {
-  const d = docLines(lines, start, commentLine);
-  return d.to > d.from ? d.from + 1 : start;
-}
-function typeSegments(fc, lines, name, types, commentLine) {
-  const segs = types.map((t) => ({ from: withDoc(lines, t.start, commentLine), to: t.end }));
-  const inside = (a, b) => segs.some((s) => s.from <= a && b <= s.to);
-  const outside = [];
-  for (const f of fc.functions) {
-    const q = bareType(qualifierOf(f.rec));
-    if ((q === name || q.startsWith(name + ".")) && !inside(f.rec.start, f.rec.end)) {
-      outside.push({ from: withDoc(lines, f.rec.start, commentLine), to: f.rec.end });
-    }
-  }
-  return mergeRuns([...segs, ...outside], lines);
-}
-function mergeRuns(runs, lines) {
-  const sorted = [...runs].sort((a, b) => a.from - b.from || b.to - a.to);
-  const out = [];
-  for (const r of sorted) {
-    const last2 = out[out.length - 1];
-    const blankGap = (a, b) => lines.slice(a - 1, b).every((l) => !l.trim());
-    if (last2 && (r.from <= last2.to + 1 || blankGap(last2.to + 1, r.from - 1))) last2.to = Math.max(last2.to, r.to);
-    else out.push({ ...r });
-  }
-  return out;
-}
-function fileSegments(lines, importLines2) {
-  const out = [];
-  let from = -1;
-  for (let i = 0; i <= lines.length; i++) {
-    const keep = i < lines.length && !importLines2.has(i);
-    if (keep && from < 0) from = i;
-    if (!keep && from >= 0) {
-      let a = from;
-      let b = i - 1;
-      while (a <= b && !lines[a].trim()) a++;
-      while (b >= a && !lines[b].trim()) b--;
-      if (a <= b) out.push({ from: a + 1, to: b + 1 });
-      from = -1;
-    }
-  }
-  return out;
-}
-function runsText(segs) {
-  const parts = segs.map((s) => s.from === s.to ? `${s.from}` : `${s.from}-${s.to}`);
-  return parts.length > 8 ? `${parts.slice(0, 8).join(", ")}, \u2026 (${parts.length} runs)` : parts.join(", ");
-}
-async function readUnit(args, cursor, budget, inBatch) {
-  const request = inBatch ? { file: args.file, name: args.name, line: args.line } : void 0;
-  const failure = (text3) => ({ text: text3, isError: true, json: { request, error: text3 } });
-  const file = cursor ? cursor.f : args.file;
-  const wantName = cursor ? cursor.n ?? void 0 : args.name;
-  if (!cursor && !wantName && args.line !== void 0) {
-    throw new Error("`line` picks among same-named functions or classes: pass `name` with it, or `fromLine` to start a file read at a line.");
-  }
-  const { fc } = await fileCatalog(file);
-  if (!fc) {
-    if (cursor) return failure(`STALE: ${file} no longer exists (or is no longer scanned). Read it again from the start.`);
-    throw new Error(`No scanned file "${file}". Paths are relative to the repo root; spec_nav_functions lists them.`);
-  }
-  if (fc.readError) throw new Error(`${fc.entry.rel} could not be read: ${fc.readError}`);
-  const text2 = (0, import_node_fs2.readFileSync)(fc.entry.abs, "utf8");
-  if (fc.textHash && hashText(text2) !== fc.textHash) {
-    return failure(`STALE: ${fc.entry.rel} changed while it was being read. Read it again.`);
-  }
-  const lines = text2.split("\n");
-  if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
-  const lang = languageById(fc.entry.language);
-  const commentLine = lang?.commentLine ?? /^\s*(\/\/|\/\*|\*)/;
-  let stmts;
-  const importLines2 = /* @__PURE__ */ new Set();
-  if (isTsFamily(fc.entry.language)) {
-    const view = tsParseView(fc.entry.ext, text2);
-    stmts = tsImports(parseSource(fc.entry.abs, view.text, view.ext));
-    for (const s of stmts) for (let l = s.start; l <= s.end; l++) importLines2.add(l - 1);
-  } else {
-    const g = genericImportStatements(fc, lines);
-    stmts = g.stmts;
-    for (const l of g.lines) importLines2.add(l);
-  }
-  const notes = [];
-  if (fc.parserUnavailable) notes.push(`no parser for ${fc.entry.language} (${fc.parserUnavailable}): classes and functions in it are unknown`);
-  else if (fc.errorLine) notes.push(`syntax error at line ${fc.errorLine}: class boundaries and imports may be off`);
-  let typeName2;
-  let types = [];
-  let segs;
-  let imports;
-  let importsNote;
-  if (wantName === void 0) {
-    segs = fileSegments(lines, importLines2);
-    imports = stmts.map((s) => s.text);
-    importsNote = "all file-level imports; their lines are left out of the source below";
-  } else {
-    const m = matchTypes(fc, wantName, cursor ? void 0 : args.line);
-    if (!m) {
-      if (cursor) return failure(`STALE: no class or type ${wantName} in ${fc.entry.rel} any more. Read it again from the start.`);
-      throw new Error(`No class or type "${wantName}" in ${fc.entry.rel}.`);
-    }
-    if ("ambiguous" in m) {
-      throw new Error(
-        `"${wantName}" names several types in ${fc.entry.rel}; pass the qualified name or a \`line\` inside the one you mean:
-` + m.ambiguous.map((k) => `  ${k}  (${fc.types.filter((t) => bareType(t.name) === k).map((t) => `${t.kind} ${t.start}-${t.end}`).join(", ")})`).join("\n")
-      );
-    }
-    typeName2 = m.name;
-    types = m.types;
-    segs = typeSegments(fc, lines, m.name, m.types, commentLine);
-    const unitText = segs.map((s) => lines.slice(s.from - 1, s.to).join("\n")).join("\n");
-    const used = new Set(unitText.match(/[A-Za-z_$][\w$]*/g) ?? []);
-    const narrow = isTsFamily(fc.entry.language) || !!lang?.importsNameIdentifiers;
-    imports = (narrow ? stmts.filter((s) => s.names.some((n) => used.has(n))) : stmts).map((s) => s.text);
-    importsNote = narrow ? "imports whose bound names appear in this class" : "all file-level imports (this language's imports name namespaces, not identifiers, so they are not narrowed)";
-  }
-  const rows = [];
-  let prevEnd = 0;
-  const gapText = (a, b) => typeName2 === void 0 ? `lines ${a}-${b}: imports, listed above` : `lines ${a}-${b}: not part of ${typeName2}`;
-  for (const s of segs) {
-    if (s.from > prevEnd + 1 && (typeName2 === void 0 || prevEnd > 0)) rows.push({ text: gapText(prevEnd + 1, s.from - 1) });
-    for (let l = s.from; l <= s.to; l++) rows.push({ line: l, text: lines[l - 1] });
-    prevEnd = s.to;
-  }
-  if (typeName2 === void 0 && lines.slice(prevEnd).some((l) => l.trim())) rows.push({ text: gapText(prevEnd + 1, lines.length) });
-  const rowsHash = hashText(rows.map((r) => r.line === void 0 ? "\u22EE" : r.text).join("\n"));
-  const firstLine = segs[0]?.from ?? 1;
-  const lastLine = segs[segs.length - 1]?.to ?? 0;
-  let start = 0;
-  if (cursor) {
-    if (cursor.h !== rowsHash) {
-      return failure(
-        `STALE: ${typeName2 ?? fc.entry.rel} changed between parts of this read, so the parts would not fit together. Read it again from the start.`
-      );
-    }
-    start = Math.min(cursor.r, rows.length);
-    if (cursor.s !== firstLine) {
-      notes.push(`It moved from line ${cursor.s} to ${firstLine} since the previous part (its code is unchanged); continuing at the same place in it.`);
-    }
-  } else if (args.fromLine !== void 0) {
-    const from = args.fromLine;
-    start = rows.findIndex((r) => r.line !== void 0 && r.line >= from);
-    if (start < 0) start = Math.max(rows.length - 1, 0);
-  }
-  const where2 = `${fc.entry.rel}${typeName2 === void 0 ? "" : `:${runsText(segs)}`}`;
-  const kinds = [...new Set(types.map((t) => t.kind))];
-  const header = [
-    typeName2 === void 0 ? `file: ${where2}  (service ${fc.entry.service}, ${fc.entry.language}, ${lines.length} lines)` : `${typeName2}  [${kinds.join(", ")}]
-file: ${where2}  (service ${fc.entry.service}, ${fc.entry.language})`,
-    ...notes.map((n) => `note: ${n}`),
-    `imports (${importsNote}):`,
-    ...imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"],
-    ""
-  ];
-  const maxLines = Math.min(Math.max(args.maxLines ?? 1e3, 1), 2e3);
-  const width = String(lastLine).length;
-  const sourceBudget = inBatch ? Math.max(budget - header.join("\n").length - 600, 1500) : budget;
-  const page = takePage(
-    rows,
-    start,
-    maxLines,
-    sourceBudget,
-    (r) => r.line === void 0 ? `${" ".repeat(width)}| \u22EE ${r.text}` : `${String(r.line).padStart(width)}| ${r.text}`
-  );
-  const shownRows = rows.slice(start, page.end);
-  const shownLines = shownRows.filter((r) => r.line !== void 0).map((r) => r.line);
-  const complete = page.end >= rows.length;
-  const nextCursor = complete ? void 0 : Buffer.from(
-    JSON.stringify({ t: "unit", f: fc.entry.rel, n: typeName2 ?? null, h: rowsHash, r: page.end, s: firstLine })
-  ).toString("base64url");
-  const nextFromLine = complete ? void 0 : rows.slice(page.end).find((r) => r.line !== void 0)?.line;
-  const shownFrom = shownLines[0] ?? firstLine;
-  const shownTo = shownLines[shownLines.length - 1] ?? lastLine;
-  const inUnit2 = (a, b) => segs.some((s) => s.from <= a && b <= s.to);
-  const json = {
-    mode: typeName2 === void 0 ? "file" : "class",
-    file: fc.entry.rel,
-    service: fc.entry.service,
-    language: fc.entry.language,
-    ...typeName2 === void 0 ? {} : { name: typeName2, kinds },
-    lines: segs,
-    types: (typeName2 === void 0 ? fc.types : types).map((t) => ({ name: t.name, kind: t.kind, start: t.start, end: t.end })),
-    functions: fc.functions.filter((f) => inUnit2(f.rec.start, f.rec.end)).map((f) => ({ name: f.rec.name, kind: f.rec.kind, start: f.rec.start, end: f.rec.end, id: f.rec.id })),
-    imports,
-    importsNote,
-    source: shownRows.map((r) => r.line === void 0 ? `\u22EE ${r.text}` : r.text).join("\n"),
-    shown: { from: shownFrom, to: shownTo },
-    complete,
-    nextCursor,
-    nextFromLine,
-    notes
-  };
-  const left = typeName2 === void 0 && importLines2.size ? "; import lines left out" : "";
-  return {
-    json,
-    text: [
-      ...header,
-      start === 0 && complete ? `source: lines ${runsText(segs) || "(none)"} (complete${left})` : `source: lines ${shownFrom}-${shownTo} of ${runsText(segs)}` + (complete ? ` (end${left})` : ` \u2014 MORE: call again with cursor="${nextCursor}" (or the same file${typeName2 ? "/name" : ""} and fromLine=${nextFromLine})`),
-      ...page.rendered,
-      ...complete ? [] : [`\u2026 continues at line ${nextFromLine}.`]
     ].join("\n")
   };
 }
@@ -292312,7 +291982,7 @@ function unwrapFn(n) {
   }
   return void 0;
 }
-function qualifierOf2(n) {
+function qualifierOf(n) {
   const out = [];
   let cur = n.getParent();
   while (cur && !import_ts_morph3.Node.isSourceFile(cur)) {
@@ -292382,7 +292052,7 @@ function buildTarget(n) {
   const sf = n.getSourceFile();
   const isDefaultExport = import_ts_morph3.Node.isFunctionDeclaration(n) && n.hasModifier(import_ts_morph3.SyntaxKind.DefaultKeyword) || sf.getStatements().some((s) => import_ts_morph3.Node.isExportAssignment(s) && s.getExpression().getText() === name);
   return {
-    qualified: [...qualifierOf2(n), name].join("."),
+    qualified: [...qualifierOf(n), name].join("."),
     file: relPath2(sf.getFilePath()),
     line: n.getStartLineNumber(),
     kind: kindOf(n),
@@ -292608,7 +292278,7 @@ async function findCallers(args) {
         const dn = declName(d) ?? base;
         const where2 = `${relPath2(d.getSourceFile().getFilePath())}:${d.getStartLineNumber()}`;
         if (d.getSourceFile().getFilePath().includes("node_modules")) return { other: `${dn} (library: ${where2.replace(/.*node_modules\//, "")})` };
-        return { other: `${[...qualifierOf2(d), dn].join(".")} (${where2})` };
+        return { other: `${[...qualifierOf(d), dn].join(".")} (${where2})` };
       };
       for (const e of searchEntries) {
         if (!scanSet.has(e.abs)) continue;
@@ -296443,12 +296113,12 @@ Use spec-nav instead of Grep/Read when:
 - About to write a new function or helper \u2192 spec_nav_find_functions first, describing the behaviour in words. Existing code is often named differently from the name you would grep for. Nothing fits \u2192 spec_nav_similar_functions with your draft as \`code\`.
 - Changing a function's signature or behaviour \u2192 spec_nav_callers, not a grep for its name: it drops same-named methods on other classes and finds calls through aliases and re-exports.
 - A concept spread across files or services (a field, fee, status, flag) \u2192 one broad spec_nav_map regex instead of several greps; each hit names its enclosing function.
-- Reading code you will NOT edit (candidates, callers, siblings) \u2192 spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file, or \`cat a b c\`. Each item is a function (\`id\` or \`file\`+\`name\`), a whole class (\`file\` + the class name: header, fields, properties, every method) or a whole file (\`file\` alone, imports listed once instead of repeated as lines). Name the class rather than the file when only one class matters: fewer tokens.
+- Reading functions you will NOT edit (candidates, callers, siblings) \u2192 spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file.
 - A change touches an endpoint, RPC call or event \u2192 spec_nav_trace_flow (upstream: who reaches it; downstream: what it reaches).
 - Seeing what a file or service defines \u2192 spec_nav_functions. Unsure of the root or service names \u2192 spec_nav_services.
 
 Grep/Read remain the right tools for an exact string you already know, non-code files (config, YAML, JSON, Markdown), and a file you are about to Edit (Edit requires a Read).`;
-var server2 = new McpServer({ name: "spec-nav", version: "0.6.0" }, { instructions: INSTRUCTIONS });
+var server2 = new McpServer({ name: "spec-nav", version: "0.7.0" }, { instructions: INSTRUCTIONS });
 function text(t, isError = false) {
   return { content: [{ type: "text", text: t }], ...isError ? { isError: true } : {} };
 }
@@ -296560,7 +296230,7 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_read_function",
   {
-    description: "Use INSTEAD OF Read (or `cat a b c`) for code you will NOT edit \u2014 search candidates, callers, siblings \u2014 so you load the code you need, not whole files. To edit a file, Read it (Edit requires that). Up to 10 reads in one call with `functions`; each is a FUNCTION, a whole CLASS or a whole FILE. CLASS: `file` + `name` of a class/interface/struct/enum/impl/module/object \u2014 its header, doc, fields, properties and every method, plus methods declared outside it (Go receivers, Rust impl blocks, Swift extensions, X.prototype.y), with only the imports it uses. FILE: `file` alone \u2014 the whole file with its import lines left out and listed once, one per line, in the header. FUNCTION: signature, whole doc comment, the imports it uses, and its exact source with line numbers \u2014 from the column it starts at to the column it ends at, so a neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported under; + `line` to pick among same-named ones). In a batch the reads share one page; one that is not found is reported in its place. Long reads come in parts: the output says where it stopped and gives a `cursor` (or `fromLine`) to continue with \u2014 nothing is cut silently. If the function changed since the id was issued, or between parts, it answers STALE instead of showing different code. When a variable is assigned several functions, it says which others exist. Does not tell you whether another service may import it \u2014 check dependencies and service boundaries before reusing.",
+    description: "Use INSTEAD OF Read for functions you will NOT edit \u2014 search candidates, callers, siblings \u2014 so you load the functions, not whole files. To edit a file, Read it (Edit requires that). Read functions in full \u2014 up to 10 in one call with `functions`, instead of one Read per file: signature, whole doc comment, the imports it uses, and its exact source with line numbers \u2014 from the column it starts at to the column it ends at, so a neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported under; + `line` to pick among same-named ones). In a batch the functions share one page; one that is not found is reported in its place. Long functions come in parts: the output says where it stopped and gives a `cursor` (or `fromLine`) to continue with \u2014 nothing is cut silently. If the function changed since the id was issued, or between parts, it answers STALE instead of showing different code. When a variable is assigned several functions, it says which others exist. Does not tell you whether another service may import it \u2014 check dependencies and service boundaries before reusing.",
     inputSchema: {
       functions: external_exports.array(
         external_exports.object({
@@ -296570,15 +296240,15 @@ server2.registerTool(
           line: external_exports.number().int().positive().optional()
         })
       ).min(1).max(MAX_BATCH_READS).optional().describe(
-        `Read up to ${MAX_BATCH_READS} at once: a function by \`id\` or \`file\`+\`name\` (+ \`line\`), a class by \`file\` + its name, a whole file by \`file\` alone. Use instead of the single-read fields below.`
+        `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`). Use instead of the single-function fields below.`
       ),
       id: external_exports.string().optional(),
-      file: external_exports.string().optional().describe("Path relative to the repo root. Alone (no `name`): the whole file."),
-      name: external_exports.string().optional().describe('Function: qualified ("OrderService.calculateFee"), short, or exported name. Class: its name ("OrderService") \u2014 the whole class.'),
-      line: external_exports.number().int().positive().optional().describe("A line inside the function or class, to disambiguate."),
-      cursor: external_exports.string().optional().describe("nextCursor from the previous part: continues there even if the code moved; refuses if it changed."),
-      fromLine: external_exports.number().int().positive().optional().describe("Continue a long function, class or file from this file line."),
-      maxLines: external_exports.number().int().positive().optional().describe("Lines per part (default 400 for a function, 1000 for a class or file)."),
+      file: external_exports.string().optional().describe("Path relative to the repo root."),
+      name: external_exports.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),
+      line: external_exports.number().int().positive().optional().describe("A line inside the function, to disambiguate."),
+      cursor: external_exports.string().optional().describe("nextCursor from the previous part: continues there even if the function moved; refuses if it changed."),
+      fromLine: external_exports.number().int().positive().optional().describe("Continue a long function from this file line."),
+      maxLines: external_exports.number().int().positive().optional().describe("Lines per part (default 400)."),
       format: formatArg
     }
   },

@@ -11,7 +11,7 @@
 | `spec_nav_services` | 检查扫描根目录、发现的项目、文件/函数数量和覆盖率。 |
 | `spec_nav_find_functions` | 跨服务查找可能满足需求的函数，排序并说明匹配原因。 |
 | `spec_nav_similar_functions` | 查找行为与某个函数或草稿相似的函数，即使名称完全不同。 |
-| `spec_nav_read_function` | 读取函数、整个类或整个文件的精确源码（一次最多 10 项），以及签名、文档和相关 import。 |
+| `spec_nav_read_function` | 读取某个函数（或一次最多 10 个）的精确源码，以及签名、文档和相关 import。 |
 | `spec_nav_functions` | 按条件筛选、分页浏览函数目录。 |
 | `spec_nav_callers` | 检查调用、引用、动态调用以及无法解析的用法。 |
 | `spec_nav_map` | 查找匹配正则的行，并给出所在函数。 |
@@ -71,23 +71,6 @@
 ```
 
 这些函数共用一页：每个函数平分剩余容量，短函数会把空间留给长函数。放不下的函数以自己的 `nextCursor` 结尾，用单函数调用（`{ "cursor": "…" }`）继续读取。找不到、有歧义或已过期（STALE）的函数在原位置报告，其他函数照常读取。
-
-**读取整个类或整个文件。** 把类名作为 `name` 传入即可读取整个类；只传 `file` 则读取整个文件。两者也可以作为 `functions` 的元素，与函数读取混用——一次调用代替 `cat a b c`：
-
-```json
-{ "functions": [
-  { "file": "services/billing/src/order-service.ts", "name": "OrderService" },
-  { "file": "services/billing/src/fees.ts" },
-  { "file": "services/billing/src/money.ts", "name": "toCents" }
-] }
-```
-
-- **类**（`file` + 类名）：class/interface/struct/enum/impl/module/object，连同其文档注释、装饰器或注解、声明头、字段、属性和所有方法——以及声明在类体之外的方法：Go 的 receiver 方法、Rust 的 `impl` 块、Swift 的 extension、Kotlin 的扩展函数、`X.prototype.y = …`。不属于该类的行显示为 `⋮ lines a-b: not part of X`。import 只保留类中用到的。如果 `name` 恰好也是某个函数的完整名称，则读取该函数；同名的类可用 `line` 区分。
-- **文件**（只传 `file`）：文件中除 import 语句之外的所有行；import 在头部列出一次，每条一行（`⋮ lines 1-7: imports, listed above` 标出它们原来的位置）。
-
-较长的类和文件与函数一样分段返回：使用 `nextCursor`（若上方插入了行会跟随代码，若代码本身改变则返回 STALE）或 `fromLine`；此模式下 `maxLines` 默认 1000。使用 `format: "json"` 时，结果还会列出文件中的类型以及本次读取范围内的函数及其 id。
-
-节省在哪里：读取类时只返回该类，batch 用一次调用代替多次 Read。读取整个文件的大小与 Read 该文件（含行号）相当——比纯 `cat` 略大；只需要某个类或几个函数时，就只读它们。
 
 ## `spec_nav_functions`
 

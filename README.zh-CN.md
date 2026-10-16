@@ -7,7 +7,7 @@
 `mcp-spec-nav` 是供 Claude Code 等编码代理使用的本地 MCP server。它读取你指定仓库中的源代码，让代理能够：
 
 - **查找已有函数**：跨服务和共享包，按关键词、按它调用的函数，或按与草稿代码的行为相似度；
-- **精确读取代码**：函数、整个类（声明头、字段、属性和所有方法）或整个文件，一次最多 10 项：源码、签名、文档以及用到的 import；
+- **精确读取函数**：源码、签名、文档以及它用到的 import；
 - **修改前查找调用方**：TypeScript/JavaScript/Vue 经类型检查器确认；Python、Go、Java、Kotlin、Swift 等其他语言基于证据判断；动态调用单独列出；
 - **按正则梳理**受支持的源文件，并给出每个匹配所在的函数；
 - **跨服务追踪调用链**：从源代码追踪 HTTP 客户端 → 路由 → handler、RPC 调用 → handler、事件/topic → 消费者，并给出每条连接的证据以及无法解析的部分（静态分析，[受支持的框架](docs/guide/flows.zh-CN.md#受支持的框架)）。
@@ -47,16 +47,6 @@ MCP 只负责读取代码。由编码代理决定复用什么、修改文件并�
 39|   const handlingFee = HANDLING_FEE;
 42|   return subtotal + handlingFee;
 43| }
-```
-
-用 `functions` 一次调用最多读取 10 项；每项可以是函数、整个类（`file` + 类名）或整个文件（只传 `file`，import 行只在头部列出一次）——一次调用代替 `cat a b c`：
-
-```json
-{ "functions": [
-  { "file": "billing/fees.ts", "name": "calculateTotal" },
-  { "file": "checkout/createOrder.ts" },
-  { "file": "orders/updateOrder.ts" }
-] }
 ```
 
 **3. 找出所有调用方** —— MCP，`spec_nav_callers`，参数 `{ "symbol": "calculateTotal", "file": "billing/fees.ts" }`：
@@ -140,7 +130,7 @@ node --test docs/examples/order-fee/verify.mjs   # 6 个测试通过
 | `spec_nav_services` | 检查扫描根目录、发现的项目、文件/函数数量和覆盖率。 |
 | `spec_nav_find_functions` | 跨服务查找可能满足需求的函数，排序并说明匹配原因。 |
 | `spec_nav_similar_functions` | 查找行为与某个函数或草稿相似的函数，即使名称完全不同。 |
-| `spec_nav_read_function` | 读取函数、整个类或整个文件的精确源码——一次调用最多 10 项，代替每个文件一次 Read（或 `cat`）。 |
+| `spec_nav_read_function` | 读取某个函数的精确源码，以及签名、文档和相关 import。 |
 | `spec_nav_functions` | 按条件筛选、分页浏览函数目录。 |
 | `spec_nav_callers` | 检查调用、引用、动态调用以及无法解析的用法。 |
 | `spec_nav_map` | 查找匹配正则的行，并给出所在函数。 |

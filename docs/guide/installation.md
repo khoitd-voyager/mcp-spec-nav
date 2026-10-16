@@ -145,9 +145,7 @@ For new logic or changes that affect other functions:
 
 1. Use spec_nav_find_functions to look for existing implementations across services.
    Use English keywords for English-named code; try another wording if needed.
-2. Read the most relevant candidates with spec_nav_read_function, several per call
-   (`functions`). Code you will not edit: read the function, or the class (file + class
-   name) rather than the whole file; `file` alone reads a whole file in place of `cat`.
+2. Read the most relevant candidates with spec_nav_read_function.
    Avoid loading the entire catalog or every function body into context.
    If nothing fits, draft the function and pass it to spec_nav_similar_functions.
 3. Check behavior, exports, dependencies and service boundaries before reusing code.

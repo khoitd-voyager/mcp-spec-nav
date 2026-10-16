@@ -1,4 +1,4 @@
-import type { RawFunction, RawType } from "./treesitter.js";
+import type { RawFunction } from "./treesitter.js";
 import { docAbove } from "./treesitter.js";
 import { isDynamicCallee } from "./dynamic.js";
 
@@ -227,7 +227,6 @@ interface Frame {
 
 export interface BraceResult {
   functions: RawFunction[];
-  types: RawType[];
   errorLine?: number;
   /** Offsets of each catalogued function's name token, so a call-site search can skip declarations. */
   nameOffsets: Set<number>;
@@ -277,7 +276,6 @@ export function extractBraceFunctions(text: string, lang: BraceLang): BraceResul
 
   const containers = lang === "kotlin" ? KOTLIN_CONTAINERS : SWIFT_CONTAINERS;
   const functions: RawFunction[] = [];
-  const types: RawType[] = [];
   const nameOffsets = new Set<number>();
   const isP = (k: number, v: string) => k < toks.length && toks[k].t === "p" && toks[k].v === v;
   const isId = (k: number, v?: string) => k < toks.length && toks[k].t === "id" && (v === undefined || toks[k].v === v);
@@ -462,7 +460,7 @@ export function extractBraceFunctions(text: string, lang: BraceLang): BraceResul
       const funInterface = lang === "kotlin" && v === "fun" && isId(k + 1, "interface");
       if ((containers.has(v) && !isSwiftClassModifier) || funInterface) {
         const kw = funInterface ? k + 1 : k;
-        const { start: declStart, mods } = prefixStart(k, from);
+        const { mods } = prefixStart(k, from);
         let j = kw + 1;
         let name: string | undefined;
         if (v === "object" && mods.has("companion")) name = isId(j) && !isP(j + 1, ".") && toks[j].v !== "Companion" ? toks[j++].v : "Companion";
@@ -481,21 +479,6 @@ export function extractBraceFunctions(text: string, lang: BraceLang): BraceResul
           if (h.nl && h.t === "id" && DECL_START.has(h.v) && h.v !== "constructor") break;
           if (h.t === "p" && (h.v === "(" || h.v === "[") && match[j] > j) j = match[j];
           else if (h.t === "p" && h.v === "<") { const a = skipAngles(j); if (a > j) j = a - 1; }
-        }
-        // `data class Point(val x: Int)` has no body: its header is all of it.
-        const endTok = body >= 0 && match[body] > body ? match[body] : Math.min(j, to) - 1;
-        if (endTok > kw) {
-          const startOffset = toks[declStart].s;
-          const endOffset = toks[endTok].e;
-          types.push({
-            name,
-            qualifier: scope.map((f) => f.name),
-            kind: funInterface ? "fun interface" : v === "object" && mods.has("companion") ? "companion object" : v,
-            start: line(startOffset),
-            end: line(Math.max(startOffset, endOffset - 1)),
-            startOffset,
-            endOffset,
-          });
         }
         if (body >= 0 && match[body] > body) {
           const isStatic = v === "object";
@@ -661,7 +644,7 @@ export function extractBraceFunctions(text: string, lang: BraceLang): BraceResul
 
   walk(0, toks.length, []);
   functions.sort((a, b) => a.startOffset - b.startOffset);
-  return { functions, types, errorLine: firstError !== undefined ? line(firstError) : undefined, nameOffsets };
+  return { functions, errorLine: firstError !== undefined ? line(firstError) : undefined, nameOffsets };
 }
 
 // ---------------------------------------------------------------------------
