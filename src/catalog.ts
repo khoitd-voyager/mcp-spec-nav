@@ -11,8 +11,8 @@ import {
   SourceEntry,
 } from "./project.js";
 import { languageById } from "./languages.js";
-import { extractFunctions, loadFailures, RawFunction } from "./treesitter.js";
-import { extractTsFunctions, parseSource, tsImportsUsed } from "./tsparse.js";
+import { extractFunctions, loadFailures, docLines, RawFunction, RawType } from "./treesitter.js";
+import { extractTsFunctions, parseSource, tsImports, tsImportsUsed, ImportStmt } from "./tsparse.js";
 import { extractBraceFunctions, BraceLang } from "./bracelang.js";
 import { tsParseView } from "./sfc.js";
 import { uniqueTokens, intern, calleeKey, parseQuery, matchTerms, scoreMatches, idfWeights, SearchDoc, TermMatch, calleeNames } from "./search.js";
@@ -83,10 +83,24 @@ export interface Indexed {
   endOffset: number;
 }
 
+/** A class, interface, struct, impl block, module… in a file. */
+export interface TypeRec {
+  /** Qualified, as functions are: `Outer.Inner`. */
+  name: string;
+  shortName: string;
+  kind: string;
+  /** Lines, 1-indexed and inclusive, without the doc comment above. */
+  start: number;
+  end: number;
+}
+
 export interface FileCatalog {
   stamp: string;
   entry: SourceEntry;
   functions: Indexed[];
+  types: TypeRec[];
+  /** Content hash of the whole file as catalogued, to tell a read of a changed file apart. */
+  textHash?: string;
   /** Kotlin/Swift: offsets of declaration names, so call-site search skips them. */
   declOffsets?: Set<number>;
   anonymous: Array<{ start: number; end: number }>;
@@ -199,6 +213,12 @@ function toIndexed(entry: SourceEntry, raws: RawFunction[], text: string): Index
   return out;
 }
 
+function toTypes(raws: RawType[]): TypeRec[] {
+  return raws
+    .map((t) => ({ name: [...t.qualifier, t.name].join("."), shortName: t.name, kind: t.kind, start: t.start, end: t.end }))
+    .sort((a, b) => a.start - b.start || b.end - a.end);
+}
+
 export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
   const cached = cache.get(entry.abs);
   if (cached && cached.stamp === entry.stamp) {
@@ -214,7 +234,7 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
   try {
     text = readFileSync(entry.abs, "utf8");
   } catch (err) {
-    const fc: FileCatalog = { stamp: entry.stamp, entry, functions: [], anonymous: [], readError: String(err) };
+    const fc: FileCatalog = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], readError: String(err) };
     cache.set(entry.abs, fc);
     return fc;
   }
@@ -229,12 +249,13 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
         stamp: entry.stamp,
         entry,
         functions: toIndexed(entry, r.functions, text),
+        types: toTypes(r.types),
         anonymous: r.anonymous,
         errorLine: r.errorLine,
         errorMessage: r.errorMessage,
       };
     } catch (err) {
-      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], errorLine: 1, errorMessage: `parser crashed: ${err}` };
+      fc = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], errorLine: 1, errorMessage: `parser crashed: ${err}` };
     }
   } else if (lang?.engine === "brace") {
     try {
@@ -243,30 +264,33 @@ export async function catalogFile(entry: SourceEntry): Promise<FileCatalog> {
         stamp: entry.stamp,
         entry,
         functions: toIndexed(entry, r.functions, text),
+        types: toTypes(r.types),
         anonymous: [],
         declOffsets: r.nameOffsets,
         errorLine: r.errorLine,
         errorMessage: r.errorLine ? "unbalanced brackets or unterminated string" : undefined,
       };
     } catch (err) {
-      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], errorLine: 1, errorMessage: `scanner crashed: ${err}` };
+      fc = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], errorLine: 1, errorMessage: `scanner crashed: ${err}` };
     }
   } else {
     const r = await extractFunctions(text, lang!);
     if (!r) {
       const reason = loadFailures().find((f) => f.id === lang!.id)?.reason ?? "parse failed";
-      fc = { stamp: entry.stamp, entry, functions: [], anonymous: [], parserUnavailable: reason };
+      fc = { stamp: entry.stamp, entry, functions: [], types: [], anonymous: [], parserUnavailable: reason };
     } else {
       fc = {
         stamp: entry.stamp,
         entry,
         functions: toIndexed(entry, r.functions, text),
+        types: toTypes(r.types),
         anonymous: [],
         errorLine: r.errorLine,
         errorMessage: r.errorLine ? "syntax error" : undefined,
       };
     }
   }
+  fc.textHash = hashText(text);
   cache.set(entry.abs, fc);
   return fc;
 }
@@ -744,10 +768,28 @@ interface ReadCursor {
   s: number;
 }
 
-function decodeReadCursor(cursor: string): ReadCursor {
+/**
+ * Where to continue a long class or file: which one (`n` null for the whole
+ * file), a hash of the rows being read, and the row to resume at. Like a
+ * function's cursor it follows the code if lines are added above it, and
+ * refuses if the code itself changed.
+ */
+interface UnitCursor {
+  t: "unit";
+  f: string;
+  n: string | null;
+  h: string;
+  /** 0-based row within the read. */
+  r: number;
+  /** The first line of the read when the cursor was issued. */
+  s: number;
+}
+
+function decodeReadCursor(cursor: string): ReadCursor | UnitCursor {
   try {
     const c = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
     if (c.t === "read" && typeof c.id === "string" && typeof c.r === "number") return c;
+    if (c.t === "unit" && typeof c.f === "string" && typeof c.r === "number" && typeof c.h === "string") return c;
   } catch {
     // fall through
   }
@@ -796,7 +838,9 @@ export async function resolveFunction(args: ReadArgs): Promise<{ fc: FileCatalog
         ` Look it up again with spec_nav_functions { file: "${file}" }.`,
     );
   }
-  if (!args.file || !args.name) throw new Error("Pass `id`, or `file` and `name` (optionally `line` to pick among same-named functions).");
+  if (!args.file || !args.name) {
+    throw new Error("Pass `id`, or `file` and `name` (optionally `line` to pick among same-named functions), or `file` alone for the whole file.");
+  }
   const { fc } = await fileCatalog(args.file);
   if (!fc) throw new Error(`No scanned file "${args.file}". Paths are relative to the repo root; spec_nav_functions lists them.`);
   const want = args.name;
@@ -814,9 +858,11 @@ export async function resolveFunction(args: ReadArgs): Promise<{ fc: FileCatalog
   }
   if (!matches.length) {
     const names = fc.functions.map((f) => f.rec.name);
+    const typeNames = [...new Set(fc.types.map((t) => t.name))];
     throw new Error(
-      `No function "${want}" in ${fc.entry.rel}` +
-        (names.length ? `. Functions there: ${names.slice(0, 40).join(", ")}${names.length > 40 ? ", …" : ""}` : " (no functions catalogued in it)."),
+      `No function or class "${want}" in ${fc.entry.rel}` +
+        (names.length ? `. Functions there: ${names.slice(0, 40).join(", ")}${names.length > 40 ? ", …" : ""}` : " (no functions catalogued in it).") +
+        (typeNames.length ? ` Classes/types there: ${typeNames.slice(0, 20).join(", ")}${typeNames.length > 20 ? ", …" : ""}.` : ""),
     );
   }
   if (matches.length > 1) {
@@ -828,27 +874,46 @@ export async function resolveFunction(args: ReadArgs): Promise<{ fc: FileCatalog
   return { fc, ix: matches[0] };
 }
 
-/** Import lines the function's body plausibly uses, for non-TS languages. */
-function genericImports(fc: FileCatalog, lines: string[], bodyText: string): { imports: string[]; narrowed: boolean } {
+const IMPORT_KEYWORDS = new Set(["import", "from", "use", "as", "pub", "alias", "require", "static", "crate", "self", "super", "only", "except"]);
+
+/**
+ * File-level import statements, for non-TS languages, read line by line.
+ * Go's `import (` … `)` lines belong to the block: they are in `lines` but
+ * are not statements of their own.
+ */
+function genericImportStatements(fc: FileCatalog, lines: string[]): { stmts: ImportStmt[]; lines: Set<number> } {
   const lang = languageById(fc.entry.language);
-  if (!lang) return { imports: [], narrowed: false };
+  const stmts: ImportStmt[] = [];
+  const importLines = new Set<number>();
+  if (!lang) return { stmts, lines: importLines };
   const inFunction = (i: number) => fc.functions.some((f) => f.rec.start <= i + 1 && i + 1 <= f.rec.end);
-  const stmts: string[] = [];
+  const push = (from: number, to: number, text: string) => {
+    let names = text.match(/[A-Za-z_$][\w$]*/g) ?? [];
+    // Go: `"github.com/x/pkg"` is used as `pkg.`; an alias comes first.
+    if (lang.id === "go") {
+      const m = text.match(/^(?:import\s+)?(\w+\s+)?"([^"]+)"/);
+      names = m ? [m[1]?.trim() || m[2].split("/").pop()!.replace(/^go-|\.v\d+$/g, "")] : names;
+    }
+    stmts.push({ start: from + 1, end: to + 1, text, names: names.filter((w) => !IMPORT_KEYWORDS.has(w)) });
+    for (let k = from; k <= to; k++) importLines.add(k);
+  };
   let inGoBlock = false;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     if (inFunction(i)) continue;
     if (lang.id === "go") {
-      if (/^\s*import\s*\($/.test(l)) { inGoBlock = true; continue; }
+      if (/^\s*import\s*\($/.test(l)) { inGoBlock = true; importLines.add(i); continue; }
       if (inGoBlock) {
+        importLines.add(i);
         if (/^\s*\)/.test(l)) { inGoBlock = false; continue; }
-        if (l.trim() && !/^\s*\/\//.test(l)) stmts.push(l.trim());
+        if (l.trim() && !/^\s*\/\//.test(l)) push(i, i, l.trim());
         continue;
       }
-      if (/^\s*import\s+/.test(l)) stmts.push(l.trim());
+      if (/^\s*import\s+/.test(l)) push(i, i, l.trim());
       continue;
     }
     if (!lang.importLine.test(l)) continue;
+    const from = i;
     let stmt = l.trim();
     // Python `from x import (\n a,\n b\n)`.
     if (stmt.includes("(") && !stmt.includes(")")) {
@@ -857,21 +922,19 @@ function genericImports(fc: FileCatalog, lines: string[], bodyText: string): { i
         if (lines[i].includes(")")) break;
       }
     }
-    stmts.push(stmt);
+    push(from, Math.min(i, lines.length - 1), stmt);
   }
-  if (!lang.importsNameIdentifiers) return { imports: stmts, narrowed: false };
+  return { stmts, lines: importLines };
+}
+
+/** Import lines the function's body plausibly uses, for non-TS languages. */
+function genericImports(fc: FileCatalog, lines: string[], bodyText: string): { imports: string[]; narrowed: boolean } {
+  const lang = languageById(fc.entry.language);
+  if (!lang) return { imports: [], narrowed: false };
+  const { stmts } = genericImportStatements(fc, lines);
+  if (!lang.importsNameIdentifiers) return { imports: stmts.map((s) => s.text), narrowed: false };
   const used = new Set(bodyText.match(/[A-Za-z_$][\w$]*/g) ?? []);
-  const KEYWORDS = new Set(["import", "from", "use", "as", "pub", "alias", "require", "static", "crate", "self", "super", "only", "except"]);
-  const keep = stmts.filter((s) => {
-    let words = s.match(/[A-Za-z_$][\w$]*/g) ?? [];
-    // Go: `"github.com/x/pkg"` is used as `pkg.`; an alias comes first.
-    if (lang.id === "go") {
-      const m = s.match(/^(?:import\s+)?(\w+\s+)?"([^"]+)"/);
-      words = m ? [m[1]?.trim() || m[2].split("/").pop()!.replace(/^go-|\.v\d+$/g, "")] : words;
-    }
-    return words.some((w) => !KEYWORDS.has(w) && used.has(w));
-  });
-  return { imports: keep, narrowed: true };
+  return { imports: stmts.filter((s) => s.names.some((w) => used.has(w))).map((s) => s.text), narrowed: true };
 }
 
 /** One function in a batched read: the same ways to name it as a single read. */
@@ -918,7 +981,7 @@ async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ t
         "To continue a long function from a batch, call again with just its `cursor`.",
     );
   }
-  if (!targets.length) throw new Error("`functions` is empty: name 1 to 10 functions.");
+  if (!targets.length) throw new Error("`functions` is empty: name 1 to 10 functions, classes or files.");
   if (targets.length > MAX_BATCH_READS) {
     throw new Error(`\`functions\` names ${targets.length} functions; at most ${MAX_BATCH_READS} per call.`);
   }
@@ -941,8 +1004,10 @@ async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ t
     outcomes.push(o);
   }
   const failed = outcomes.filter((o) => o.isError).length;
+  // A file alone, or a name that turns out to be a class, is not a function.
+  const noun = targets.every((t) => t.id || t.name) ? "function" : "target";
   const summary =
-    `${targets.length} function${targets.length === 1 ? "" : "s"} requested: ${targets.length - failed} read` +
+    `${targets.length} ${noun}${targets.length === 1 ? "" : "s"} requested: ${targets.length - failed} read` +
     (failed ? `, ${failed} failed (shown in place)` : "") + ".";
   if (args.format === "json") {
     return {
@@ -969,7 +1034,19 @@ async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ t
 async function readOne(args: ReadArgs, budget: number, inBatch: boolean): Promise<ReadOutcome> {
   const request = inBatch ? { id: args.id, file: args.file, name: args.name, line: args.line } : undefined;
   const failure = (text: string): ReadOutcome => ({ text, isError: true, json: { request, error: text } });
-  const cursor = args.cursor ? decodeReadCursor(args.cursor) : undefined;
+  const anyCursor = args.cursor ? decodeReadCursor(args.cursor) : undefined;
+  if (anyCursor?.t === "unit") return readUnit(args, anyCursor, budget, inBatch);
+  const cursor = anyCursor;
+  // A file alone is the whole file; a name that is a class (and not a
+  // function's exact name) is the whole class.
+  if (!cursor && !args.id && args.file) {
+    if (!args.name) return readUnit(args, undefined, budget, inBatch);
+    const { fc } = await fileCatalog(args.file);
+    const want = args.name;
+    if (fc && !fc.functions.some((f) => f.rec.name === want || idName(f) === want) && matchTypes(fc, want, args.line)) {
+      return readUnit(args, undefined, budget, inBatch);
+    }
+  }
   let resolved: { fc: FileCatalog; ix: Indexed };
   try {
     // A cursor names the function itself, so later parts need nothing else.
@@ -1090,6 +1167,295 @@ async function readOne(args: ReadArgs, budget: number, inBatch: boolean): Promis
             `follows the function if lines are added above it and refuses if the function itself changed; ` +
             `fromLine=${lastShown + 1} is a plain file line.`]),
       ...(inBatch ? [] : ["", REUSE_ADVICE(r.service)]),
+    ].join("\n"),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Reading a whole class, or a whole file
+
+/** `Order<T>` (a Rust `impl<T> Order<T>`) is the type `Order`. */
+const bareType = (name: string) => name.replace(/<.*>$/, "");
+
+/** The scope a function is declared in: `Order` for `Order.total`. */
+const qualifierOf = (r: FnRecord) => r.name.slice(0, Math.max(0, r.name.length - r.shortName.length - 1));
+
+/**
+ * The type `want` names in a file — by qualified name, else by short name or
+ * a dotted suffix — with every declaration of it: a Rust struct and its
+ * `impl` blocks, a Swift type and its extensions, a reopened Ruby class.
+ * `line` picks the one around it when several types share the name.
+ */
+function matchTypes(
+  fc: FileCatalog,
+  want: string,
+  line?: number,
+): { name: string; types: TypeRec[] } | { ambiguous: string[] } | undefined {
+  const groups = new Map<string, TypeRec[]>();
+  for (const t of fc.types) {
+    const k = bareType(t.name);
+    groups.set(k, [...(groups.get(k) ?? []), t]);
+  }
+  const w = bareType(want);
+  let keys = groups.has(w) ? [w] : [...groups.keys()].filter((k) => k.endsWith("." + w) || k.split(".").pop() === w);
+  if (line !== undefined) {
+    const around = (k: string) => groups.get(k)!.filter((t) => t.start <= line && line <= t.end);
+    // The innermost type around the line: `Inner`, not the `Outer` holding it.
+    keys = keys
+      .filter((k) => around(k).length)
+      .sort((a, b) => Math.min(...around(a).map((t) => t.end - t.start)) - Math.min(...around(b).map((t) => t.end - t.start)))
+      .slice(0, 1);
+  }
+  if (!keys.length) return undefined;
+  if (keys.length > 1) return { ambiguous: keys };
+  return { name: keys[0], types: groups.get(keys[0])! };
+}
+
+/** The first line of `start`'s declaration including the doc comment right above it. */
+function withDoc(lines: string[], start: number, commentLine: RegExp): number {
+  const d = docLines(lines, start, commentLine);
+  return d.to > d.from ? d.from + 1 : start;
+}
+
+/**
+ * The lines of a type: each of its declarations whole — header, fields,
+ * properties, methods — with the doc comment above, plus methods declared
+ * outside them (Go receivers, `Order.prototype.x = …`, Kotlin extension
+ * functions on it). Runs separated only by blank lines are joined.
+ */
+function typeSegments(fc: FileCatalog, lines: string[], name: string, types: TypeRec[], commentLine: RegExp): Array<{ from: number; to: number }> {
+  const segs = types.map((t) => ({ from: withDoc(lines, t.start, commentLine), to: t.end }));
+  const inside = (a: number, b: number) => segs.some((s) => s.from <= a && b <= s.to);
+  const outside: Array<{ from: number; to: number }> = [];
+  for (const f of fc.functions) {
+    const q = bareType(qualifierOf(f.rec));
+    if ((q === name || q.startsWith(name + ".")) && !inside(f.rec.start, f.rec.end)) {
+      outside.push({ from: withDoc(lines, f.rec.start, commentLine), to: f.rec.end });
+    }
+  }
+  return mergeRuns([...segs, ...outside], lines);
+}
+
+function mergeRuns(runs: Array<{ from: number; to: number }>, lines: string[]): Array<{ from: number; to: number }> {
+  const sorted = [...runs].sort((a, b) => a.from - b.from || b.to - a.to);
+  const out: Array<{ from: number; to: number }> = [];
+  for (const r of sorted) {
+    const last = out[out.length - 1];
+    const blankGap = (a: number, b: number) => lines.slice(a - 1, b).every((l) => !l.trim());
+    if (last && (r.from <= last.to + 1 || blankGap(last.to + 1, r.from - 1))) last.to = Math.max(last.to, r.to);
+    else out.push({ ...r });
+  }
+  return out;
+}
+
+/** The whole file but its import lines, as runs, blank lines at either end of a run dropped. */
+function fileSegments(lines: string[], importLines: Set<number>): Array<{ from: number; to: number }> {
+  const out: Array<{ from: number; to: number }> = [];
+  let from = -1;
+  for (let i = 0; i <= lines.length; i++) {
+    const keep = i < lines.length && !importLines.has(i);
+    if (keep && from < 0) from = i;
+    if (!keep && from >= 0) {
+      let a = from;
+      let b = i - 1;
+      while (a <= b && !lines[a].trim()) a++;
+      while (b >= a && !lines[b].trim()) b--;
+      if (a <= b) out.push({ from: a + 1, to: b + 1 });
+      from = -1;
+    }
+  }
+  return out;
+}
+
+/** A row of a class or file read: a source line, or a note standing for lines left out. */
+interface Row {
+  line?: number;
+  text: string;
+}
+
+/** `10-40, 55-60`: where a read's lines are. */
+function runsText(segs: Array<{ from: number; to: number }>): string {
+  const parts = segs.map((s) => (s.from === s.to ? `${s.from}` : `${s.from}-${s.to}`));
+  return parts.length > 8 ? `${parts.slice(0, 8).join(", ")}, … (${parts.length} runs)` : parts.join(", ");
+}
+
+/**
+ * Read a whole class (`name` naming a type) or a whole file (no `name`) in
+ * one go: what replaces `cat` on a file, and what is left of it when only one
+ * class in it matters. A class comes with its header, fields, properties and
+ * every method; a file with everything but its import lines, which are
+ * listed once, one per line, in the header. Paged like a function, with a
+ * cursor that follows the code if lines move and refuses if it changed.
+ */
+async function readUnit(args: ReadArgs, cursor: UnitCursor | undefined, budget: number, inBatch: boolean): Promise<ReadOutcome> {
+  const request = inBatch ? { file: args.file, name: args.name, line: args.line } : undefined;
+  const failure = (text: string): ReadOutcome => ({ text, isError: true, json: { request, error: text } });
+  const file = cursor ? cursor.f : args.file!;
+  const wantName = cursor ? (cursor.n ?? undefined) : args.name;
+  if (!cursor && !wantName && args.line !== undefined) {
+    throw new Error("`line` picks among same-named functions or classes: pass `name` with it, or `fromLine` to start a file read at a line.");
+  }
+  const { fc } = await fileCatalog(file);
+  if (!fc) {
+    if (cursor) return failure(`STALE: ${file} no longer exists (or is no longer scanned). Read it again from the start.`);
+    throw new Error(`No scanned file "${file}". Paths are relative to the repo root; spec_nav_functions lists them.`);
+  }
+  if (fc.readError) throw new Error(`${fc.entry.rel} could not be read: ${fc.readError}`);
+  const text = readFileSync(fc.entry.abs, "utf8");
+  // The catalog and this read are two file reads; a write between them would
+  // put class boundaries in the wrong place.
+  if (fc.textHash && hashText(text) !== fc.textHash) {
+    return failure(`STALE: ${fc.entry.rel} changed while it was being read. Read it again.`);
+  }
+  const lines = text.split("\n");
+  if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
+  const lang = languageById(fc.entry.language);
+  const commentLine = lang?.commentLine ?? /^\s*(\/\/|\/\*|\*)/;
+
+  let stmts: ImportStmt[];
+  const importLines = new Set<number>();
+  if (isTsFamily(fc.entry.language)) {
+    const view = tsParseView(fc.entry.ext, text);
+    stmts = tsImports(parseSource(fc.entry.abs, view.text, view.ext));
+    for (const s of stmts) for (let l = s.start; l <= s.end; l++) importLines.add(l - 1);
+  } else {
+    const g = genericImportStatements(fc, lines);
+    stmts = g.stmts;
+    for (const l of g.lines) importLines.add(l);
+  }
+
+  const notes: string[] = [];
+  if (fc.parserUnavailable) notes.push(`no parser for ${fc.entry.language} (${fc.parserUnavailable}): classes and functions in it are unknown`);
+  else if (fc.errorLine) notes.push(`syntax error at line ${fc.errorLine}: class boundaries and imports may be off`);
+
+  let typeName: string | undefined;
+  let types: TypeRec[] = [];
+  let segs: Array<{ from: number; to: number }>;
+  let imports: string[];
+  let importsNote: string;
+  if (wantName === undefined) {
+    segs = fileSegments(lines, importLines);
+    imports = stmts.map((s) => s.text);
+    importsNote = "all file-level imports; their lines are left out of the source below";
+  } else {
+    const m = matchTypes(fc, wantName, cursor ? undefined : args.line);
+    if (!m) {
+      if (cursor) return failure(`STALE: no class or type ${wantName} in ${fc.entry.rel} any more. Read it again from the start.`);
+      throw new Error(`No class or type "${wantName}" in ${fc.entry.rel}.`);
+    }
+    if ("ambiguous" in m) {
+      throw new Error(
+        `"${wantName}" names several types in ${fc.entry.rel}; pass the qualified name or a \`line\` inside the one you mean:\n` +
+          m.ambiguous.map((k) => `  ${k}  (${fc.types.filter((t) => bareType(t.name) === k).map((t) => `${t.kind} ${t.start}-${t.end}`).join(", ")})`).join("\n"),
+      );
+    }
+    typeName = m.name;
+    types = m.types;
+    segs = typeSegments(fc, lines, m.name, m.types, commentLine);
+    const unitText = segs.map((s) => lines.slice(s.from - 1, s.to).join("\n")).join("\n");
+    const used = new Set(unitText.match(/[A-Za-z_$][\w$]*/g) ?? []);
+    const narrow = isTsFamily(fc.entry.language) || !!lang?.importsNameIdentifiers;
+    imports = (narrow ? stmts.filter((s) => s.names.some((n) => used.has(n))) : stmts).map((s) => s.text);
+    importsNote = narrow
+      ? "imports whose bound names appear in this class"
+      : "all file-level imports (this language's imports name namespaces, not identifiers, so they are not narrowed)";
+  }
+
+  const rows: Row[] = [];
+  let prevEnd = 0;
+  const gapText = (a: number, b: number) =>
+    typeName === undefined ? `lines ${a}-${b}: imports, listed above` : `lines ${a}-${b}: not part of ${typeName}`;
+  for (const s of segs) {
+    if (s.from > prevEnd + 1 && (typeName === undefined || prevEnd > 0)) rows.push({ text: gapText(prevEnd + 1, s.from - 1) });
+    for (let l = s.from; l <= s.to; l++) rows.push({ line: l, text: lines[l - 1] });
+    prevEnd = s.to;
+  }
+  if (typeName === undefined && lines.slice(prevEnd).some((l) => l.trim())) rows.push({ text: gapText(prevEnd + 1, lines.length) });
+  const rowsHash = hashText(rows.map((r) => (r.line === undefined ? "⋮" : r.text)).join("\n"));
+  const firstLine = segs[0]?.from ?? 1;
+  const lastLine = segs[segs.length - 1]?.to ?? 0;
+
+  let start = 0;
+  if (cursor) {
+    if (cursor.h !== rowsHash) {
+      return failure(
+        `STALE: ${typeName ?? fc.entry.rel} changed between parts of this read, so the parts would not fit together. ` +
+          `Read it again from the start.`,
+      );
+    }
+    start = Math.min(cursor.r, rows.length);
+    if (cursor.s !== firstLine) {
+      notes.push(`It moved from line ${cursor.s} to ${firstLine} since the previous part (its code is unchanged); continuing at the same place in it.`);
+    }
+  } else if (args.fromLine !== undefined) {
+    const from = args.fromLine;
+    start = rows.findIndex((r) => r.line !== undefined && r.line >= from);
+    if (start < 0) start = Math.max(rows.length - 1, 0);
+  }
+
+  const where = `${fc.entry.rel}${typeName === undefined ? "" : `:${runsText(segs)}`}`;
+  const kinds = [...new Set(types.map((t) => t.kind))];
+  const header = [
+    typeName === undefined
+      ? `file: ${where}  (service ${fc.entry.service}, ${fc.entry.language}, ${lines.length} lines)`
+      : `${typeName}  [${kinds.join(", ")}]\nfile: ${where}  (service ${fc.entry.service}, ${fc.entry.language})`,
+    ...notes.map((n) => `note: ${n}`),
+    `imports (${importsNote}):`,
+    ...(imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"]),
+    "",
+  ];
+  const maxLines = Math.min(Math.max(args.maxLines ?? 1000, 1), 2000);
+  const width = String(lastLine).length;
+  const sourceBudget = inBatch ? Math.max(budget - header.join("\n").length - 600, 1500) : budget;
+  const page = takePage(rows, start, maxLines, sourceBudget, (r) =>
+    r.line === undefined ? `${" ".repeat(width)}| ⋮ ${r.text}` : `${String(r.line).padStart(width)}| ${r.text}`,
+  );
+  const shownRows = rows.slice(start, page.end);
+  const shownLines = shownRows.filter((r) => r.line !== undefined).map((r) => r.line!);
+  const complete = page.end >= rows.length;
+  const nextCursor = complete
+    ? undefined
+    : Buffer.from(
+        JSON.stringify({ t: "unit", f: fc.entry.rel, n: typeName ?? null, h: rowsHash, r: page.end, s: firstLine } satisfies UnitCursor),
+      ).toString("base64url");
+  const nextFromLine = complete ? undefined : rows.slice(page.end).find((r) => r.line !== undefined)?.line;
+  const shownFrom = shownLines[0] ?? firstLine;
+  const shownTo = shownLines[shownLines.length - 1] ?? lastLine;
+
+  const inUnit = (a: number, b: number) => segs.some((s) => s.from <= a && b <= s.to);
+  const json = {
+    mode: typeName === undefined ? "file" : "class",
+    file: fc.entry.rel,
+    service: fc.entry.service,
+    language: fc.entry.language,
+    ...(typeName === undefined ? {} : { name: typeName, kinds }),
+    lines: segs,
+    types: (typeName === undefined ? fc.types : types).map((t) => ({ name: t.name, kind: t.kind, start: t.start, end: t.end })),
+    functions: fc.functions
+      .filter((f) => inUnit(f.rec.start, f.rec.end))
+      .map((f) => ({ name: f.rec.name, kind: f.rec.kind, start: f.rec.start, end: f.rec.end, id: f.rec.id })),
+    imports,
+    importsNote,
+    source: shownRows.map((r) => (r.line === undefined ? `⋮ ${r.text}` : r.text)).join("\n"),
+    shown: { from: shownFrom, to: shownTo },
+    complete,
+    nextCursor,
+    nextFromLine,
+    notes,
+  };
+  const left = typeName === undefined && importLines.size ? "; import lines left out" : "";
+  return {
+    json,
+    text: [
+      ...header,
+      start === 0 && complete
+        ? `source: lines ${runsText(segs) || "(none)"} (complete${left})`
+        : `source: lines ${shownFrom}-${shownTo} of ${runsText(segs)}` +
+          (complete
+            ? ` (end${left})`
+            : ` — MORE: call again with cursor="${nextCursor}" (or the same file${typeName ? "/name" : ""} and fromLine=${nextFromLine})`),
+      ...page.rendered,
+      ...(complete ? [] : [`… continues at line ${nextFromLine}.`]),
     ].join("\n"),
   };
 }

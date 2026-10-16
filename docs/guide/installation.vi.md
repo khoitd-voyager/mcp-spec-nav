@@ -146,7 +146,9 @@ Với logic mới hoặc thay đổi ảnh hưởng tới các hàm khác:
 
 1. Dùng spec_nav_find_functions tìm implementation có sẵn trên các service.
    Dùng từ khóa tiếng Anh nếu code đặt tên bằng tiếng Anh; thử cách diễn đạt khác khi cần.
-2. Dùng spec_nav_read_function đọc các ứng viên phù hợp.
+2. Dùng spec_nav_read_function đọc các ứng viên phù hợp, nhiều mục mỗi lần gọi
+   (`functions`). Code không sửa: đọc hàm, hoặc class (file + tên class) thay vì cả file;
+   chỉ truyền `file` để đọc cả file thay cho `cat`.
    Tránh nạp toàn bộ danh mục hoặc mọi thân hàm vào context.
    Không thấy hàm phù hợp thì viết nháp rồi đưa cho spec_nav_similar_functions.
 3. Kiểm tra hành vi, export, dependency và ranh giới service trước khi tái sử dụng.

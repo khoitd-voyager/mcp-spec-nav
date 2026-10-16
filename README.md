@@ -7,7 +7,7 @@
 `mcp-spec-nav` is a local MCP server for AI coding agents such as Claude Code. It reads the source code of the repository you choose and lets the agent:
 
 - **find existing functions** across services and shared packages — by words, by what they call, or by behavioural similarity to a draft;
-- **read a function** exactly: source, signature, documentation and the imports it uses;
+- **read code exactly** — a function, a whole class (header, fields, properties, every method) or a whole file, up to 10 in one call: source, signature, documentation and the imports it uses;
 - **find callers** before a change — type-checked in TypeScript/JavaScript/Vue, evidence-based in Python, Go, Java, Kotlin, Swift and other languages, with dynamic uses listed;
 - **map a pattern** across supported source files, with the enclosing function of each match;
 - **trace flows across services** from source code — HTTP client → route → handler, RPC call → handler, event/topic → consumers — with the evidence for each link and what could not be resolved (static analysis, [supported frameworks](docs/guide/flows.md#supported-frameworks)).
@@ -47,6 +47,16 @@ Every model turn with the MCP installed also carries its tool definitions (~3.8k
 39|   const handlingFee = HANDLING_FEE;
 42|   return subtotal + handlingFee;
 43| }
+```
+
+Up to 10 reads fit in one call with `functions`; each can be a function, a whole class (`file` + class name) or a whole file (`file` alone, import lines listed once instead of repeated) — one call instead of `cat a b c`:
+
+```json
+{ "functions": [
+  { "file": "billing/fees.ts", "name": "calculateTotal" },
+  { "file": "checkout/createOrder.ts" },
+  { "file": "orders/updateOrder.ts" }
+] }
 ```
 
 **3. Find every caller** — MCP, `spec_nav_callers` with `{ "symbol": "calculateTotal", "file": "billing/fees.ts" }`:
@@ -130,7 +140,7 @@ Installing an MCP makes its tools available; it does not ensure the agent uses t
 | `spec_nav_services` | Check the scan root, discovered projects, counts and coverage. |
 | `spec_nav_find_functions` | Find ranked candidates for existing logic across services. |
 | `spec_nav_similar_functions` | Find functions that behave like a candidate or a draft, whatever they are named. |
-| `spec_nav_read_function` | Read one candidate's exact source and context. |
+| `spec_nav_read_function` | Read the exact source of functions, whole classes or whole files — up to 10 in one call instead of one Read (or `cat`) per file. |
 | `spec_nav_functions` | Browse the function catalog with filters and pagination. |
 | `spec_nav_callers` | Inspect calls, references, dynamic uses and unresolved usages before a change. |
 | `spec_nav_map` | Find regex matches with the enclosing function. |

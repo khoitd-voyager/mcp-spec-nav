@@ -7,7 +7,7 @@
 `mcp-spec-nav` là MCP server chạy local cho coding agent như Claude Code. Nó đọc source code trong repo bạn chọn và giúp agent:
 
 - **tìm hàm có sẵn** ở nhiều service và package dùng chung — theo từ khóa, theo các hàm nó gọi, hoặc theo hành vi giống một bản nháp;
-- **đọc chính xác một hàm**: thân hàm, signature, tài liệu và các import nó dùng;
+- **đọc chính xác code** — một hàm, nguyên class (header, field, property, mọi method) hoặc nguyên file, tối đa 10 mục mỗi lần gọi: source, signature, tài liệu và các import được dùng;
 - **tìm nơi gọi hàm** trước khi sửa — kiểm tra bằng type checker cho TypeScript/JavaScript/Vue, theo bằng chứng cho Python, Go, Java, Kotlin, Swift và các ngôn ngữ khác; liệt kê riêng các lời gọi động;
 - **tìm theo regex** trong các file nguồn được hỗ trợ, kèm tên hàm chứa mỗi kết quả;
 - **lần theo luồng giữa các service** từ source code — HTTP client → route → handler, RPC → handler, event/topic → consumer — kèm bằng chứng cho từng link và phần chưa resolve được (phân tích tĩnh, [framework được hỗ trợ](docs/guide/flows.vi.md#framework-được-hỗ-trợ)).
@@ -47,6 +47,16 @@ Mỗi lượt model khi đã cài MCP còn mang theo định nghĩa tool (~3,8k 
 39|   const handlingFee = HANDLING_FEE;
 42|   return subtotal + handlingFee;
 43| }
+```
+
+Một lần gọi đọc được tới 10 mục bằng `functions`; mỗi mục là một hàm, nguyên một class (`file` + tên class) hoặc nguyên một file (chỉ `file`, các dòng import liệt kê một lần thay vì lặp lại) — một lần gọi thay cho `cat a b c`:
+
+```json
+{ "functions": [
+  { "file": "billing/fees.ts", "name": "calculateTotal" },
+  { "file": "checkout/createOrder.ts" },
+  { "file": "orders/updateOrder.ts" }
+] }
 ```
 
 **3. Tìm mọi nơi gọi** — MCP, `spec_nav_callers` với `{ "symbol": "calculateTotal", "file": "billing/fees.ts" }`:
@@ -130,7 +140,7 @@ Cài MCP chỉ làm cho tool có sẵn, không bảo đảm agent sẽ dùng. Th
 | `spec_nav_services` | Kiểm tra đường dẫn quét, các project, số lượng file/hàm và coverage. |
 | `spec_nav_find_functions` | Tìm các hàm có thể đáp ứng yêu cầu, xếp hạng và giải thích vì sao khớp. |
 | `spec_nav_similar_functions` | Tìm hàm có hành vi giống một hàm hoặc một bản nháp, dù tên khác hẳn. |
-| `spec_nav_read_function` | Đọc code chính xác của một hàm, kèm signature, tài liệu và import liên quan. |
+| `spec_nav_read_function` | Đọc code chính xác của hàm, nguyên class hoặc nguyên file — tối đa 10 mục trong một lần gọi, thay cho mỗi file một lần Read (hay `cat`). |
 | `spec_nav_functions` | Xem danh mục hàm, lọc và lấy từng trang. |
 | `spec_nav_callers` | Kiểm tra lời gọi, references, lời gọi động và những trường hợp chưa resolve được. |
 | `spec_nav_map` | Tìm dòng khớp regex, kèm tên hàm chứa dòng đó. |

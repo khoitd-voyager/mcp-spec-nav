@@ -21,13 +21,13 @@ Use spec-nav instead of Grep/Read when:
 - About to write a new function or helper → spec_nav_find_functions first, describing the behaviour in words. Existing code is often named differently from the name you would grep for. Nothing fits → spec_nav_similar_functions with your draft as \`code\`.
 - Changing a function's signature or behaviour → spec_nav_callers, not a grep for its name: it drops same-named methods on other classes and finds calls through aliases and re-exports.
 - A concept spread across files or services (a field, fee, status, flag) → one broad spec_nav_map regex instead of several greps; each hit names its enclosing function.
-- Reading functions you will NOT edit (candidates, callers, siblings) → spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file.
+- Reading code you will NOT edit (candidates, callers, siblings) → spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file, or \`cat a b c\`. Each item is a function (\`id\` or \`file\`+\`name\`), a whole class (\`file\` + the class name: header, fields, properties, every method) or a whole file (\`file\` alone, imports listed once instead of repeated as lines). Name the class rather than the file when only one class matters: fewer tokens.
 - A change touches an endpoint, RPC call or event → spec_nav_trace_flow (upstream: who reaches it; downstream: what it reaches).
 - Seeing what a file or service defines → spec_nav_functions. Unsure of the root or service names → spec_nav_services.
 
 Grep/Read remain the right tools for an exact string you already know, non-code files (config, YAML, JSON, Markdown), and a file you are about to Edit (Edit requires a Read).`;
 
-const server = new McpServer({ name: "spec-nav", version: "0.5.1" }, { instructions: INSTRUCTIONS });
+const server = new McpServer({ name: "spec-nav", version: "0.6.0" }, { instructions: INSTRUCTIONS });
 
 function text(t: string, isError = false) {
   return { content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) };
@@ -211,15 +211,19 @@ server.registerTool(
   "spec_nav_read_function",
   {
     description:
-      "Use INSTEAD OF Read for functions you will NOT edit — search candidates, callers, siblings — so " +
-      "you load the functions, not whole files. To edit a file, Read it (Edit requires that). " +
-      "Read functions in full — up to 10 in one call with `functions`, instead of one Read per file: " +
-      "signature, whole doc comment, the imports it uses, and its exact " +
+      "Use INSTEAD OF Read (or `cat a b c`) for code you will NOT edit — search candidates, callers, siblings — so " +
+      "you load the code you need, not whole files. To edit a file, Read it (Edit requires that). " +
+      "Up to 10 reads in one call with `functions`; each is a FUNCTION, a whole CLASS or a whole FILE. " +
+      "CLASS: `file` + `name` of a class/interface/struct/enum/impl/module/object — its header, doc, fields, " +
+      "properties and every method, plus methods declared outside it (Go receivers, Rust impl blocks, Swift " +
+      "extensions, X.prototype.y), with only the imports it uses. FILE: `file` alone — the whole file with " +
+      "its import lines left out and listed once, one per line, in the header. " +
+      "FUNCTION: signature, whole doc comment, the imports it uses, and its exact " +
       "source with line numbers — from the column it starts at to the column it ends at, so a " +
       "neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / " +
       "spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported " +
-      "under; + `line` to pick among same-named ones). In a batch the functions share one page; one " +
-      "that is not found is reported in its place. Long functions come in parts: the output says " +
+      "under; + `line` to pick among same-named ones). In a batch the reads share one page; one " +
+      "that is not found is reported in its place. Long reads come in parts: the output says " +
       "where it stopped and gives a `cursor` (or `fromLine`) to continue with — nothing is cut " +
       "silently. If the function changed since the id was issued, or between parts, it answers STALE " +
       "instead of showing different code. When a variable is assigned several functions, it says " +
@@ -239,19 +243,22 @@ server.registerTool(
         .max(MAX_BATCH_READS)
         .optional()
         .describe(
-          `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`). ` +
-            "Use instead of the single-function fields below.",
+          `Read up to ${MAX_BATCH_READS} at once: a function by \`id\` or \`file\`+\`name\` (+ \`line\`), ` +
+            "a class by `file` + its name, a whole file by `file` alone. Use instead of the single-read fields below.",
         ),
       id: z.string().optional(),
-      file: z.string().optional().describe("Path relative to the repo root."),
-      name: z.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),
-      line: z.number().int().positive().optional().describe("A line inside the function, to disambiguate."),
+      file: z.string().optional().describe("Path relative to the repo root. Alone (no `name`): the whole file."),
+      name: z
+        .string()
+        .optional()
+        .describe('Function: qualified ("OrderService.calculateFee"), short, or exported name. Class: its name ("OrderService") — the whole class.'),
+      line: z.number().int().positive().optional().describe("A line inside the function or class, to disambiguate."),
       cursor: z
         .string()
         .optional()
-        .describe("nextCursor from the previous part: continues there even if the function moved; refuses if it changed."),
-      fromLine: z.number().int().positive().optional().describe("Continue a long function from this file line."),
-      maxLines: z.number().int().positive().optional().describe("Lines per part (default 400)."),
+        .describe("nextCursor from the previous part: continues there even if the code moved; refuses if it changed."),
+      fromLine: z.number().int().positive().optional().describe("Continue a long function, class or file from this file line."),
+      maxLines: z.number().int().positive().optional().describe("Lines per part (default 400 for a function, 1000 for a class or file)."),
       format: formatArg,
     },
   },

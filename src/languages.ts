@@ -45,6 +45,12 @@ export interface LangSpec {
    */
   containerNameField?: Record<string, string>;
   /**
+   * Node types that declare a type but are not a scope for functions — a
+   * Rust struct (its methods are in `impl` blocks), a Go type (methods hang
+   * off receivers). Recorded so the type can be read whole, with its methods.
+   */
+  typeNodes?: string[];
+  /**
    * Node types whose own `receiver` field supplies the qualifier, for
    * languages that attach a method to a type without nesting it inside one.
    * Go's `func (o *Order) Total()` is a top-level declaration, so without this
@@ -120,6 +126,7 @@ export const LANGUAGES: LangSpec[] = [
     wasm: "tree-sitter-go/tree-sitter-go.wasm",
     functionNodes: ["function_declaration", "method_declaration", "func_literal"],
     containerNodes: ["type_declaration"],
+    typeNodes: ["type_spec"],
     receiverNodes: ["method_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|")/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
@@ -134,6 +141,7 @@ export const LANGUAGES: LangSpec[] = [
     wasm: "tree-sitter-java/tree-sitter-java.wasm",
     functionNodes: ["method_declaration", "constructor_declaration"],
     containerNodes: ["class_declaration", "interface_declaration", "enum_declaration", "record_declaration"],
+    typeNodes: ["annotation_type_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|import\s|package\s|@\w+\s*$)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
     importLine: /^\s*import\s+.+;/,
@@ -160,6 +168,7 @@ export const LANGUAGES: LangSpec[] = [
     wasm: "tree-sitter-rust/tree-sitter-rust.wasm",
     functionNodes: ["function_item", "closure_expression"],
     containerNodes: ["impl_item", "trait_item", "mod_item"],
+    typeNodes: ["struct_item", "enum_item", "union_item"],
     // An `impl Order` names its type in `type`, not `name`.
     containerNameField: { impl_item: "type" },
     noise: /^\s*(\/\/|\/\*|\*|use\s|#\[)/,
@@ -174,6 +183,7 @@ export const LANGUAGES: LangSpec[] = [
     wasm: "tree-sitter-php/tree-sitter-php.wasm",
     functionNodes: ["function_definition", "method_declaration"],
     containerNodes: ["class_declaration", "interface_declaration", "trait_declaration"],
+    typeNodes: ["enum_declaration"],
     noise: /^\s*(\/\/|#|\/\*|\*|use\s|namespace\s|require\s|include\s)/,
     commentLine: /^\s*(\/\/|#(?!\[)|\/\*|\*)/,
     importLine: /^\s*(use\s+.+;|(require|include)(_once)?\b.+;)/,
@@ -187,6 +197,7 @@ export const LANGUAGES: LangSpec[] = [
     wasm: "tree-sitter-c/tree-sitter-c.wasm",
     functionNodes: ["function_definition"],
     containerNodes: [],
+    typeNodes: ["struct_specifier", "enum_specifier", "union_specifier"],
     declaratorNodes: ["function_definition"],
     noise: /^\s*(\/\/|\/\*|\*|#include|#import)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
@@ -201,6 +212,7 @@ export const LANGUAGES: LangSpec[] = [
     wasm: "tree-sitter-cpp/tree-sitter-cpp.wasm",
     functionNodes: ["function_definition"],
     containerNodes: ["class_specifier", "struct_specifier", "namespace_definition"],
+    typeNodes: ["enum_specifier", "union_specifier"],
     declaratorNodes: ["function_definition"],
     noise: /^\s*(\/\/|\/\*|\*|#include|#import|using\s)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
@@ -261,6 +273,7 @@ export const LANGUAGES: LangSpec[] = [
       "local_function_statement",
     ],
     containerNodes: ["class_declaration", "struct_declaration", "interface_declaration", "record_declaration"],
+    typeNodes: ["enum_declaration"],
     noise: /^\s*(\/\/|\/\*|\*|using\s|namespace\s|\[\w+)/,
     commentLine: /^\s*(\/\/|\/\*|\*)/,
     importLine: /^\s*(global\s+)?using\s+[^(]+;/,
