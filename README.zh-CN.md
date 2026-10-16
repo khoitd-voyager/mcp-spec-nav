@@ -26,7 +26,7 @@ MCP 只负责读取代码。由编码代理决定复用什么、修改文件并�
 | 从一个服务追踪请求或事件到另一个服务 | 对受支持的框架有用：带证据的静态连接；无法确定的部分会明确报告，而不是猜测。 |
 | 在单个文件内做简单修改 | 收益有限，可能增加工具调用次数。 |
 
-安装 MCP 后，每个模型轮次还会携带工具定义（基准测试中约 3.8k token），因此对于小型、单一概念的修改收益很小。
+安装 MCP 后，每个模型轮次还会携带工具定义（基准测试中约 3.8k token），因此对于小型、单一概念的修改收益很小。在 Claude Code 于 8 个 Grafana pull request 上的真实运行中，一个通过钩子**强制**调用 spec-nav 的设置使每会话成本增加约 58%，而质量提升不可测；仅安装 MCP 的设置尚未测量（[基准测试](#基准测试)）。
 
 ## 示例：修改订单费用
 
@@ -144,7 +144,28 @@ TypeScript、JavaScript、Python、Go、Java、C#、Ruby、Rust、PHP、C、C++�
 
 ## 基准测试
 
-**目前没有使用真实 LLM 的基准测试记录。** 以下结果全部来自**模拟代理**：确定性策略，不是 LLM，这样测得的差异来自工具。一个代理只有 Grep/Read/Edit（类似 Claude Code 的内置工具），另一个有 spec-nav 加 Read/Edit。无 MCP 一侧预先获得了 LLM 式的同义词知识，并采用同样宽松的评分规则。每个会话是一个完整的功能需求：复用已有逻辑、修改一个函数的签名并更新所有调用方、在所有位置修改一个常量，然后阅读并修改每个文件。仓库：带种子的合成 monorepo（答案由生成器植入）和 immich@cc7fd67（答案来自 TypeScript `findReferences`、文档注释和 ripgrep）。Token 按 3.5 字符/token 估算。
+### 真实 LLM 运行（中期结果，8 个任务）
+
+Claude Code（Claude Sonnet 5.5）在 8 个已合并的 Grafana pull request 上运行，分别使用和不使用 spec-nav 设置。每个会话从 PR 之前的提交开始，用 PR 自带的测试（对代理隐藏）、PR 涉及包的测试以及一个盲评 LLM 评审打分。记录于 2026-10-14 至 2026-10-15。
+
+> **spec-nav 设置不只是 MCP。** 它是 MCP **加上** `AGENTS.md`/`CLAUDE.md` 中的说明，**再加上**一个**强制**使用 spec-nav 的 Claude Code 钩子：在调用一组 spec-nav 工具之前阻止首次修改代码，后期任务中还禁止递归 grep。仅安装 MCP、不强制调用的设置尚未测量，因此这些数字**并不**表明 Claude Code 不用 MCP 更好。额外成本有一部分来自强制调用。
+
+| 每会话均值 | Claude Code | + spec-nav（MCP + 说明 + 强制钩子） | 差值 [95% CI] |
+|---|---:|---:|---:|
+| 隐藏测试通过 | 100% | 100% | 0 |
+| 通过且无回归 | 88% | 75%¹ | −13% [−50%, +25%] |
+| 评审总体（1–10） | 7.8 | 8.1 | +0.4 [−0.5, +1.4] |
+| PR 修改的文件中代理也修改的比例 | 90% | 92% | +3% [0%, +8%] |
+| 每会话成本 | $0.34 | $0.54 | +$0.20 [+$0.13, +$0.26] |
+| 工具调用 | 14.5 | 26.5 | +12.0 [+5.6, +17.5] |
+
+¹ 若将一次失败视为不稳定测试则为 88%：在该任务中，测试覆盖的文件与 Claude Code 会话的逐字节相同，而后者通过了测试。
+
+两种设置都解决了所有任务，因此隐藏测试无法区分二者；质量差异在噪声范围内，明确的影响是强制设置的成本（+58%）。在两个工作流框架（Compass、ai-wf-bex）中加入 spec-nav 呈现相同模式：质量变化不可测，成本更高。每个任务只运行一次，单一模型、单一仓库；spec-nav 的钩子设置在运行期间有变化，并修正了一处测试框架错误。引用这些数字前请阅读[报告](bench/results/live-grafana-8-tasks.md#简体中文)。随着任务和重复次数增加，报告会更新。
+
+### 模拟代理
+
+以下结果全部来自**模拟代理**：确定性策略，不是 LLM，这样测得的差异来自工具。一个代理只有 Grep/Read/Edit（类似 Claude Code 的内置工具），另一个有 spec-nav 加 Read/Edit。无 MCP 一侧预先获得了 LLM 式的同义词知识，并采用同样宽松的评分规则。每个会话是一个完整的功能需求：复用已有逻辑、修改一个函数的签名并更新所有调用方、在所有位置修改一个常量，然后阅读并修改每个文件。仓库：带种子的合成 monorepo（答案由生成器植入）和 immich@cc7fd67（答案来自 TypeScript `findReferences`、文档注释和 ripgrep）。Token 按 3.5 字符/token 估算。
 
 | | 合成，100 个会话 | 合成，50 个大会话 | immich（真实），20 个会话 | immich（真实），10 个大会话 |
 |---|---:|---:|---:|---:|
@@ -164,7 +185,7 @@ TypeScript、JavaScript、Python、Go、Java、C#、Ruby、Rust、PHP、C、C++�
 
 **跨服务调用链**（不涉及代理和 LLM）—— `spec_nav_trace_flow` 在自动生成的仓库上（每个仓库 14 个服务，5 个保留种子，598 个带答案的调用点）：precision 100%，错误连接为 0（仅按名称连接：136 条错误连接），recall 84%——所有遗漏都来自经过封装函数或 `urljoin` 的调用，适配器不会跟踪。首次调用约 0.1 s（1,000 个文件的仓库约 0.7 s），之后每次 1–10 ms。生成器与适配器出自同一作者，因此这检验的是连接规则，而非对真实代码的覆盖。
 
-方法、假设与局限：[bench/README.md](bench/README.md#简体中文)。报告：[合成](bench/results/synthetic-150-sessions.md#简体中文) · [immich](bench/results/real-immich-30-sessions.md#简体中文) · [VS Code 耗时](bench/results/perf-vscode.md) · [调用链](bench/results/flow-test.md#简体中文) · [全部结果](bench/results/)。
+方法、假设与局限：[bench/README.md](bench/README.md#简体中文)。报告：[Grafana 真实运行](bench/results/live-grafana-8-tasks.md#简体中文) · [合成](bench/results/synthetic-150-sessions.md#简体中文) · [immich](bench/results/real-immich-30-sessions.md#简体中文) · [VS Code 耗时](bench/results/perf-vscode.md) · [调用链](bench/results/flow-test.md#简体中文) · [全部结果](bench/results/)。
 
 ## 局限
 

@@ -26,7 +26,7 @@ MCP chỉ đọc code. Coding agent của bạn quyết định tái sử dụng
 | Lần theo một request hoặc event từ service này sang service khác | Hữu ích với các framework được hỗ trợ: link tĩnh kèm bằng chứng; phần không xác định được thì báo rõ, không đoán. |
 | Sửa đơn giản trong một file | Lợi ích ít, có thể thêm lượt gọi tool. |
 
-Mỗi lượt model khi đã cài MCP còn mang theo định nghĩa tool (~3,8k token trong benchmark), nên với thay đổi nhỏ, một khái niệm, lợi ích ít.
+Mỗi lượt model khi đã cài MCP còn mang theo định nghĩa tool (~3,8k token trong benchmark), nên với thay đổi nhỏ, một khái niệm, lợi ích ít. Trong lần chạy thật với Claude Code trên 8 pull request của Grafana, một cấu hình **ép** gọi spec-nav bằng hook làm chi phí mỗi session tăng khoảng 58% mà không đo được cải thiện chất lượng; cấu hình chỉ cài MCP chưa được đo ([Benchmark](#benchmark)).
 
 ## Ví dụ: sửa phí đơn hàng
 
@@ -144,7 +144,28 @@ TypeScript, JavaScript, Python, Go, Java, C#, Ruby, Rust, PHP, C, C++, Scala, El
 
 ## Benchmark
 
-**Chưa có benchmark nào chạy bằng LLM thật.** Mọi kết quả bên dưới đến từ **agent mô phỏng**: chính sách tất định, không phải LLM, để khác biệt đo được là do công cụ. Một agent chỉ có Grep/Read/Edit (như tool built-in của Claude Code), agent kia có spec-nav cùng Read/Edit. Phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Repo: một monorepo giả lập có seed (đáp án do generator cài) và immich@cc7fd67 (đáp án từ `findReferences` của TypeScript, doc comment và ripgrep). Token ước lượng 3,5 ký tự/token.
+### Chạy bằng LLM thật (tạm thời, 8 task)
+
+Claude Code (Claude Sonnet 5.5) trên 8 pull request đã merge của Grafana, có và không có cấu hình spec-nav. Mỗi session bắt đầu từ commit ngay trước PR và được chấm bằng chính test của PR (agent không được thấy), test của các package PR đụng tới, và một LLM judge chấm mù. Chạy từ 2026-10-14 đến 2026-10-15.
+
+> **Cấu hình spec-nav không phải chỉ có MCP.** Đó là MCP **cộng** hướng dẫn trong `AGENTS.md`/`CLAUDE.md` **cộng** một hook của Claude Code **ép** dùng spec-nav: hook chặn lần sửa code đầu tiên cho tới khi đã gọi đủ một bộ tool spec-nav, và ở các task sau còn chặn grep đệ quy. Cấu hình chỉ cài MCP, không ép gọi, chưa được đo, nên các số này **không** cho thấy Claude Code làm tốt hơn khi không có MCP. Một phần chi phí tăng thêm đến từ các lần gọi bị ép.
+
+| Trung bình mỗi session | Claude Code | + spec-nav (MCP + hướng dẫn + hook ép dùng) | Chênh lệch [KTC 95%] |
+|---|---:|---:|---:|
+| Pass test ẩn | 100% | 100% | 0 |
+| Pass và không hồi quy | 88% | 75%¹ | −13% [−50%, +25%] |
+| Judge tổng thể (1–10) | 7,8 | 8,1 | +0,4 [−0,5, +1,4] |
+| File của PR mà agent cũng sửa | 90% | 92% | +3% [0%, +8%] |
+| Chi phí mỗi session | $0,34 | $0,54 | +$0,20 [+$0,13, +$0,26] |
+| Tool call | 14,5 | 26,5 | +12,0 [+5,6, +17,5] |
+
+¹ 88% nếu coi một lần fail là flaky: ở task đó, file mà test kiểm tra giống hệt từng byte với của session Claude Code, mà session đó pass.
+
+Cả hai cấu hình đều giải được mọi task nên test ẩn không phân biệt được chúng; chênh lệch chất lượng nằm trong mức nhiễu, tác động rõ ràng là chi phí của cấu hình bị ép (+58%). Thêm spec-nav vào hai workflow framework (Compass, ai-wf-bex) cũng cho cùng kiểu kết quả: không đo được thay đổi về chất lượng, chi phí cao hơn. Mỗi task chạy một lần, một model, một repo; cấu hình hook của spec-nav thay đổi trong quá trình chạy, và một lỗi của harness đã được hiệu chỉnh. Đọc [báo cáo](bench/results/live-grafana-8-tasks.md#tiếng-việt) trước khi trích dẫn số liệu. Báo cáo sẽ được cập nhật khi chạy thêm task và lần lặp.
+
+### Agent mô phỏng
+
+Mọi kết quả bên dưới đến từ **agent mô phỏng**: chính sách tất định, không phải LLM, để khác biệt đo được là do công cụ. Một agent chỉ có Grep/Read/Edit (như tool built-in của Claude Code), agent kia có spec-nav cùng Read/Edit. Phía không-MCP được cho sẵn kiến thức đồng nghĩa như LLM và cùng luật chấm hào phóng. Mỗi session là một feature request trọn vẹn: tái sử dụng logic có sẵn, đổi signature một hàm và sửa mọi caller, đổi một hằng số ở mọi nơi, rồi đọc và sửa từng file. Repo: một monorepo giả lập có seed (đáp án do generator cài) và immich@cc7fd67 (đáp án từ `findReferences` của TypeScript, doc comment và ripgrep). Token ước lượng 3,5 ký tự/token.
 
 | | Giả lập, 100 session | Giả lập, 50 session lớn | immich (thật), 20 session | immich (thật), 10 session lớn |
 |---|---:|---:|---:|---:|
@@ -164,7 +185,7 @@ Phần đọc file để sửa tốn như nhau; khoản tiết kiệm nằm ở 
 
 **Luồng giữa các service** (không có agent, không có LLM) — `spec_nav_trace_flow` trên repo sinh tự động (14 service mỗi repo, 5 seed kiểm tra, 598 điểm gọi có đáp án): precision 100%, 0 link nối sai (nối chỉ theo tên: 136 link sai), recall 84% — mọi trường hợp bỏ sót là lời gọi qua hàm wrapper hoặc `urljoin`, adapter không lần theo. Lần gọi đầu ~0,1 s (0,7 s với repo 1.000 file), sau đó 1–10 ms mỗi lần. Bộ sinh và adapter cùng tác giả, nên đây là phép kiểm tra luật nối, không phải độ phủ trên code thật.
 
-Phương pháp, giả định và giới hạn: [bench/README.md](bench/README.md#tiếng-việt). Báo cáo: [giả lập](bench/results/synthetic-150-sessions.md#tiếng-việt) · [immich](bench/results/real-immich-30-sessions.md#tiếng-việt) · [thời gian trên VS Code](bench/results/perf-vscode.md) · [luồng](bench/results/flow-test.md#tiếng-việt) · [tất cả kết quả](bench/results/).
+Phương pháp, giả định và giới hạn: [bench/README.md](bench/README.md#tiếng-việt). Báo cáo: [Grafana chạy thật](bench/results/live-grafana-8-tasks.md#tiếng-việt) · [giả lập](bench/results/synthetic-150-sessions.md#tiếng-việt) · [immich](bench/results/real-immich-30-sessions.md#tiếng-việt) · [thời gian trên VS Code](bench/results/perf-vscode.md) · [luồng](bench/results/flow-test.md#tiếng-việt) · [tất cả kết quả](bench/results/).
 
 ## Giới hạn
 

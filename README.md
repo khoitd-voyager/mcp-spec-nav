@@ -26,7 +26,7 @@ The MCP only reads code. Your coding agent decides what to reuse, edits the file
 | You follow a request or event from one service to another | Useful for the supported frameworks: static links with evidence; unknowns are reported, not guessed. |
 | You make a simple edit within one file | Limited benefit; may add tool calls. |
 
-Every model turn with the MCP installed also carries its tool definitions (~3.8k tokens in the benchmark), so on small, single-concept changes the gain is small.
+Every model turn with the MCP installed also carries its tool definitions (~3.8k tokens in the benchmark), so on small, single-concept changes the gain is small. In a live run with Claude Code on 8 Grafana pull requests, a setup that **forced** spec-nav calls through a hook added about 58% to the cost per session with no measurable quality gain; the MCP installed on its own has not been measured yet ([Benchmark](#benchmark)).
 
 ## Example: change an order fee
 
@@ -144,7 +144,28 @@ TypeScript, JavaScript, Python, Go, Java, C#, Ruby, Rust, PHP, C, C++, Scala, El
 
 ## Benchmark
 
-**No benchmark with a live LLM has been recorded.** All results below come from **simulated agents**: deterministic policies, not an LLM, so the differences come from the tools. One agent has only Grep/Read/Edit (like Claude Code's built-in tools), the other has spec-nav plus Read/Edit. The no-MCP side is given an LLM's synonym knowledge and the same generous scoring. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file. Repositories: a seeded synthetic monorepo (answers planted by the generator) and immich@cc7fd67 (answers from TypeScript `findReferences`, doc comments and ripgrep). Tokens are estimated at 3.5 characters/token.
+### Live LLM run (interim, 8 tasks)
+
+Claude Code (Claude Sonnet 5.5) on 8 merged Grafana pull requests, with and without a spec-nav setup. Each session starts from the commit before the PR and is scored by the PR's own tests (hidden from the agent), the tests of the packages it touches, and a blind LLM judge. Recorded 2026-10-14 to 2026-10-15.
+
+> **The spec-nav setup is not the MCP alone.** It is the MCP **plus** instructions in `AGENTS.md`/`CLAUDE.md` **plus** a Claude Code hook that **forces** spec-nav use: it blocks the first code edit until a set of spec-nav tools has been called, and on later tasks it blocks recursive grep. The MCP installed without forced calls has not been measured yet, so these numbers do **not** show that Claude Code does better without the MCP. Part of the extra cost comes from the forced calls.
+
+| Mean per session | Claude Code | + spec-nav (MCP + instructions + forcing hook) | Difference [95% CI] |
+|---|---:|---:|---:|
+| Hidden tests pass | 100% | 100% | 0 |
+| Pass and no regression | 88% | 75%¹ | −13% [−50%, +25%] |
+| Judge overall (1–10) | 7.8 | 8.1 | +0.4 [−0.5, +1.4] |
+| PR files the agent also changed | 90% | 92% | +3% [0%, +8%] |
+| Cost per session | $0.34 | $0.54 | +$0.20 [+$0.13, +$0.26] |
+| Tool calls | 14.5 | 26.5 | +12.0 [+5.6, +17.5] |
+
+¹ 88% if one failure is counted as flaky: on that task the file the test covers is byte-identical to the Claude Code session's, which passed.
+
+Both setups solved every task, so the hidden tests do not separate them; the quality differences are within noise, and the clear effect is the cost of the forced setup (+58%). Adding spec-nav to two workflow frameworks (Compass, ai-wf-bex) showed the same pattern: no measurable quality change, higher cost. One run per task, one model and one repository; the spec-nav hook settings changed during the run, and one harness error was corrected. Read the [report](bench/results/live-grafana-8-tasks.md#english) before quoting these numbers. It will be updated as more tasks and repeats are run.
+
+### Simulated agents
+
+All results below come from **simulated agents**: deterministic policies, not an LLM, so the differences come from the tools. One agent has only Grep/Read/Edit (like Claude Code's built-in tools), the other has spec-nav plus Read/Edit. The no-MCP side is given an LLM's synonym knowledge and the same generous scoring. Each session is a whole feature request: reuse existing logic, change a function's signature and update every caller, change a constant everywhere, then read and edit every file. Repositories: a seeded synthetic monorepo (answers planted by the generator) and immich@cc7fd67 (answers from TypeScript `findReferences`, doc comments and ripgrep). Tokens are estimated at 3.5 characters/token.
 
 | | Synthetic, 100 sessions | Synthetic, 50 large sessions | immich (real), 20 sessions | immich (real), 10 large sessions |
 |---|---:|---:|---:|---:|
@@ -164,7 +185,7 @@ Reading what you will edit costs the same either way; the saving is in the searc
 
 **Cross-service flows** (no agent, no LLM) — `spec_nav_trace_flow` on generated repositories (14 services each, 5 held-out seeds, 598 labelled call sites): 100% precision with 0 wrong links (linking by name only: 136 wrong links), 84% recall — every miss is a call made through a wrapper function or `urljoin`, which the adapters do not follow. First call ~0.1 s (0.7 s on a 1,000-file repository), then 1–10 ms per call. The generator and the adapters share an author, so this checks the linking rules, not coverage of real code.
 
-Method, assumptions and limitations: [bench/README.md](bench/README.md#english). Reports: [synthetic](bench/results/synthetic-150-sessions.md#english) · [immich](bench/results/real-immich-30-sessions.md#english) · [VS Code timings](bench/results/perf-vscode.md) · [flows](bench/results/flow-test.md#english) · [all results](bench/results/).
+Method, assumptions and limitations: [bench/README.md](bench/README.md#english). Reports: [live Grafana](bench/results/live-grafana-8-tasks.md#english) · [synthetic](bench/results/synthetic-150-sessions.md#english) · [immich](bench/results/real-immich-30-sessions.md#english) · [VS Code timings](bench/results/perf-vscode.md) · [flows](bench/results/flow-test.md#english) · [all results](bench/results/).
 
 ## Limits
 

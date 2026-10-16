@@ -11,7 +11,7 @@
 | `spec_nav_services` | Kiểm tra đường dẫn quét, các project, số lượng file/hàm và coverage. |
 | `spec_nav_find_functions` | Tìm các hàm có thể đáp ứng yêu cầu, xếp hạng và giải thích vì sao khớp. |
 | `spec_nav_similar_functions` | Tìm hàm có hành vi giống một hàm hoặc một bản nháp, dù tên khác hẳn. |
-| `spec_nav_read_function` | Đọc code chính xác của một hàm, kèm signature, tài liệu và import liên quan. |
+| `spec_nav_read_function` | Đọc code chính xác của một hàm (hoặc tối đa 10 hàm mỗi lần gọi), kèm signature, tài liệu và import liên quan. |
 | `spec_nav_functions` | Xem danh mục hàm, lọc và lấy từng trang. |
 | `spec_nav_callers` | Kiểm tra lời gọi, references, lời gọi động và những trường hợp chưa resolve được. |
 | `spec_nav_map` | Tìm dòng khớp regex, kèm tên hàm chứa dòng đó. |
@@ -60,6 +60,17 @@ Tham số khác: `services`, `inFile`, `language`, `minScore` (mặc định 0.2
 Dùng đường dẫn/tên thật từ kết quả, hoặc truyền `{ "id": "<id do tool trả về>" }`. `name` có thể là tên đầy đủ (`OrderService.calculateFee`), tên ngắn hoặc tên được export; thêm `line` để chọn giữa các hàm trùng tên. Kết quả gồm signature, toàn bộ doc comment, các import hàm dùng và source chính xác kèm số dòng.
 
 Hàm dài được chia phần: đọc tiếp bằng `nextCursor` trả về, truyền vào `cursor` (hoặc dùng `fromLine`); `maxLines` đặt số dòng mỗi phần (mặc định 400). Không có phần nào bị cắt mà không báo.
+
+Đọc tối đa 10 hàm trong một lần gọi bằng `functions`:
+
+```json
+{ "functions": [
+  { "file": "services/billing/src/fees.ts", "name": "calculateFee" },
+  { "id": "<id do tool trả về>" }
+] }
+```
+
+Các hàm dùng chung một trang: mỗi hàm nhận phần đều của dung lượng còn lại, nên hàm ngắn chừa chỗ cho hàm dài. Hàm không vừa sẽ kết thúc bằng `nextCursor` riêng, đọc tiếp bằng một lần gọi đơn (`{ "cursor": "…" }`). Hàm không tìm thấy, trùng tên hoặc STALE được báo ngay tại vị trí của nó; các hàm khác vẫn được đọc.
 
 ## `spec_nav_functions`
 

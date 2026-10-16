@@ -69,6 +69,41 @@ test("read by file + name, ambiguity, and non-TS imports", async () => {
   assert.deepEqual(py.imports, ["from json import dumps, loads"]);
 });
 
+test("several functions in one call: shared page, errors in place, continuation by cursor", async () => {
+  const [hugeFn] = (await s.json("spec_nav_functions", { name: "huge" })).functions;
+  const r = await s.json("spec_nav_read_function", {
+    functions: [
+      { file: "svc/src/fees.ts", name: "calcFee" },
+      { file: "svc/src/dup.ts", name: "run" },
+      { file: "py/util.py", name: "dump" },
+      { id: hugeFn.id },
+    ],
+  });
+  assert.match(r.summary, /4 functions requested: 3 read, 1 failed/);
+  assert.equal(r.functions[0].source, "export function calcFee(a: number) {\n  return a * 2;\n}");
+  assert.match(r.functions[1].error, /ambiguous/);
+  assert.deepEqual(r.functions[1].request.name, "run");
+  assert.deepEqual(r.functions[2].imports, ["from json import dumps, loads"]);
+  assert.equal(r.functions[3].complete, false, "the long one is cut to its share");
+  const rest = await s.json("spec_nav_read_function", { cursor: r.functions[3].nextCursor });
+  assert.equal(rest.shown.from, r.functions[3].shown.to + 1);
+
+  const text = await s.call("spec_nav_read_function", {
+    functions: [{ file: "svc/src/fees.ts", name: "calcFee" }, { file: "svc/src/use.ts", name: "useFee" }],
+  });
+  assert.match(text, /=== 1\/2 ===[\s\S]*calcFee[\s\S]*=== 2\/2 ===[\s\S]*useFee/);
+  assert.equal(text.match(/Before reusing this from another service/g).length, 1, "advice once per service");
+  assert.ok(text.length < 30_000);
+
+  await assert.rejects(
+    s.call("spec_nav_read_function", { functions: [{ id: hugeFn.id }], id: hugeFn.id }),
+    /either `functions`/,
+  );
+  await assert.rejects(
+    s.call("spec_nav_read_function", { functions: Array.from({ length: 11 }, () => ({ id: hugeFn.id })) }),
+  );
+});
+
 test("a stale id is refused with the current id; the new id works", async () => {
   const [fn] = (await s.json("spec_nav_functions", { name: "calcFee" })).functions;
   writeFileSync(join(root, "svc/src/fees.ts"), "// moved down\n\nexport function calcFee(a: number) {\n  return a * 3;\n}\n");

@@ -11,7 +11,7 @@ These are MCP tool arguments, not terminal commands. Your agent calls them for y
 | `spec_nav_services` | Check the scan root, discovered projects, counts and coverage. |
 | `spec_nav_find_functions` | Find ranked candidates for existing logic across services. |
 | `spec_nav_similar_functions` | Find functions that behave like a candidate or a draft, whatever they are named. |
-| `spec_nav_read_function` | Read one candidate's exact source and context. |
+| `spec_nav_read_function` | Read the exact source and context of one candidate, or up to 10 in one call. |
 | `spec_nav_functions` | Browse the function catalog with filters and pagination. |
 | `spec_nav_callers` | Inspect calls, references, dynamic uses and unresolved usages before a change. |
 | `spec_nav_map` | Find regex matches with the enclosing function. |
@@ -60,6 +60,17 @@ Other arguments: `services`, `inFile`, `language`, `minScore` (default 0.2), `li
 Use a real path/name from your results, or pass `{ "id": "<id returned by the tool>" }`. `name` can be qualified (`OrderService.calculateFee`), short, or a name the function is exported under; add `line` to pick among same-named functions. The output includes the signature, the whole doc comment, the imports the function uses and its exact source with line numbers.
 
 For long functions, continue with the returned `nextCursor` as `cursor` (or `fromLine`); `maxLines` sets the lines per part (default 400). Nothing is cut silently.
+
+Read up to 10 functions in one call with `functions`:
+
+```json
+{ "functions": [
+  { "file": "services/billing/src/fees.ts", "name": "calculateFee" },
+  { "id": "<id returned by the tool>" }
+] }
+```
+
+The functions share one page: each gets an even share of what is left, so short ones leave room for longer ones. A function that does not fit ends with its own `nextCursor`, read on with a single-function call (`{ "cursor": "…" }`). One that is not found, is ambiguous or is stale is reported in its place; the others are still read.
 
 ## `spec_nav_functions`
 

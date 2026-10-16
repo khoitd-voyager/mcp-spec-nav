@@ -291060,24 +291060,80 @@ function genericImports(fc, lines, bodyText) {
   });
   return { imports: keep, narrowed: true };
 }
+var MAX_BATCH_READS = 10;
+var REUSE_ADVICE = (service) => `Before reusing this from another service: check that service already depends on (or may depend on) ${service === "." ? "the root project" : service}, how it is consumed elsewhere (spec_nav_callers), and that it does what you need in every branch.`;
 async function readFunction(args) {
+  if (args.functions) return readFunctions(args.functions, args);
+  const r = await readOne(args, CHAR_BUDGET - 4e3, false);
+  return { text: args.format === "json" && !r.isError && r.json ? JSON.stringify(r.json) : r.text, isError: r.isError };
+}
+async function readFunctions(targets, args) {
+  if (args.id || args.file || args.name || args.line !== void 0 || args.cursor || args.fromLine !== void 0) {
+    throw new Error(
+      "Pass either `functions` (several functions) or `id` / `file`+`name` / `cursor` (one function), not both. To continue a long function from a batch, call again with just its `cursor`."
+    );
+  }
+  if (!targets.length) throw new Error("`functions` is empty: name 1 to 10 functions.");
+  if (targets.length > MAX_BATCH_READS) {
+    throw new Error(`\`functions\` names ${targets.length} functions; at most ${MAX_BATCH_READS} per call.`);
+  }
+  const total = CHAR_BUDGET - 2e3;
+  let used = 0;
+  const outcomes = [];
+  const services = /* @__PURE__ */ new Set();
+  for (let i = 0; i < targets.length; i++) {
+    const share = Math.floor((total - used) / (targets.length - i));
+    const t = targets[i];
+    let o;
+    try {
+      o = await readOne({ ...t, maxLines: args.maxLines, format: args.format }, share, true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      o = { text: `ERROR: ${msg}`, isError: true, json: { request: t, error: msg } };
+    }
+    if (o.json && typeof o.json.service === "string") services.add(o.json.service);
+    used += o.text.length;
+    outcomes.push(o);
+  }
+  const failed2 = outcomes.filter((o) => o.isError).length;
+  const summary = `${targets.length} function${targets.length === 1 ? "" : "s"} requested: ${targets.length - failed2} read` + (failed2 ? `, ${failed2} failed (shown in place)` : "") + ".";
+  if (args.format === "json") {
+    return {
+      text: JSON.stringify({ summary, functions: outcomes.map((o) => o.json) }),
+      isError: failed2 === targets.length || void 0
+    };
+  }
+  return {
+    text: [
+      summary,
+      ...outcomes.map((o, i) => `
+=== ${i + 1}/${targets.length} ===
+${o.text}`),
+      "",
+      ...[...services].map(REUSE_ADVICE)
+    ].join("\n"),
+    isError: failed2 === targets.length || void 0
+  };
+}
+async function readOne(args, budget, inBatch) {
+  const request = inBatch ? { id: args.id, file: args.file, name: args.name, line: args.line } : void 0;
+  const failure = (text3) => ({ text: text3, isError: true, json: { request, error: text3 } });
   const cursor = args.cursor ? decodeReadCursor(args.cursor) : void 0;
   let resolved;
   try {
     resolved = await resolveFunction(cursor ? { ...args, id: cursor.id } : args);
   } catch (err) {
     if (!(err instanceof StaleIdError)) throw err;
-    return {
-      text: cursor ? `STALE: the function changed between parts of this read, so the parts would not fit together. Read it again from the start. ${err.message}` : err.message,
-      isError: true
-    };
+    return failure(
+      cursor ? `STALE: the function changed between parts of this read, so the parts would not fit together. Read it again from the start. ${err.message}` : err.message
+    );
   }
   const { fc, ix } = resolved;
   const r = ix.rec;
   const text2 = (0, import_node_fs2.readFileSync)(fc.entry.abs, "utf8");
   const bodyText = text2.slice(ix.startOffset, ix.endOffset);
   if (hashText(bodyText) !== r.hash) {
-    return { text: `STALE: ${r.file} changed while it was being read. Look the function up again.`, isError: true };
+    return failure(`STALE: ${r.file} changed while it was being read. Look the function up again.`);
   }
   const lines = text2.split("\n");
   let imports;
@@ -291105,55 +291161,55 @@ async function readFunction(args) {
     from = args.fromLine ?? r.start;
   }
   from = Math.min(Math.max(from, r.start), r.end);
+  const alt = alternativesNote(r);
+  if (alt) notes.push(alt);
+  const header = [
+    `${r.name}  [${flags(r)}]`,
+    `id:   ${r.id}`,
+    `file: ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
+    `sig:  ${r.signature}${r.returnType && !r.signature.includes(r.returnType) ? ` -> ${r.returnType}` : ""}`,
+    ...r.exportedAs ? [`exported as: ${r.exportedAs.join(", ")}`] : [],
+    ...notes.map((n) => `note: ${n}`),
+    ...ix.fullDoc ? ["doc:", ...ix.fullDoc.split("\n").map((l) => `  ${l}`)] : [],
+    `imports (${importsNote}):`,
+    ...imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"],
+    ""
+  ];
   const maxLines = Math.min(Math.max(args.maxLines ?? 400, 1), 2e3);
   const width = String(r.end).length;
+  const sourceBudget = inBatch ? Math.max(budget - header.join("\n").length - 600, 1500) : budget;
   const page = takePage(
     fnLines.slice(from - r.start),
     0,
     maxLines,
-    CHAR_BUDGET - 4e3,
+    sourceBudget,
     (l, i) => `${String(from + i).padStart(width)}| ${l}`
   );
   const lastShown = from + page.end - 1;
   const complete = lastShown >= r.end;
   const shownAll = from === r.start && complete;
   const nextCursor = complete ? void 0 : Buffer.from(JSON.stringify({ t: "read", id: r.id, h: r.hash, r: lastShown + 1 - r.start, s: r.start })).toString("base64url");
-  const alt = alternativesNote(r);
-  if (alt) notes.push(alt);
-  if (args.format === "json") {
-    return {
-      text: JSON.stringify({
-        ...r,
-        doc: ix.fullDoc,
-        docTruncated: void 0,
-        imports,
-        importsNote,
-        source: fnLines.slice(from - r.start, lastShown - r.start + 1).join("\n"),
-        shown: { from, to: lastShown },
-        complete,
-        nextCursor,
-        nextFromLine: complete ? void 0 : lastShown + 1,
-        notes
-      })
-    };
-  }
+  const json = {
+    ...r,
+    doc: ix.fullDoc,
+    docTruncated: void 0,
+    imports,
+    importsNote,
+    source: fnLines.slice(from - r.start, lastShown - r.start + 1).join("\n"),
+    shown: { from, to: lastShown },
+    complete,
+    nextCursor,
+    nextFromLine: complete ? void 0 : lastShown + 1,
+    notes
+  };
   return {
+    json,
     text: [
-      `${r.name}  [${flags(r)}]`,
-      `id:   ${r.id}`,
-      `file: ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
-      `sig:  ${r.signature}${r.returnType && !r.signature.includes(r.returnType) ? ` -> ${r.returnType}` : ""}`,
-      ...r.exportedAs ? [`exported as: ${r.exportedAs.join(", ")}`] : [],
-      ...notes.map((n) => `note: ${n}`),
-      ...ix.fullDoc ? ["doc:", ...ix.fullDoc.split("\n").map((l) => `  ${l}`)] : [],
-      `imports (${importsNote}):`,
-      ...imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"],
-      "",
+      ...header,
       shownAll ? `source: lines ${r.start}-${r.end} (complete)` : `source: lines ${from}-${lastShown} of ${r.start}-${r.end}` + (complete ? " (end of function)" : ` \u2014 MORE: call again with the same id and fromLine=${lastShown + 1}, or with cursor="${nextCursor}"`),
       ...page.rendered,
       ...complete ? [] : [`\u2026 function continues at line ${lastShown + 1} (to ${r.end}). Prefer cursor="${nextCursor}": it follows the function if lines are added above it and refuses if the function itself changed; fromLine=${lastShown + 1} is a plain file line.`],
-      "",
-      `Before reusing this from another service: check that service already depends on (or may depend on) ${r.service === "." ? "the root project" : r.service}, how it is consumed elsewhere (spec_nav_callers), and that it does what you need in every branch.`
+      ...inBatch ? [] : ["", REUSE_ADVICE(r.service)]
     ].join("\n")
   };
 }
@@ -296158,8 +296214,18 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_read_function",
   {
-    description: "Read one function in full: signature, whole doc comment, the imports it uses, and its exact source with line numbers \u2014 from the column it starts at to the column it ends at, so a neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported under; + `line` to pick among same-named ones). Long functions come in parts: the output says where it stopped and gives a `cursor` (or `fromLine`) to continue with \u2014 nothing is cut silently. If the function changed since the id was issued, or between parts, it answers STALE instead of showing different code. When a variable is assigned several functions, it says which others exist. Does not tell you whether another service may import it \u2014 check dependencies and service boundaries before reusing.",
+    description: "Read functions in full \u2014 up to 10 in one call with `functions`, instead of one Read per file: signature, whole doc comment, the imports it uses, and its exact source with line numbers \u2014 from the column it starts at to the column it ends at, so a neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported under; + `line` to pick among same-named ones). In a batch the functions share one page; one that is not found is reported in its place. Long functions come in parts: the output says where it stopped and gives a `cursor` (or `fromLine`) to continue with \u2014 nothing is cut silently. If the function changed since the id was issued, or between parts, it answers STALE instead of showing different code. When a variable is assigned several functions, it says which others exist. Does not tell you whether another service may import it \u2014 check dependencies and service boundaries before reusing.",
     inputSchema: {
+      functions: external_exports.array(
+        external_exports.object({
+          id: external_exports.string().optional(),
+          file: external_exports.string().optional(),
+          name: external_exports.string().optional(),
+          line: external_exports.number().int().positive().optional()
+        })
+      ).min(1).max(MAX_BATCH_READS).optional().describe(
+        `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`). Use instead of the single-function fields below.`
+      ),
       id: external_exports.string().optional(),
       file: external_exports.string().optional().describe("Path relative to the repo root."),
       name: external_exports.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),

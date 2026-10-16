@@ -11,7 +11,7 @@
 | `spec_nav_services` | 检查扫描根目录、发现的项目、文件/函数数量和覆盖率。 |
 | `spec_nav_find_functions` | 跨服务查找可能满足需求的函数，排序并说明匹配原因。 |
 | `spec_nav_similar_functions` | 查找行为与某个函数或草稿相似的函数，即使名称完全不同。 |
-| `spec_nav_read_function` | 读取某个函数的精确源码，以及签名、文档和相关 import。 |
+| `spec_nav_read_function` | 读取某个函数（或一次最多 10 个）的精确源码，以及签名、文档和相关 import。 |
 | `spec_nav_functions` | 按条件筛选、分页浏览函数目录。 |
 | `spec_nav_callers` | 检查调用、引用、动态调用以及无法解析的用法。 |
 | `spec_nav_map` | 查找匹配正则的行，并给出所在函数。 |
@@ -60,6 +60,17 @@
 使用结果中的实际路径/名称，或传入 `{ "id": "<工具返回的 id>" }`。`name` 可以是限定名（`OrderService.calculateFee`）、短名或导出名；同名函数可用 `line` 区分。输出包含签名、完整的文档注释、函数用到的 import，以及带行号的精确源码。
 
 函数较长时会分段返回：把返回的 `nextCursor` 作为 `cursor`（或使用 `fromLine`）继续读取；`maxLines` 设置每段行数（默认 400）。不会静默截断。
+
+用 `functions` 一次最多读取 10 个函数：
+
+```json
+{ "functions": [
+  { "file": "services/billing/src/fees.ts", "name": "calculateFee" },
+  { "id": "<工具返回的 id>" }
+] }
+```
+
+这些函数共用一页：每个函数平分剩余容量，短函数会把空间留给长函数。放不下的函数以自己的 `nextCursor` 结尾，用单函数调用（`{ "cursor": "…" }`）继续读取。找不到、有歧义或已过期（STALE）的函数在原位置报告，其他函数照常读取。
 
 ## `spec_nav_functions`
 

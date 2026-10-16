@@ -874,7 +874,101 @@ function genericImports(fc: FileCatalog, lines: string[], bodyText: string): { i
   return { imports: keep, narrowed: true };
 }
 
-export async function readFunction(args: ReadArgs): Promise<{ text: string; isError?: boolean }> {
+/** One function in a batched read: the same ways to name it as a single read. */
+export interface ReadTarget {
+  id?: string;
+  file?: string;
+  name?: string;
+  line?: number;
+}
+
+export const MAX_BATCH_READS = 10;
+
+const REUSE_ADVICE = (service: string) =>
+  "Before reusing this from another service: check that service already depends on (or may depend on) " +
+  `${service === "." ? "the root project" : service}, how it is consumed elsewhere (spec_nav_callers), ` +
+  "and that it does what you need in every branch.";
+
+interface ReadOutcome {
+  text: string;
+  isError?: boolean;
+  /** The structured form, for format "json". */
+  json?: Record<string, unknown>;
+}
+
+export async function readFunction(
+  args: ReadArgs & { functions?: ReadTarget[] },
+): Promise<{ text: string; isError?: boolean }> {
+  if (args.functions) return readFunctions(args.functions, args);
+  const r = await readOne(args, CHAR_BUDGET - 4000, false);
+  return { text: args.format === "json" && !r.isError && r.json ? JSON.stringify(r.json) : r.text, isError: r.isError };
+}
+
+/**
+ * Several functions in one call. They share one page's character budget: each
+ * gets an even share of what is left, so short ones leave room for the rest. A
+ * function that does not fit in its share ends with a cursor, exactly as a
+ * single read would; one that cannot be found or is stale is reported in its
+ * place without failing the others.
+ */
+async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ text: string; isError?: boolean }> {
+  if (args.id || args.file || args.name || args.line !== undefined || args.cursor || args.fromLine !== undefined) {
+    throw new Error(
+      "Pass either `functions` (several functions) or `id` / `file`+`name` / `cursor` (one function), not both. " +
+        "To continue a long function from a batch, call again with just its `cursor`.",
+    );
+  }
+  if (!targets.length) throw new Error("`functions` is empty: name 1 to 10 functions.");
+  if (targets.length > MAX_BATCH_READS) {
+    throw new Error(`\`functions\` names ${targets.length} functions; at most ${MAX_BATCH_READS} per call.`);
+  }
+  const total = CHAR_BUDGET - 2000;
+  let used = 0;
+  const outcomes: ReadOutcome[] = [];
+  const services = new Set<string>();
+  for (let i = 0; i < targets.length; i++) {
+    const share = Math.floor((total - used) / (targets.length - i));
+    const t = targets[i];
+    let o: ReadOutcome;
+    try {
+      o = await readOne({ ...t, maxLines: args.maxLines, format: args.format }, share, true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      o = { text: `ERROR: ${msg}`, isError: true, json: { request: t, error: msg } };
+    }
+    if (o.json && typeof o.json.service === "string") services.add(o.json.service);
+    used += o.text.length;
+    outcomes.push(o);
+  }
+  const failed = outcomes.filter((o) => o.isError).length;
+  const summary =
+    `${targets.length} function${targets.length === 1 ? "" : "s"} requested: ${targets.length - failed} read` +
+    (failed ? `, ${failed} failed (shown in place)` : "") + ".";
+  if (args.format === "json") {
+    return {
+      text: JSON.stringify({ summary, functions: outcomes.map((o) => o.json) }),
+      isError: failed === targets.length || undefined,
+    };
+  }
+  return {
+    text: [
+      summary,
+      ...outcomes.map((o, i) => `\n=== ${i + 1}/${targets.length} ===\n${o.text}`),
+      "",
+      ...[...services].map(REUSE_ADVICE),
+    ].join("\n"),
+    isError: failed === targets.length || undefined,
+  };
+}
+
+/**
+ * Read one function. `budget` bounds the characters of its source page; in a
+ * batch (`inBatch`) errors carry the request, and the reuse advice is left to
+ * the batch so it is said once per service.
+ */
+async function readOne(args: ReadArgs, budget: number, inBatch: boolean): Promise<ReadOutcome> {
+  const request = inBatch ? { id: args.id, file: args.file, name: args.name, line: args.line } : undefined;
+  const failure = (text: string): ReadOutcome => ({ text, isError: true, json: { request, error: text } });
   const cursor = args.cursor ? decodeReadCursor(args.cursor) : undefined;
   let resolved: { fc: FileCatalog; ix: Indexed };
   try {
@@ -882,13 +976,12 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
     resolved = await resolveFunction(cursor ? { ...args, id: cursor.id } : args);
   } catch (err) {
     if (!(err instanceof StaleIdError)) throw err;
-    return {
-      text: cursor
+    return failure(
+      cursor
         ? `STALE: the function changed between parts of this read, so the parts would not fit together. ` +
           `Read it again from the start. ${err.message}`
         : err.message,
-      isError: true,
-    };
+    );
   }
   const { fc, ix } = resolved;
   const r = ix.rec;
@@ -897,7 +990,7 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
   // The catalog and this read are two file reads; a write between them would
   // show code the id does not describe.
   if (hashText(bodyText) !== r.hash) {
-    return { text: `STALE: ${r.file} changed while it was being read. Look the function up again.`, isError: true };
+    return failure(`STALE: ${r.file} changed while it was being read. Look the function up again.`);
   }
   const lines = text.split("\n");
 
@@ -934,13 +1027,29 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
     from = args.fromLine ?? r.start;
   }
   from = Math.min(Math.max(from, r.start), r.end);
+  const alt = alternativesNote(r);
+  if (alt) notes.push(alt);
+  const header = [
+    `${r.name}  [${flags(r)}]`,
+    `id:   ${r.id}`,
+    `file: ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
+    `sig:  ${r.signature}${r.returnType && !r.signature.includes(r.returnType) ? ` -> ${r.returnType}` : ""}`,
+    ...(r.exportedAs ? [`exported as: ${r.exportedAs.join(", ")}`] : []),
+    ...notes.map((n) => `note: ${n}`),
+    ...(ix.fullDoc ? ["doc:", ...ix.fullDoc.split("\n").map((l) => `  ${l}`)] : []),
+    `imports (${importsNote}):`,
+    ...(imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"]),
+    "",
+  ];
   const maxLines = Math.min(Math.max(args.maxLines ?? 400, 1), 2000);
   const width = String(r.end).length;
+  // A batch share also pays for the header; a single read keeps its fixed budget.
+  const sourceBudget = inBatch ? Math.max(budget - header.join("\n").length - 600, 1500) : budget;
   const page = takePage(
     fnLines.slice(from - r.start),
     0,
     maxLines,
-    CHAR_BUDGET - 4000,
+    sourceBudget,
     (l, i) => `${String(from + i).padStart(width)}| ${l}`,
   );
   const lastShown = from + page.end - 1;
@@ -950,38 +1059,24 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
     ? undefined
     : Buffer.from(JSON.stringify({ t: "read", id: r.id, h: r.hash, r: lastShown + 1 - r.start, s: r.start } satisfies ReadCursor))
         .toString("base64url");
-  const alt = alternativesNote(r);
-  if (alt) notes.push(alt);
 
-  if (args.format === "json") {
-    return {
-      text: JSON.stringify({
-        ...r,
-        doc: ix.fullDoc,
-        docTruncated: undefined,
-        imports,
-        importsNote,
-        source: fnLines.slice(from - r.start, lastShown - r.start + 1).join("\n"),
-        shown: { from, to: lastShown },
-        complete,
-        nextCursor,
-        nextFromLine: complete ? undefined : lastShown + 1,
-        notes,
-      }),
-    };
-  }
+  const json = {
+    ...r,
+    doc: ix.fullDoc,
+    docTruncated: undefined,
+    imports,
+    importsNote,
+    source: fnLines.slice(from - r.start, lastShown - r.start + 1).join("\n"),
+    shown: { from, to: lastShown },
+    complete,
+    nextCursor,
+    nextFromLine: complete ? undefined : lastShown + 1,
+    notes,
+  };
   return {
+    json,
     text: [
-      `${r.name}  [${flags(r)}]`,
-      `id:   ${r.id}`,
-      `file: ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
-      `sig:  ${r.signature}${r.returnType && !r.signature.includes(r.returnType) ? ` -> ${r.returnType}` : ""}`,
-      ...(r.exportedAs ? [`exported as: ${r.exportedAs.join(", ")}`] : []),
-      ...notes.map((n) => `note: ${n}`),
-      ...(ix.fullDoc ? ["doc:", ...ix.fullDoc.split("\n").map((l) => `  ${l}`)] : []),
-      `imports (${importsNote}):`,
-      ...(imports.length ? imports.map((i) => `  ${i}`) : ["  (none found)"]),
-      "",
+      ...header,
       shownAll
         ? `source: lines ${r.start}-${r.end} (complete)`
         : `source: lines ${from}-${lastShown} of ${r.start}-${r.end}` +
@@ -994,10 +1089,7 @@ export async function readFunction(args: ReadArgs): Promise<{ text: string; isEr
         : [`… function continues at line ${lastShown + 1} (to ${r.end}). Prefer cursor="${nextCursor}": it ` +
             `follows the function if lines are added above it and refuses if the function itself changed; ` +
             `fromLine=${lastShown + 1} is a plain file line.`]),
-      "",
-      "Before reusing this from another service: check that service already depends on (or may depend on) " +
-        `${r.service === "." ? "the root project" : r.service}, how it is consumed elsewhere (spec_nav_callers), ` +
-        "and that it does what you need in every branch.",
+      ...(inBatch ? [] : ["", REUSE_ADVICE(r.service)]),
     ].join("\n"),
   };
 }

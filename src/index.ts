@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { REPO_ROOT } from "./project.js";
 import { mapPattern, renderMap, listServices } from "./tools.js";
-import { listFunctions, findFunctions, readFunction } from "./catalog.js";
+import { listFunctions, findFunctions, readFunction, MAX_BATCH_READS } from "./catalog.js";
 import { findCallers } from "./callers.js";
 import { similarFunctions } from "./similar.js";
 import { traceFlow } from "./flow/trace.js";
@@ -186,17 +186,35 @@ server.registerTool(
   "spec_nav_read_function",
   {
     description:
-      "Read one function in full: signature, whole doc comment, the imports it uses, and its exact " +
+      "Read functions in full — up to 10 in one call with `functions`, instead of one Read per file: " +
+      "signature, whole doc comment, the imports it uses, and its exact " +
       "source with line numbers — from the column it starts at to the column it ends at, so a " +
       "neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / " +
       "spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported " +
-      "under; + `line` to pick among same-named ones). Long functions come in parts: the output says " +
+      "under; + `line` to pick among same-named ones). In a batch the functions share one page; one " +
+      "that is not found is reported in its place. Long functions come in parts: the output says " +
       "where it stopped and gives a `cursor` (or `fromLine`) to continue with — nothing is cut " +
       "silently. If the function changed since the id was issued, or between parts, it answers STALE " +
       "instead of showing different code. When a variable is assigned several functions, it says " +
       "which others exist. Does not tell you whether another service may import it — check " +
       "dependencies and service boundaries before reusing.",
     inputSchema: {
+      functions: z
+        .array(
+          z.object({
+            id: z.string().optional(),
+            file: z.string().optional(),
+            name: z.string().optional(),
+            line: z.number().int().positive().optional(),
+          }),
+        )
+        .min(1)
+        .max(MAX_BATCH_READS)
+        .optional()
+        .describe(
+          `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`). ` +
+            "Use instead of the single-function fields below.",
+        ),
       id: z.string().optional(),
       file: z.string().optional().describe("Path relative to the repo root."),
       name: z.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),
