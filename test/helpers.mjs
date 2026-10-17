@@ -35,11 +35,11 @@ export function removeRepo(root) {
 }
 
 /** Start the server against `root`. Returns { call, json, text, close }. */
-export async function startServer(root) {
+export async function startServer(root, env = {}) {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [DIST],
-    env: { ...process.env, SPEC_NAV_ROOT: root },
+    env: { ...process.env, SPEC_NAV_ROOT: root, ...env },
     stderr: "pipe",
   });
   const client = new Client({ name: "spec-nav-test", version: "0.0.0" });

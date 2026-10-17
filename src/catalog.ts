@@ -290,6 +290,23 @@ export async function snapshot(services?: string[]): Promise<Snapshot> {
   return { scan, files, fingerprint: fingerprint(entries), services: services?.map(normaliseService) };
 }
 
+/**
+ * Catalogue the repo in the background right after start, so the first real
+ * call does not pay for indexing. Yields to the event loop every few files:
+ * a request arriving meanwhile is served between them, not after the lot.
+ * Files already catalogued (by a request) are skipped by the cache.
+ */
+export async function prewarm(): Promise<{ files: number; ms: number }> {
+  const t0 = Date.now();
+  const scan = scanRepo();
+  let n = 0;
+  for (const e of scan.files) {
+    await catalogFile(e);
+    if (++n % 20 === 0) await new Promise((r) => setImmediate(r));
+  }
+  return { files: n, ms: Date.now() - t0 };
+}
+
 /** One catalogued file, by path, refreshed if it changed. */
 export async function fileCatalog(rel: string): Promise<{ fc?: FileCatalog; scan: RepoScan }> {
   const scan = scanRepo();
@@ -413,9 +430,29 @@ export interface ListArgs {
   format?: "text" | "json";
 }
 
-/** A path filter: substring, or a glob when it has `*`. */
+/** Characters that mark a path filter as a regex rather than a substring. */
+const REGEX_HINT = /[|()^$\\]/;
+
+/**
+ * A path filter: substring, a glob when it has `*`, or a regex — written as
+ * `/…/flags`, or recognised by `|`, `(`, `^`, `$` or `\`. Agents write
+ * `services/(order|payment)` expecting a regex; read as a substring it matched
+ * nothing. An implicit regex also keeps the substring reading, so a Next.js
+ * route group such as `app/(shop)/` still matches itself.
+ */
 export function fileMatcher(pattern?: string): (rel: string) => boolean {
   if (!pattern) return () => true;
+  const slashed = pattern.match(/^\/(.+)\/([a-z]*)$/);
+  if (slashed || REGEX_HINT.test(pattern)) {
+    const [source, flags] = slashed ? [slashed[1], slashed[2]] : [pattern, "i"];
+    let re: RegExp;
+    try {
+      re = new RegExp(source, flags);
+    } catch (err) {
+      throw new Error(`\`file\` "${pattern}" is not a valid regex (${(err as Error).message}). Pass a path substring, a * glob, or /regex/.`);
+    }
+    return slashed ? (rel) => re.test(rel) : (rel) => rel.includes(pattern) || re.test(rel);
+  }
   const p = pattern.replace(/\\/g, "/").replace(/^\.\//, "");
   if (!p.includes("*")) return (rel) => rel.includes(p);
   const re = new RegExp(
@@ -710,7 +747,20 @@ export async function findFunctions(args: FindArgs): Promise<string> {
       "the one that owns it before reusing it.",
     "",
     ...page.rendered,
+    ...nextReads(hits.slice(start, page.end)),
   ].join("\n");
+}
+
+/** Candidates usually read next, as one ready batch: direct matches first, at most three. */
+function nextReads(shown: Array<{ rec: FnRecord; callsOnly?: boolean; bodyOnly?: boolean }>): string[] {
+  const direct = shown.filter((h) => !h.callsOnly && !h.bodyOnly);
+  const pick = (direct.length ? direct : shown).slice(0, 3);
+  if (!pick.length) return [];
+  return [
+    "",
+    `Next — read the top ${pick.length === 1 ? "candidate" : `${pick.length} candidates in one call`}: ` +
+      `spec_nav_read_function ${JSON.stringify({ functions: pick.map((h) => ({ id: h.rec.id })) })}`,
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -725,6 +775,10 @@ export interface ReadArgs {
   maxLines?: number;
   /** From a previous part's `nextCursor`: continues there, relative to the function. */
   cursor?: string;
+  /** Read only the lines around these file lines (a long function, or a file with `file` alone). */
+  lines?: number[];
+  /** Lines shown either side of each of `lines` (default 15, max 60). */
+  around?: number;
   format?: "text" | "json";
 }
 
@@ -889,6 +943,126 @@ export interface ReadTarget {
   file?: string;
   name?: string;
   line?: number;
+  lines?: number[];
+  around?: number;
+}
+
+export const DEFAULT_AROUND = 15;
+const MAX_AROUND = 60;
+
+/**
+ * The lines around `lines`, not the whole function: a 1,000-line component is
+ * read where it matters. With `name`/`id` the windows stay inside that
+ * function; with `file` alone they are taken from the file and each says which
+ * function it is in. Overlapping windows are merged; requested lines are
+ * marked with `>`.
+ */
+async function readWindows(args: ReadArgs, budget: number, inBatch: boolean): Promise<ReadOutcome> {
+  const request = inBatch ? { id: args.id, file: args.file, name: args.name, lines: args.lines } : undefined;
+  const failure = (text: string): ReadOutcome => ({ text, isError: true, json: { request, error: text } });
+  const around = Math.min(Math.max(args.around ?? DEFAULT_AROUND, 0), MAX_AROUND);
+  const wanted = [...new Set(args.lines!.filter((l) => Number.isInteger(l) && l > 0))].sort((a, b) => a - b);
+  if (!wanted.length) throw new Error("`lines` holds no line numbers (1-based file lines).");
+
+  let fc: FileCatalog;
+  let fn: Indexed | undefined;
+  if (args.id || args.name) {
+    try {
+      ({ fc, ix: fn } = await resolveFunction({ ...args, line: args.line ?? wanted[0] }));
+    } catch (err) {
+      if (err instanceof StaleIdError) return failure(err.message);
+      throw err;
+    }
+  } else if (args.file) {
+    const r = await fileCatalog(args.file);
+    if (!r.fc) throw new Error(`No scanned file "${args.file}". Paths are relative to the repo root; spec_nav_functions lists them.`);
+    fc = r.fc;
+  } else {
+    throw new Error("With `lines`, pass `file` (lines anywhere in it) or `file`+`name` / `id` (lines inside that function).");
+  }
+  const text = readFileSync(fc.entry.abs, "utf8");
+  if (fn && hashText(text.slice(fn.startOffset, fn.endOffset)) !== fn.rec.hash) {
+    return failure(`STALE: ${fn.rec.file} changed while it was being read. Look the function up again.`);
+  }
+  const fileLines = text.split("\n");
+  const lo = fn ? fn.rec.start : 1;
+  const hi = fn ? fn.rec.end : fileLines.length - (fileLines[fileLines.length - 1] === "" ? 1 : 0);
+  const notes: string[] = [];
+  const outside = wanted.filter((l) => l < lo || l > hi);
+  if (outside.length) {
+    notes.push(`line${outside.length > 1 ? "s" : ""} ${outside.join(", ")} ${fn ? `outside ${fn.rec.name} (${lo}-${hi})` : `past the end of the file (${hi} lines)`}: not shown.`);
+  }
+  const inside = wanted.filter((l) => l >= lo && l <= hi);
+  if (!inside.length) return failure(`None of lines ${wanted.join(", ")} is ${fn ? `inside ${fn.rec.name} (${lo}-${hi})` : `in ${fc.entry.rel}`}.`);
+
+  const windows: Array<{ from: number; to: number; first: number }> = [];
+  for (const l of inside) {
+    const from = Math.max(lo, l - around);
+    const to = Math.min(hi, l + around);
+    const last = windows[windows.length - 1];
+    if (last && from <= last.to + 1) last.to = Math.max(last.to, to);
+    else windows.push({ from, to, first: l });
+  }
+  const marked = new Set(inside);
+  const width = String(hi).length;
+  const enclosing = (line: number) => {
+    const inner = fc.functions
+      .filter((f) => f.rec.start <= line && line <= f.rec.end)
+      .sort((a, b) => a.rec.end - a.rec.start - (b.rec.end - b.rec.start))[0];
+    return inner ? `${inner.rec.name} (${span(inner.rec)})` : "top level";
+  };
+
+  const header = fn
+    ? [
+        `${fn.rec.name}  [${flags(fn.rec)}]`,
+        `id:   ${fn.rec.id}`,
+        `file: ${fn.rec.file}:${span(fn.rec)}  (service ${fn.rec.service}, ${fn.rec.language})`,
+        `sig:  ${fn.rec.signature}${fn.rec.returnType && !fn.rec.signature.includes(fn.rec.returnType) ? ` -> ${fn.rec.returnType}` : ""}`,
+      ]
+    : [`file: ${fc.entry.rel}  (service ${fc.entry.service}, ${fc.entry.language}, ${hi} lines)`];
+  const body: string[] = [];
+  const shown: Array<{ from: number; to: number; in?: string; source: string }> = [];
+  let used = header.join("\n").length + 400;
+  const left: number[] = [];
+  for (const w of windows) {
+    const label = `--- lines ${w.from}-${w.to}${fn ? "" : ` in ${enclosing(w.first)}`}${fn && w.from === lo && w.to === hi ? " (whole function)" : ""}`;
+    const rendered = fileLines.slice(w.from - 1, w.to).map((l, i) => `${String(w.from + i).padStart(width)}${marked.has(w.from + i) ? ">" : "|"} ${l}`);
+    const size = label.length + rendered.reduce((n, l) => n + l.length + 1, 0);
+    if (shown.length && used + size > budget) {
+      left.push(...inside.filter((l) => l >= w.from && l <= w.to));
+      continue;
+    }
+    used += size;
+    body.push(label, ...rendered);
+    shown.push({ from: w.from, to: w.to, ...(fn ? {} : { in: enclosing(w.first) }), source: fileLines.slice(w.from - 1, w.to).join("\n") });
+  }
+  if (left.length) notes.push(`not shown (page full): around line${left.length > 1 ? "s" : ""} ${left.join(", ")} — ask again for those, or with a smaller \`around\`.`);
+
+  let imports: string[] = [];
+  if (isTsFamily(fc.entry.language)) {
+    const view = tsParseView(fc.entry.ext, text);
+    imports = tsImportsUsed(parseSource(fc.entry.abs, view.text, view.ext), shown.map((s) => s.source).join("\n"));
+  }
+  const json = {
+    file: fc.entry.rel,
+    service: fc.entry.service,
+    ...(fn ? { function: { ...fn.rec } } : {}),
+    lines: inside,
+    around,
+    windows: shown,
+    imports,
+    notes,
+  };
+  return {
+    json,
+    text: [
+      ...header,
+      ...notes.map((n) => `note: ${n}`),
+      ...(imports.length ? ["imports (used in the lines shown):", ...imports.map((i) => `  ${i}`)] : []),
+      `windows: ${shown.length} — ±${around} lines around ${inside.join(", ")} (> marks a requested line)`,
+      ...body,
+    ].join("\n"),
+  };
 }
 
 export const MAX_BATCH_READS = 10;
@@ -921,7 +1095,7 @@ export async function readFunction(
  * place without failing the others.
  */
 async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ text: string; isError?: boolean }> {
-  if (args.id || args.file || args.name || args.line !== undefined || args.cursor || args.fromLine !== undefined) {
+  if (args.id || args.file || args.name || args.line !== undefined || args.cursor || args.fromLine !== undefined || args.lines?.length) {
     throw new Error(
       "Pass either `functions` (several functions) or `id` / `file`+`name` / `cursor` (one function), not both. " +
         "To continue a long function from a batch, call again with just its `cursor`.",
@@ -940,7 +1114,7 @@ async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ t
     const t = targets[i];
     let o: ReadOutcome;
     try {
-      o = await readOne({ ...t, maxLines: args.maxLines, format: args.format }, share, true);
+      o = await readOne({ ...t, around: t.around ?? args.around, maxLines: args.maxLines, format: args.format }, share, true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       o = { text: `ERROR: ${msg}`, isError: true, json: { request: t, error: msg } };
@@ -976,6 +1150,10 @@ async function readFunctions(targets: ReadTarget[], args: ReadArgs): Promise<{ t
  * the batch so it is said once per service.
  */
 async function readOne(args: ReadArgs, budget: number, inBatch: boolean): Promise<ReadOutcome> {
+  if (args.lines?.length) {
+    if (args.cursor || args.fromLine !== undefined) throw new Error("Pass `lines` or `cursor`/`fromLine`, not both.");
+    return readWindows(args, budget, inBatch);
+  }
   const request = inBatch ? { id: args.id, file: args.file, name: args.name, line: args.line } : undefined;
   const failure = (text: string): ReadOutcome => ({ text, isError: true, json: { request, error: text } });
   const cursor = args.cursor ? decodeReadCursor(args.cursor) : undefined;

@@ -139,32 +139,34 @@ The prompts under [Try it on a real task](#3-try-it-on-a-real-task) also work in
 Installing an MCP makes its tools available; it does not ensure the agent will use them. Add this section to your project's `CLAUDE.md`:
 
 ```markdown
-## Use existing code before writing new logic
+## Find existing code with spec-nav
 
-For new logic or changes that affect other functions:
+- Before writing a new function: spec_nav_find_functions, describing the behaviour in words.
+  Nothing fits → pass your draft to spec_nav_similar_functions.
+  Another service's function is not automatically safe to import: check dependencies first.
+- Before changing a function's signature or behaviour: spec_nav_callers, not a grep for its name.
+  Check sites marked likely, ambiguous, unresolved or dynamic by hand.
+- Searching the repo for a name or concept: one broad spec_nav_map regex instead of grep -rn.
+  It covers code and config/docs, and takes `file` and `context` like grep.
+- A change touching an endpoint, an event or another service: spec_nav_trace_flow.
+  Links marked partial, ambiguous or unresolved are leads, not facts: read both ends.
+- When a result ends with a ready "Next —" call, send it instead of searching again.
 
-1. Use spec_nav_find_functions to look for existing implementations across services.
-   Use English keywords for English-named code; try another wording if needed.
-2. Read the most relevant candidates with spec_nav_read_function.
-   Avoid loading the entire catalog or every function body into context.
-   If nothing fits, draft the function and pass it to spec_nav_similar_functions.
-3. Check behavior, exports, dependencies and service boundaries before reusing code.
-   Another service's function is not automatically safe to import.
-4. Use spec_nav_callers before changing a function's signature or behavior.
-   Check sites marked likely, ambiguous, unresolved or dynamic by hand.
-   Use spec_nav_map with one broad regex for concepts spanning files or services.
-5. When a change touches an endpoint, an event or a call to another service, use
-   spec_nav_trace_flow (upstream: who reaches it; downstream: what it reaches).
-   Links marked partial, ambiguous or unresolved are leads, not facts: read both ends.
-6. Inspect coverage and unresolved results. Follow cursors when you need the complete
-   result set; use ordinary search/file reads for unsupported or missing areas.
-7. After editing, refresh relevant queries and run the project's appropriate checks.
-
-Scale this workflow to the task. Small, isolated edits do not require every tool.
-Search results are candidates, not proof that no other implementation exists.
+One call per question: there is no need to call every tool. Results are candidates,
+not proof that nothing else exists.
 ```
 
-For other agents, adapt this section to their project instruction file, such as `AGENTS.md`.
+Each line is a trigger, not a step: an agent told to run a fixed sequence of tools before editing makes more calls, not fewer. For other agents, adapt this section to their project instruction file, such as `AGENTS.md`.
+
+### Load the tools up front (Claude Code)
+
+Claude Code can defer MCP tools behind its tool search: the agent sees only their names and has to call `ToolSearch` before it can use them, which costs a call and often means it reaches for Grep instead. To load spec-nav's tools from the start, set `ENABLE_TOOL_SEARCH=false`, either in the environment that launches `claude` or in `.claude/settings.json`:
+
+```json
+{ "env": { "ENABLE_TOOL_SEARCH": "false" } }
+```
+
+The tool definitions are then sent with every request (about 5k tokens for spec-nav's eight tools), in exchange for no `ToolSearch` calls.
 
 ## Install from a local checkout
 

@@ -75,10 +75,11 @@ type FnLike = ts.ArrowFunction | ts.FunctionExpression;
 
 /**
  * Calls whose result is the function passed in, wrapped: `useCallback(fn)`,
- * `memo(fn)`, `asyncHandler(fn)`. Only these — `items.map(x => …)` also takes
- * an arrow first, and its result is an array, not a function.
+ * `memo(fn)`, `asyncHandler(fn)`, React/Next `cache(fn)` and `unstable_cache(fn)`.
+ * Only these — `items.map(x => …)` also takes an arrow first, and its result
+ * is an array, not a function.
  */
-export const WRAPPERS = /^(useCallback|memo|forwardRef|debounce|throttle|once|memoize\w*|observer|\w*[Hh]andler|catchAsync|wrapAsync|asyncWrap\w*|withSpan|trace\w*)$/;
+export const WRAPPERS = /^(useCallback|memo|forwardRef|cache|unstable_cache|debounce|throttle|once|memoize\w*|observer|\w*[Hh]andler|catchAsync|wrapAsync|asyncWrap\w*|withSpan|trace\w*)$/;
 
 /**
  * A function value held by an initializer — directly, or as the first argument

@@ -30,7 +30,7 @@ import {
  *  - HTTP servers: Express (`express()`, `Router()`), Fastify (`fastify()`,
  *    plugins), koa-router, NestJS controllers (`@Controller` + `@Get`…).
  *  - HTTP clients: `fetch`, axios (and `axios.create` instances), NestJS
- *    `HttpService`.
+ *    `HttpService`, medusa-js `client.request(method, path)`.
  *  - RPC and events: NestJS microservices (`@MessagePattern`/`@EventPattern`
  *    with `ClientProxy.send`/`emit`), `@nestjs/event-emitter`
  *    (`@OnEvent` with `EventEmitter2.emit`), kafkajs producers and consumers.
@@ -42,7 +42,7 @@ import {
 
 /** Files worth parsing for communication: a library or an HTTP-looking call is named. */
 export const TS_PREFILTER =
-  /\b(?:express|fastify|Fastify|koa-router|fetch|ofetch|axios|HttpService|kafkajs|setGlobalPrefix)\b|\$fetch\b|@koa\/router|@nestjs\/(?:common|microservices|event-emitter|axios)\b|\.(?:producer|consumer)\s*\(|\.(?:get|post|put|patch|delete|all|head|options)\s*\(\s*['"`]\//;
+  /\b(?:express|fastify|Fastify|koa-router|fetch|ofetch|axios|HttpService|kafkajs|setGlobalPrefix)\b|@medusajs\/medusa-js|\$fetch\b|@koa\/router|@nestjs\/(?:common|microservices|event-emitter|axios)\b|\.(?:producer|consumer)\s*\(|\.(?:get|post|put|patch|delete|all|head|options)\s*\(\s*['"`]\//;
 
 /** Files whose location is their route: Medusa, Next.js (app and pages), SvelteKit. */
 const FILE_ROUTE = /(^|\/)(src\/api\/(.+\/)?route|(src\/)?app\/(.+\/)?route|src\/routes\/(.+\/)?\+server)\.[cm]?[jt]sx?$|(^|\/)(src\/)?pages\/api\/.+\.[jt]sx?$/;
@@ -965,6 +965,19 @@ export function extractTs(entry: SourceEntry, text: string, analysed: boolean): 
           addRoute(facts.routers.get(r.local)?.lib ?? "express", m.toUpperCase(), (root as ts.CallExpression).arguments[0],
             { local: r.local, path: [] }, handlerOf(args[args.length - 1]), n);
         }
+        return;
+      }
+    }
+
+    // medusa-js: `this.client.request("GET", path)` in a resource class, or
+    // `medusa.client.request(…)` — only in a file that imports @medusajs/medusa-js.
+    if (m === "request" && args.length >= 2 && ts.isPropertyAccessExpression(recvExpr) && recvExpr.name.text === "client" &&
+        fileMentions("@medusajs/medusa-js")) {
+      const verb = literal(strOf(args[0]))?.toUpperCase();
+      if (verb && VERBS.has(verb.toLowerCase())) {
+        addClient("medusa-js", verb, strOf(args[1]), n, {
+          methodNote: "the client's baseUrl is set where the Medusa client is created",
+        });
         return;
       }
     }

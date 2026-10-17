@@ -140,32 +140,34 @@ Các câu mẫu ở [Dùng thử ngay](#3-dùng-thử-ngay) cũng dùng được
 Cài MCP chỉ làm cho tool có sẵn, không bảo đảm agent sẽ dùng. Thêm đoạn sau vào `CLAUDE.md` của dự án để hướng dẫn Claude sử dụng:
 
 ```markdown
-## Tìm code có sẵn trước khi viết logic mới
+## Tìm code có sẵn bằng spec-nav
 
-Với logic mới hoặc thay đổi ảnh hưởng tới các hàm khác:
+- Trước khi viết hàm mới: spec_nav_find_functions, mô tả hành vi bằng lời.
+  Không thấy hàm phù hợp → đưa bản nháp cho spec_nav_similar_functions.
+  Hàm ở service khác không mặc nhiên import được: kiểm tra dependency trước.
+- Trước khi đổi signature hoặc hành vi của hàm: spec_nav_callers, đừng grep tên hàm.
+  Tự kiểm tra các chỗ được đánh dấu likely, ambiguous, unresolved hoặc dynamic.
+- Tìm một tên hoặc khái niệm trong repo: một regex rộng với spec_nav_map thay cho grep -rn.
+  Tool quét cả code lẫn config/docs, nhận `file` và `context` như grep.
+- Thay đổi đụng tới endpoint, event hoặc service khác: spec_nav_trace_flow.
+  Link partial, ambiguous hoặc unresolved chỉ là manh mối, chưa phải kết luận: đọc cả hai đầu.
+- Khi kết quả kết thúc bằng lệnh "Next —" soạn sẵn, gửi luôn lệnh đó thay vì tìm lại.
 
-1. Dùng spec_nav_find_functions tìm implementation có sẵn trên các service.
-   Dùng từ khóa tiếng Anh nếu code đặt tên bằng tiếng Anh; thử cách diễn đạt khác khi cần.
-2. Dùng spec_nav_read_function đọc các ứng viên phù hợp.
-   Tránh nạp toàn bộ danh mục hoặc mọi thân hàm vào context.
-   Không thấy hàm phù hợp thì viết nháp rồi đưa cho spec_nav_similar_functions.
-3. Kiểm tra hành vi, export, dependency và ranh giới service trước khi tái sử dụng.
-   Hàm ở service khác không mặc nhiên có thể import trực tiếp.
-4. Dùng spec_nav_callers trước khi đổi signature hoặc hành vi của hàm.
-   Tự kiểm tra các chỗ được đánh dấu likely, ambiguous, unresolved hoặc dynamic.
-   Dùng spec_nav_map với một regex đủ rộng khi thay đổi liên quan nhiều file/service.
-5. Khi thay đổi đụng tới endpoint, event hoặc lời gọi sang service khác, dùng
-   spec_nav_trace_flow (upstream: ai gọi tới; downstream: nó gọi tiếp tới đâu).
-   Link partial, ambiguous hoặc unresolved chỉ là manh mối, chưa phải kết luận: đọc cả hai đầu.
-6. Đọc coverage và kết quả unresolved. Lấy trang tiếp theo nếu cần đủ kết quả;
-   dùng tìm kiếm và đọc file thông thường cho phần không hỗ trợ hoặc còn thiếu.
-7. Sau khi sửa, cập nhật các truy vấn liên quan và chạy kiểm tra phù hợp của dự án.
-
-Áp dụng theo mức độ thay đổi. Sửa nhỏ, độc lập không cần gọi tất cả tool.
-Không tìm thấy ứng viên không có nghĩa là repo chắc chắn chưa có implementation.
+Mỗi câu hỏi một lần gọi, không cần gọi đủ mọi tool. Kết quả là ứng viên,
+không phải bằng chứng rằng repo không còn chỗ nào khác.
 ```
 
-Với agent khác, chuyển hướng dẫn này sang file phù hợp, chẳng hạn `AGENTS.md`.
+Mỗi dòng là một điều kiện kích hoạt, không phải một bước: bắt agent chạy một chuỗi tool cố định trước khi sửa chỉ làm nó gọi nhiều hơn chứ không ít đi. Với agent khác, chuyển hướng dẫn này sang file phù hợp, chẳng hạn `AGENTS.md`.
+
+### Load tool sẵn từ đầu (Claude Code)
+
+Claude Code có thể giấu tool MCP sau tính năng tool search: agent chỉ thấy tên và phải gọi `ToolSearch` trước khi dùng. Như vậy tốn thêm một call, và agent thường chọn Grep luôn cho nhanh. Để load tool spec-nav ngay từ đầu, đặt `ENABLE_TOOL_SEARCH=false`, trong môi trường chạy `claude` hoặc trong `.claude/settings.json`:
+
+```json
+{ "env": { "ENABLE_TOOL_SEARCH": "false" } }
+```
+
+Đổi lại, định nghĩa tool được gửi kèm mọi request (khoảng 5k token cho 8 tool của spec-nav), nhưng không còn lần gọi `ToolSearch` nào.
 
 ## Cài từ source local
 

@@ -2,8 +2,9 @@ import { scanRepo } from "../project.js";
 import { resolveFunction, StaleIdError } from "../catalog.js";
 import { CHAR_BUDGET, CHANGED_WARNING, decodeCursor, encodeCursor, paramsHash, takePage } from "../paging.js";
 import { lit } from "./model.js";
-import { buildGraph, Graph, Unit, Endpoint, CommEdge, Resolution, Confidence, fnUnit, routeSegs, analyseUrl, segsDisplay, FlowCoverage } from "./link.js";
+import { buildGraph, currentGraph, Graph, Unit, Endpoint, CommEdge, Resolution, Confidence, fnUnit, routeSegs, analyseUrl, segsDisplay, FlowCoverage } from "./link.js";
 import { callsFrom, callsInto } from "./calls.js";
+import { prewarmFacts } from "./facts.js";
 
 /**
  * `spec_nav_trace_flow`: follow a flow through communication between
@@ -345,7 +346,7 @@ function coverageLines(c: FlowCoverage): string[] {
 
 const SUPPORTED =
   "Supported: HTTP — Express, Fastify, koa-router, NestJS controllers, file-based routes (Next.js app/pages, Medusa src/api, " +
-  "SvelteKit +server), FastAPI, Flask (servers); fetch, axios, NestJS HttpService, " +
+  "SvelteKit +server), FastAPI, Flask (servers); fetch, axios, NestJS HttpService, medusa-js, " +
   "requests, httpx, aiohttp (clients). RPC — NestJS microservices @MessagePattern/ClientProxy.send. Events — NestJS @EventPattern/" +
   "ClientProxy.emit, @nestjs/event-emitter @OnEvent/EventEmitter2.emit (same service only), kafkajs producer/consumer. Nothing else " +
   "(gRPC, GraphQL, BullMQ, RabbitMQ, Hono, Go, Java…) is traced.";
@@ -456,4 +457,78 @@ export async function traceFlow(args: TraceArgs): Promise<{ text: string; isErro
       ...(steps.length ? page.rendered : ["(no steps: nothing communicates from or to this point that the adapters can see — see coverage above)"]),
     ].join("\n"),
   };
+}
+
+/** Build the flow graph in the background after start, so boundaries can be shown inline. */
+export async function prewarmFlow(): Promise<{ edges: number; ms: number }> {
+  const t0 = Date.now();
+  const scan = scanRepo();
+  await prewarmFacts(scan.files);
+  const g = await buildGraph(scan);
+  return { edges: g.edges.length, ms: Date.now() - t0 };
+}
+
+/** A place in code: a hit or a call site, with the function it is in when known. */
+export interface Place {
+  file: string;
+  line: number;
+  /** Name and first line of the enclosing function. */
+  fnName?: string;
+  fnLine?: number;
+  /** For a whole function: sends anywhere from `line` to here count. */
+  toLine?: number;
+}
+
+/**
+ * The other side of the service boundaries at these places, from the flow
+ * graph when it is already built (it is built in the background after start;
+ * this never builds it): who calls an endpoint handled here, and where an HTTP
+ * call or message sent here lands. Shown in the result itself — a separate
+ * "Next — spec_nav_trace_flow" line was offered often and followed rarely.
+ * Undefined when the graph is not ready.
+ */
+export function boundariesAt(places: Place[], max = 6): string[] | undefined {
+  const g = currentGraph(scanRepo());
+  if (!g) return undefined;
+  const lines: string[] = [];
+  const seen = new Set<string>();
+  let more = 0;
+  const push = (k: string, text: string) => {
+    if (seen.has(k)) return;
+    seen.add(k);
+    if (lines.length < max) lines.push(text);
+    else more++;
+  };
+  const files = new Set(places.map((p) => p.file));
+  const handled = g.endpoints.filter((e) => files.has(e.file) || (e.handler && files.has(e.handler.file)));
+  for (const p of places) {
+    for (const e of handled) {
+      const h = e.handler;
+      const here = (h && h.file === p.file && (h.line === p.fnLine || h.line === p.line)) ||
+        (e.file === p.file && (e.line === p.line || (!!p.fnName && e.method === p.fnName.toUpperCase())));
+      if (!here) continue;
+      const callers = g.edges.filter((x) => x.targets.includes(e));
+      if (!callers.length) {
+        push(`in:${e.uid}`, `${e.display} (${p.file}:${p.line}) — called by: nothing in the repo (external clients, or a URL built at runtime)`);
+        continue;
+      }
+      for (const x of callers) {
+        push(`in:${e.uid}:${x.site.file}:${x.site.line}`,
+          `${e.display} (${p.file}:${p.line}) — called by ${x.source.service}: ${x.site.file}:${x.site.line} ${x.source.label} [${x.resolution}]`);
+      }
+    }
+    for (const x of g.edges) {
+      if (x.site.file !== p.file || x.site.line < p.line || x.site.line > (p.toLine ?? p.line)) continue;
+      if (!x.targets.length) {
+        push(`out:${x.site.file}:${x.site.line}`, `${x.site.file}:${x.site.line} ${x.call} — sends to: no handler in the repo matches [${x.resolution}]`);
+        continue;
+      }
+      for (const t of x.targets) {
+        push(`out:${x.site.file}:${x.site.line}:${t.uid}`,
+          `${x.site.file}:${x.site.line} ${x.call} — sends to ${t.service}: ${t.handler ? `${t.handler.file}:${t.handler.line} ${t.handler.label}` : `${t.file}:${t.line}`} [${x.resolution}]`);
+      }
+    }
+  }
+  if (more) lines.push(`… ${more} more — spec_nav_trace_flow on the handler or call lists them all, with evidence.`);
+  return lines;
 }

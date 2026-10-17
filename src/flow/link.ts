@@ -492,6 +492,12 @@ function composeStamp(): string {
   }).join("|");
 }
 
+/** The graph already built for the repo as it is now, or undefined — never builds one. */
+export function currentGraph(scan: RepoScan): Graph | undefined {
+  if (!last) return undefined;
+  return last.fingerprint === fingerprint(scan.files) + ":" + composeStamp() ? last : undefined;
+}
+
 export async function buildGraph(scan: RepoScan): Promise<Graph> {
   const fp = fingerprint(scan.files) + ":" + composeStamp();
   if (last && last.fingerprint === fp) return last;

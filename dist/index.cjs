@@ -3014,7 +3014,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve4.call(this, root, ref);
+      let _sch = resolve5.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3041,7 +3041,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve4(root, ref) {
+    function resolve5(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3874,7 +3874,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve4(baseURI, relativeURI, options) {
+    function resolve5(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -4243,7 +4243,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize: normalize3,
-      resolve: resolve4,
+      resolve: resolve5,
       resolveComponent,
       equal,
       serialize,
@@ -54459,11 +54459,11 @@ ${lanes.join("\n")}
             if (i < rootLength) {
               return void 0;
             }
-            const sep4 = directory.lastIndexOf(directorySeparator, i - 1);
-            if (sep4 === -1) {
+            const sep5 = directory.lastIndexOf(directorySeparator, i - 1);
+            if (sep5 === -1) {
               return void 0;
             }
-            return directory.substr(0, Math.max(sep4, rootLength));
+            return directory.substr(0, Math.max(sep5, rootLength));
           }
         }
       }
@@ -65500,31 +65500,31 @@ ${lanes.join("\n")}
         }
         function createNodeBuilder() {
           return {
-            typeToTypeNode: (type, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typeToTypeNodeHelper(type, context)),
-            typePredicateToTypePredicateNode: (typePredicate, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typePredicateToTypePredicateNodeHelper(typePredicate, context)),
-            expressionOrTypeToTypeNode: (expr, type, addUndefined, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => expressionOrTypeToTypeNode(context, expr, type, addUndefined)),
-            serializeTypeForDeclaration: (declaration, type, symbol, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => serializeTypeForDeclaration(context, declaration, type, symbol)),
-            serializeReturnTypeForSignature: (signature, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => serializeReturnTypeForSignature(context, signature)),
-            indexInfoToIndexSignatureDeclaration: (indexInfo, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => indexInfoToIndexSignatureDeclarationHelper(
+            typeToTypeNode: (type, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typeToTypeNodeHelper(type, context)),
+            typePredicateToTypePredicateNode: (typePredicate, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typePredicateToTypePredicateNodeHelper(typePredicate, context)),
+            expressionOrTypeToTypeNode: (expr, type, addUndefined, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => expressionOrTypeToTypeNode(context, expr, type, addUndefined)),
+            serializeTypeForDeclaration: (declaration, type, symbol, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => serializeTypeForDeclaration(context, declaration, type, symbol)),
+            serializeReturnTypeForSignature: (signature, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => serializeReturnTypeForSignature(context, signature)),
+            indexInfoToIndexSignatureDeclaration: (indexInfo, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => indexInfoToIndexSignatureDeclarationHelper(
               indexInfo,
               context,
               /*typeNode*/
               void 0
             )),
-            signatureToSignatureDeclaration: (signature, kind, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => signatureToSignatureDeclarationHelper(signature, kind, context)),
-            symbolToEntityName: (symbol, meaning, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToName(
+            signatureToSignatureDeclaration: (signature, kind, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => signatureToSignatureDeclarationHelper(signature, kind, context)),
+            symbolToEntityName: (symbol, meaning, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToName(
               symbol,
               context,
               meaning,
               /*expectsIdentifier*/
               false
             )),
-            symbolToExpression: (symbol, meaning, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToExpression(symbol, context, meaning)),
-            symbolToTypeParameterDeclarations: (symbol, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typeParametersToTypeParameterDeclarations(symbol, context)),
-            symbolToParameterDeclaration: (symbol, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToParameterDeclaration(symbol, context)),
-            typeParameterToDeclaration: (parameter, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typeParameterToDeclaration(parameter, context)),
-            symbolTableToDeclarationStatements: (symbolTable, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolTableToDeclarationStatements(symbolTable, context)),
-            symbolToNode: (symbol, meaning, enclosingDeclaration, flags2, internalFlags, tracker) => withContext2(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToNode(symbol, context, meaning))
+            symbolToExpression: (symbol, meaning, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToExpression(symbol, context, meaning)),
+            symbolToTypeParameterDeclarations: (symbol, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typeParametersToTypeParameterDeclarations(symbol, context)),
+            symbolToParameterDeclaration: (symbol, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToParameterDeclaration(symbol, context)),
+            typeParameterToDeclaration: (parameter, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => typeParameterToDeclaration(parameter, context)),
+            symbolTableToDeclarationStatements: (symbolTable, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolTableToDeclarationStatements(symbolTable, context)),
+            symbolToNode: (symbol, meaning, enclosingDeclaration, flags2, internalFlags, tracker) => withContext22(enclosingDeclaration, flags2, internalFlags, tracker, (context) => symbolToNode(symbol, context, meaning))
           };
           function getTypeFromTypeNode2(context, node, noMappedTypes) {
             const type = getTypeFromTypeNodeWithoutContext(node);
@@ -65631,7 +65631,7 @@ ${lanes.join("\n")}
             }
             return symbolToExpression(symbol, context, meaning);
           }
-          function withContext2(enclosingDeclaration, flags2, internalFlags, tracker, cb) {
+          function withContext22(enclosingDeclaration, flags2, internalFlags, tracker, cb) {
             const moduleResolverHost = (tracker == null ? void 0 : tracker.trackSymbol) ? tracker.moduleResolverHost : (internalFlags || 0) & 4 ? createBasicNodeBuilderModuleSpecifierResolutionHost(host) : void 0;
             const context = {
               enclosingDeclaration,
@@ -128949,7 +128949,7 @@ ${lanes.join("\n")}
           }
         }
         function createImportCallExpressionAMD(arg, containsLexicalThis) {
-          const resolve4 = factory2.createUniqueName("resolve");
+          const resolve5 = factory2.createUniqueName("resolve");
           const reject = factory2.createUniqueName("reject");
           const parameters = [
             factory2.createParameterDeclaration(
@@ -128958,7 +128958,7 @@ ${lanes.join("\n")}
               /*dotDotDotToken*/
               void 0,
               /*name*/
-              resolve4
+              resolve5
             ),
             factory2.createParameterDeclaration(
               /*modifiers*/
@@ -128975,7 +128975,7 @@ ${lanes.join("\n")}
                 factory2.createIdentifier("require"),
                 /*typeArguments*/
                 void 0,
-                [factory2.createArrayLiteralExpression([arg || factory2.createOmittedExpression()]), resolve4, reject]
+                [factory2.createArrayLiteralExpression([arg || factory2.createOmittedExpression()]), resolve5, reject]
               )
             )
           ]);
@@ -177190,7 +177190,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
           return fixes;
         },
         getAllCodeActions: (context) => {
-          const changes = withContext(context, 0, (f) => {
+          const changes = withContext2(context, 0, (f) => {
             eachDiagnostic(context, errorCodes47, (diag2) => {
               f.addTypeAnnotation(diag2);
             });
@@ -177199,7 +177199,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
         }
       });
       function addCodeAction(fixName8, fixes, context, typePrintMode, cb) {
-        const changes = withContext(context, typePrintMode, cb);
+        const changes = withContext2(context, typePrintMode, cb);
         if (changes.result && changes.textChanges.length) {
           fixes.push(createCodeFixAction(
             fixName8,
@@ -177210,7 +177210,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
           ));
         }
       }
-      function withContext(context, typePrintMode, cb) {
+      function withContext2(context, typePrintMode, cb) {
         const emptyInferenceResult = { typeNode: void 0, mutatedTarget: false };
         const changeTracker = ts_textChanges_exports.ChangeTracker.fromContext(context);
         const sourceFile = context.sourceFile;
@@ -213522,8 +213522,8 @@ ${e.message}`;
         installPackage(options) {
           this.packageInstallId++;
           const request = { kind: "installPackage", ...options, id: this.packageInstallId };
-          const promise = new Promise((resolve4, reject) => {
-            (this.packageInstalledPromise ?? (this.packageInstalledPromise = /* @__PURE__ */ new Map())).set(this.packageInstallId, { resolve: resolve4, reject });
+          const promise = new Promise((resolve5, reject) => {
+            (this.packageInstalledPromise ?? (this.packageInstalledPromise = /* @__PURE__ */ new Map())).set(this.packageInstallId, { resolve: resolve5, reject });
           });
           this.installer.send(request);
           return promise;
@@ -218412,7 +218412,7 @@ var require_path_browserify = __commonJS({
       }
       return res;
     }
-    function _format(sep4, pathObject) {
+    function _format(sep5, pathObject) {
       var dir = pathObject.dir || pathObject.root;
       var base = pathObject.base || (pathObject.name || "") + (pathObject.ext || "");
       if (!dir) {
@@ -218421,11 +218421,11 @@ var require_path_browserify = __commonJS({
       if (dir === pathObject.root) {
         return dir + base;
       }
-      return dir + sep4 + base;
+      return dir + sep5 + base;
     }
     var posix = {
       // path.resolve([from ...], to)
-      resolve: function resolve4() {
+      resolve: function resolve5() {
         var resolvedPath = "";
         var resolvedAbsolute = false;
         var cwd;
@@ -249625,12 +249625,12 @@ type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "js
     };
     var NodeRuntimeFileSystem = class {
       delete(path7) {
-        return new Promise((resolve4, reject) => {
+        return new Promise((resolve5, reject) => {
           fs__namespace.rm(path7, { recursive: true }, (err) => {
             if (err)
               reject(err);
             else
-              resolve4();
+              resolve5();
           });
         });
       }
@@ -249649,12 +249649,12 @@ type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "js
         }));
       }
       readFile(filePath, encoding = "utf-8") {
-        return new Promise((resolve4, reject) => {
+        return new Promise((resolve5, reject) => {
           fs__namespace.readFile(filePath, encoding, (err, data) => {
             if (err)
               reject(err);
             else
-              resolve4(data);
+              resolve5(data);
           });
         });
       }
@@ -249662,12 +249662,12 @@ type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "js
         return fs__namespace.readFileSync(filePath, encoding);
       }
       async writeFile(filePath, fileText) {
-        await new Promise((resolve4, reject) => {
+        await new Promise((resolve5, reject) => {
           fs__namespace.writeFile(filePath, fileText, (err) => {
             if (err)
               reject(err);
             else
-              resolve4();
+              resolve5();
           });
         });
       }
@@ -249681,12 +249681,12 @@ type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "js
         fs__namespace.mkdirSync(dirPath, { recursive: true });
       }
       move(srcPath, destPath) {
-        return new Promise((resolve4, reject) => {
+        return new Promise((resolve5, reject) => {
           fs__namespace.rename(srcPath, destPath, (err) => {
             if (err)
               reject(err);
             else
-              resolve4();
+              resolve5();
           });
         });
       }
@@ -249694,12 +249694,12 @@ type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "js
         fs__namespace.renameSync(srcPath, destPath);
       }
       copy(srcPath, destPath) {
-        return new Promise((resolve4, reject) => {
+        return new Promise((resolve5, reject) => {
           fs__namespace.copyFile(srcPath, destPath, (err) => {
             if (err)
               reject(err);
             else
-              resolve4();
+              resolve5();
           });
         });
       }
@@ -249707,15 +249707,15 @@ type XMLHttpRequestResponseType = "" | "arraybuffer" | "blob" | "document" | "js
         fs__namespace.copyFileSync(srcPath, destPath);
       }
       stat(path7) {
-        return new Promise((resolve4, reject) => {
+        return new Promise((resolve5, reject) => {
           fs__namespace.stat(path7, (err, stat) => {
             if (err) {
               if (err.code === "ENOENT" || err.code === "ENOTDIR")
-                resolve4(void 0);
+                resolve5(void 0);
               else
                 reject(err);
             } else {
-              resolve4(stat);
+              resolve5(stat);
             }
           });
         });
@@ -285451,7 +285451,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve4) => setTimeout(resolve4, pollInterval));
+        await new Promise((resolve5) => setTimeout(resolve5, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -285468,7 +285468,7 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve5, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -285546,7 +285546,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve4(parseResult.data);
+            resolve5(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -285808,12 +285808,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve5, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve4, interval);
+      const timeoutId = setTimeout(resolve5, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -286956,7 +286956,7 @@ var McpServer = class {
     let task = createTaskResult.task;
     const pollInterval = task.pollInterval ?? 5e3;
     while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-      await new Promise((resolve4) => setTimeout(resolve4, pollInterval));
+      await new Promise((resolve5) => setTimeout(resolve5, pollInterval));
       const updatedTask = await extra.taskStore.getTask(taskId);
       if (!updatedTask) {
         throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -287622,12 +287622,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve4) => {
+    return new Promise((resolve5) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve4();
+        resolve5();
       } else {
-        this._stdout.once("drain", resolve4);
+        this._stdout.once("drain", resolve5);
       }
     });
   }
@@ -288037,6 +288037,42 @@ var UNSUPPORTED_SOURCE = /* @__PURE__ */ new Set([
   ".gql",
   ".proto"
 ]);
+var TEXT_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".json",
+  ".jsonc",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".ini",
+  ".properties",
+  ".xml",
+  ".md",
+  ".mdx",
+  ".rst",
+  ".txt",
+  ".sql",
+  ".graphql",
+  ".gql",
+  ".proto",
+  ".prisma",
+  ".html",
+  ".css",
+  ".scss",
+  ".sass",
+  ".less",
+  ".env",
+  ".conf",
+  ".cfg",
+  ".tf",
+  ".hcl"
+]);
+var TEXT_SKIP = /* @__PURE__ */ new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "composer.lock", "Gemfile.lock", "Cargo.lock", "poetry.lock"]);
+function textExt(name) {
+  if (TEXT_SKIP.has(name)) return void 0;
+  if (name === ".env" || name.startsWith(".env.")) return ".env";
+  const ext = path.extname(name).toLowerCase();
+  return TEXT_EXTENSIONS.has(ext) ? ext : void 0;
+}
 var MAX_FILE_BYTES = 15e5;
 function assertRoot() {
   if (!fs.existsSync(REPO_ROOT)) {
@@ -288060,6 +288096,7 @@ function scanRepo() {
   assertRoot();
   const projects = [];
   const files = [];
+  const texts = [];
   const unsupported = [];
   const skippedDirs = [];
   const skippedFiles = [];
@@ -288096,6 +288133,25 @@ function scanRepo() {
         if (e.name.endsWith(".d.ts") || e.name.endsWith(".d.mts") || e.name.endsWith(".d.cts")) continue;
         if (!SCANNABLE.has(ext)) {
           if (UNSUPPORTED_SOURCE.has(ext)) unsupported.push(toPosix(childRel));
+          const tExt = textExt(e.name);
+          if (tExt) {
+            let st2;
+            try {
+              st2 = fs.statSync(abs, { bigint: true });
+            } catch {
+              continue;
+            }
+            if (st2.size > BigInt(MAX_FILE_BYTES)) continue;
+            texts.push({
+              abs,
+              rel: toPosix(childRel),
+              service: current,
+              ext: tExt,
+              language: "text",
+              size: Number(st2.size),
+              stamp: `${st2.mtimeNs}:${st2.ctimeNs}:${st2.size}:${st2.ino}`
+            });
+          }
           continue;
         }
         let st;
@@ -288127,10 +288183,12 @@ function scanRepo() {
     }
   };
   walk2(REPO_ROOT, "", ".");
-  files.sort((a, b) => a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0);
+  const byRel = (a, b) => a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0;
+  files.sort(byRel);
+  texts.sort(byRel);
   const services = [...projects];
   if (!projects.length || files.some((f) => f.service === ".")) services.push(".");
-  return { root: REPO_ROOT, services: services.sort(), files, unsupported, skippedDirs, skippedFiles, unreadable };
+  return { root: REPO_ROOT, services: services.sort(), files, texts, unsupported, skippedDirs, skippedFiles, unreadable };
 }
 function filterFiles(scan, services) {
   if (!services?.length) return scan.files;
@@ -288196,6 +288254,7 @@ function enclosingFunction(node) {
       return {
         name,
         line: current.getStartLineNumber(),
+        endLine: current.getEndLineNumber(),
         signature: `${name}(${sigParts.join(", ")})`,
         params
       };
@@ -288207,7 +288266,7 @@ function enclosingFunction(node) {
 
 // src/tools.ts
 init_cjs_shim();
-var import_node_fs3 = require("node:fs");
+var import_node_fs7 = require("node:fs");
 
 // src/treesitter.ts
 init_cjs_shim();
@@ -288614,7 +288673,7 @@ function unwrap(e) {
     }
   }
 }
-var WRAPPERS = /^(useCallback|memo|forwardRef|debounce|throttle|once|memoize\w*|observer|\w*[Hh]andler|catchAsync|wrapAsync|asyncWrap\w*|withSpan|trace\w*)$/;
+var WRAPPERS = /^(useCallback|memo|forwardRef|cache|unstable_cache|debounce|throttle|once|memoize\w*|observer|\w*[Hh]andler|catchAsync|wrapAsync|asyncWrap\w*|withSpan|trace\w*)$/;
 function functionValue(init) {
   if (!init) return void 0;
   const e = unwrap(init);
@@ -289803,8 +289862,8 @@ function braceSites(text2, lang, name, declOffsets) {
     if (prev?.t === "id" && (prev.v === "fun" || prev.v === "func" || prev.v === "class" || prev.v === "val" || prev.v === "var" || prev.v === "let")) continue;
     let receiver = "";
     let j = k - 1;
-    const sep4 = toks[j];
-    if (sep4 && sep4.t === "p" && (sep4.v === "." || sep4.v === "?." || sep4.v === "!." || sep4.v === "::")) {
+    const sep5 = toks[j];
+    if (sep5 && sep5.t === "p" && (sep5.v === "." || sep5.v === "?." || sep5.v === "!." || sep5.v === "::")) {
       const parts = [];
       j--;
       while (j >= 0) {
@@ -289820,8 +289879,8 @@ function braceSites(text2, lang, name, declOffsets) {
       receiver = parts.join(".") || "<expr>";
     }
     const next = toks[k + 1];
-    if (next?.t === "p" && next.v === ":" && !(sep4?.v === "::")) continue;
-    const isCall2 = !!next && next.t === "p" && (next.v === "(" || next.v === "{" && !next.nl) && sep4?.v !== "::";
+    if (next?.t === "p" && next.v === ":" && !(sep5?.v === "::")) continue;
+    const isCall2 = !!next && next.t === "p" && (next.v === "(" || next.v === "{" && !next.nl) && sep5?.v !== "::";
     out.push({ offset: tk.s, receiver, kind: isCall2 ? "call" : "reference" });
   }
   return out;
@@ -290648,6 +290707,16 @@ async function snapshot(services) {
   for (const e of entries) files.push(await catalogFile(e));
   return { scan, files, fingerprint: fingerprint(entries), services: services?.map(normaliseService) };
 }
+async function prewarm() {
+  const t0 = Date.now();
+  const scan = scanRepo();
+  let n = 0;
+  for (const e of scan.files) {
+    await catalogFile(e);
+    if (++n % 20 === 0) await new Promise((r) => setImmediate(r));
+  }
+  return { files: n, ms: Date.now() - t0 };
+}
 async function fileCatalog(rel) {
   const scan = scanRepo();
   const norm2 = rel.replace(/\\/g, "/").replace(/^\.\//, "");
@@ -290722,8 +290791,20 @@ function renderCoverage(c) {
   for (const u of c.parserUnavailable) out.push(`  parser unavailable: ${u.language} (${u.files} files) \u2014 ${u.reason}`);
   return out;
 }
+var REGEX_HINT = /[|()^$\\]/;
 function fileMatcher(pattern) {
   if (!pattern) return () => true;
+  const slashed = pattern.match(/^\/(.+)\/([a-z]*)$/);
+  if (slashed || REGEX_HINT.test(pattern)) {
+    const [source, flags2] = slashed ? [slashed[1], slashed[2]] : [pattern, "i"];
+    let re2;
+    try {
+      re2 = new RegExp(source, flags2);
+    } catch (err) {
+      throw new Error(`\`file\` "${pattern}" is not a valid regex (${err.message}). Pass a path substring, a * glob, or /regex/.`);
+    }
+    return slashed ? (rel) => re2.test(rel) : (rel) => rel.includes(pattern) || re2.test(rel);
+  }
   const p = pattern.replace(/\\/g, "/").replace(/^\.\//, "");
   if (!p.includes("*")) return (rel) => rel.includes(p);
   const re = new RegExp(
@@ -290937,8 +291018,18 @@ async function findFunctions(args) {
     ...cur.changedSinceFirstPage ? [CHANGED_WARNING] : [],
     "Reading a candidate does not make it safe to import: check that the calling service may depend on the one that owns it before reusing it.",
     "",
-    ...page.rendered
+    ...page.rendered,
+    ...nextReads(hits.slice(start, page.end))
   ].join("\n");
+}
+function nextReads(shown) {
+  const direct = shown.filter((h) => !h.callsOnly && !h.bodyOnly);
+  const pick2 = (direct.length ? direct : shown).slice(0, 3);
+  if (!pick2.length) return [];
+  return [
+    "",
+    `Next \u2014 read the top ${pick2.length === 1 ? "candidate" : `${pick2.length} candidates in one call`}: spec_nav_read_function ${JSON.stringify({ functions: pick2.map((h) => ({ id: h.rec.id })) })}`
+  ];
 }
 function decodeReadCursor(cursor) {
   try {
@@ -290950,11 +291041,11 @@ function decodeReadCursor(cursor) {
 }
 function parseId(id) {
   const at = id.lastIndexOf("@");
-  const sep4 = id.indexOf("::");
-  if (at < 0 || sep4 < 0 || sep4 > at) {
+  const sep5 = id.indexOf("::");
+  if (at < 0 || sep5 < 0 || sep5 > at) {
     throw new Error(`"${id}" is not a function id. Ids look like "path/to/file.ts::Class.method@1a2b3c4d" and come from spec_nav_functions or spec_nav_find_functions.`);
   }
-  return { file: id.slice(0, sep4), name: id.slice(sep4 + 2, at), hash: id.slice(at + 1) };
+  return { file: id.slice(0, sep5), name: id.slice(sep5 + 2, at), hash: id.slice(at + 1) };
 }
 var StaleIdError = class extends Error {
 };
@@ -291065,6 +291156,107 @@ function genericImports(fc, lines, bodyText) {
   });
   return { imports: keep, narrowed: true };
 }
+var DEFAULT_AROUND = 15;
+var MAX_AROUND = 60;
+async function readWindows(args, budget, inBatch) {
+  const request = inBatch ? { id: args.id, file: args.file, name: args.name, lines: args.lines } : void 0;
+  const failure = (text3) => ({ text: text3, isError: true, json: { request, error: text3 } });
+  const around = Math.min(Math.max(args.around ?? DEFAULT_AROUND, 0), MAX_AROUND);
+  const wanted = [...new Set(args.lines.filter((l) => Number.isInteger(l) && l > 0))].sort((a, b) => a - b);
+  if (!wanted.length) throw new Error("`lines` holds no line numbers (1-based file lines).");
+  let fc;
+  let fn;
+  if (args.id || args.name) {
+    try {
+      ({ fc, ix: fn } = await resolveFunction({ ...args, line: args.line ?? wanted[0] }));
+    } catch (err) {
+      if (err instanceof StaleIdError) return failure(err.message);
+      throw err;
+    }
+  } else if (args.file) {
+    const r = await fileCatalog(args.file);
+    if (!r.fc) throw new Error(`No scanned file "${args.file}". Paths are relative to the repo root; spec_nav_functions lists them.`);
+    fc = r.fc;
+  } else {
+    throw new Error("With `lines`, pass `file` (lines anywhere in it) or `file`+`name` / `id` (lines inside that function).");
+  }
+  const text2 = (0, import_node_fs2.readFileSync)(fc.entry.abs, "utf8");
+  if (fn && hashText(text2.slice(fn.startOffset, fn.endOffset)) !== fn.rec.hash) {
+    return failure(`STALE: ${fn.rec.file} changed while it was being read. Look the function up again.`);
+  }
+  const fileLines = text2.split("\n");
+  const lo = fn ? fn.rec.start : 1;
+  const hi = fn ? fn.rec.end : fileLines.length - (fileLines[fileLines.length - 1] === "" ? 1 : 0);
+  const notes = [];
+  const outside = wanted.filter((l) => l < lo || l > hi);
+  if (outside.length) {
+    notes.push(`line${outside.length > 1 ? "s" : ""} ${outside.join(", ")} ${fn ? `outside ${fn.rec.name} (${lo}-${hi})` : `past the end of the file (${hi} lines)`}: not shown.`);
+  }
+  const inside = wanted.filter((l) => l >= lo && l <= hi);
+  if (!inside.length) return failure(`None of lines ${wanted.join(", ")} is ${fn ? `inside ${fn.rec.name} (${lo}-${hi})` : `in ${fc.entry.rel}`}.`);
+  const windows = [];
+  for (const l of inside) {
+    const from = Math.max(lo, l - around);
+    const to = Math.min(hi, l + around);
+    const last2 = windows[windows.length - 1];
+    if (last2 && from <= last2.to + 1) last2.to = Math.max(last2.to, to);
+    else windows.push({ from, to, first: l });
+  }
+  const marked = new Set(inside);
+  const width = String(hi).length;
+  const enclosing2 = (line) => {
+    const inner = fc.functions.filter((f) => f.rec.start <= line && line <= f.rec.end).sort((a, b) => a.rec.end - a.rec.start - (b.rec.end - b.rec.start))[0];
+    return inner ? `${inner.rec.name} (${span(inner.rec)})` : "top level";
+  };
+  const header = fn ? [
+    `${fn.rec.name}  [${flags(fn.rec)}]`,
+    `id:   ${fn.rec.id}`,
+    `file: ${fn.rec.file}:${span(fn.rec)}  (service ${fn.rec.service}, ${fn.rec.language})`,
+    `sig:  ${fn.rec.signature}${fn.rec.returnType && !fn.rec.signature.includes(fn.rec.returnType) ? ` -> ${fn.rec.returnType}` : ""}`
+  ] : [`file: ${fc.entry.rel}  (service ${fc.entry.service}, ${fc.entry.language}, ${hi} lines)`];
+  const body = [];
+  const shown = [];
+  let used = header.join("\n").length + 400;
+  const left = [];
+  for (const w of windows) {
+    const label = `--- lines ${w.from}-${w.to}${fn ? "" : ` in ${enclosing2(w.first)}`}${fn && w.from === lo && w.to === hi ? " (whole function)" : ""}`;
+    const rendered = fileLines.slice(w.from - 1, w.to).map((l, i) => `${String(w.from + i).padStart(width)}${marked.has(w.from + i) ? ">" : "|"} ${l}`);
+    const size = label.length + rendered.reduce((n, l) => n + l.length + 1, 0);
+    if (shown.length && used + size > budget) {
+      left.push(...inside.filter((l) => l >= w.from && l <= w.to));
+      continue;
+    }
+    used += size;
+    body.push(label, ...rendered);
+    shown.push({ from: w.from, to: w.to, ...fn ? {} : { in: enclosing2(w.first) }, source: fileLines.slice(w.from - 1, w.to).join("\n") });
+  }
+  if (left.length) notes.push(`not shown (page full): around line${left.length > 1 ? "s" : ""} ${left.join(", ")} \u2014 ask again for those, or with a smaller \`around\`.`);
+  let imports = [];
+  if (isTsFamily(fc.entry.language)) {
+    const view = tsParseView(fc.entry.ext, text2);
+    imports = tsImportsUsed(parseSource(fc.entry.abs, view.text, view.ext), shown.map((s) => s.source).join("\n"));
+  }
+  const json = {
+    file: fc.entry.rel,
+    service: fc.entry.service,
+    ...fn ? { function: { ...fn.rec } } : {},
+    lines: inside,
+    around,
+    windows: shown,
+    imports,
+    notes
+  };
+  return {
+    json,
+    text: [
+      ...header,
+      ...notes.map((n) => `note: ${n}`),
+      ...imports.length ? ["imports (used in the lines shown):", ...imports.map((i) => `  ${i}`)] : [],
+      `windows: ${shown.length} \u2014 \xB1${around} lines around ${inside.join(", ")} (> marks a requested line)`,
+      ...body
+    ].join("\n")
+  };
+}
 var MAX_BATCH_READS = 10;
 var REUSE_ADVICE = (service) => `Before reusing this from another service: check that service already depends on (or may depend on) ${service === "." ? "the root project" : service}, how it is consumed elsewhere (spec_nav_callers), and that it does what you need in every branch.`;
 async function readFunction(args) {
@@ -291073,7 +291265,7 @@ async function readFunction(args) {
   return { text: args.format === "json" && !r.isError && r.json ? JSON.stringify(r.json) : r.text, isError: r.isError };
 }
 async function readFunctions(targets, args) {
-  if (args.id || args.file || args.name || args.line !== void 0 || args.cursor || args.fromLine !== void 0) {
+  if (args.id || args.file || args.name || args.line !== void 0 || args.cursor || args.fromLine !== void 0 || args.lines?.length) {
     throw new Error(
       "Pass either `functions` (several functions) or `id` / `file`+`name` / `cursor` (one function), not both. To continue a long function from a batch, call again with just its `cursor`."
     );
@@ -291091,7 +291283,7 @@ async function readFunctions(targets, args) {
     const t = targets[i];
     let o;
     try {
-      o = await readOne({ ...t, maxLines: args.maxLines, format: args.format }, share, true);
+      o = await readOne({ ...t, around: t.around ?? args.around, maxLines: args.maxLines, format: args.format }, share, true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       o = { text: `ERROR: ${msg}`, isError: true, json: { request: t, error: msg } };
@@ -291121,6 +291313,10 @@ ${o.text}`),
   };
 }
 async function readOne(args, budget, inBatch) {
+  if (args.lines?.length) {
+    if (args.cursor || args.fromLine !== void 0) throw new Error("Pass `lines` or `cursor`/`fromLine`, not both.");
+    return readWindows(args, budget, inBatch);
+  }
   const request = inBatch ? { id: args.id, file: args.file, name: args.name, line: args.line } : void 0;
   const failure = (text3) => ({ text: text3, isError: true, json: { request, error: text3 } });
   const cursor = args.cursor ? decodeReadCursor(args.cursor) : void 0;
@@ -291219,179 +291415,95 @@ async function readOne(args, budget, inBatch) {
   };
 }
 
-// src/tools.ts
-var HIT_TEXT_LIMIT = 160;
-var TS_NOISE = /^\s*(\/\/|\*|\/\*|import\s|export\s*\{)/;
-function matchingLines(text2, re, noise, includeComments) {
-  const matched = [];
-  text2.split("\n").forEach((lineText, idx) => {
-    if (!re.test(lineText)) return;
-    if (!includeComments && noise.test(lineText)) return;
-    const t = lineText.trim();
-    matched.push({ idx, text: t.length > HIT_TEXT_LIMIT ? t.slice(0, HIT_TEXT_LIMIT - 1) + "\u2026" : t });
-  });
-  return matched;
+// src/flow/trace.ts
+init_cjs_shim();
+
+// src/flow/model.ts
+init_cjs_shim();
+function lit(v) {
+  return { parts: [{ k: "lit", v }], via: [] };
 }
-function labelHits(matched, ranges) {
-  return matched.map(({ idx, text: lineText }) => {
-    const lineNo = idx + 1;
-    let named;
-    let anon;
-    for (const r of ranges) {
-      if (r.start > lineNo || lineNo > r.end) continue;
-      const span2 = r.end - r.start;
-      if (r.name === "<anonymous>") {
-        if (!anon || span2 < anon.end - anon.start) anon = r;
-      } else if (!named || span2 < named.end - named.start) {
-        named = r;
-      }
-    }
-    const best = named ?? anon;
-    return { line: lineNo, enclosing: best ? `${best.name}:${best.line}` : "-", text: lineText };
-  });
+function dyn(text2) {
+  const t = text2.replace(/\s+/g, " ").trim();
+  return { parts: [{ k: "dyn", text: t.length > 60 ? t.slice(0, 59) + "\u2026" : t }], via: [] };
 }
-async function mapPattern(pattern, services, opts = {}) {
-  const scan = scanRepo();
-  const entries = filterFiles(scan, services);
-  const re = new RegExp(pattern, "i");
-  const includeComments = opts.includeComments ?? false;
-  const out = [];
-  const scanned = /* @__PURE__ */ new Set();
-  const languagesSeen = /* @__PURE__ */ new Set();
-  let totalHits = 0;
-  for (const entry of entries) {
-    scanned.add(entry.service);
-    let text2;
-    try {
-      text2 = (0, import_node_fs3.readFileSync)(entry.abs, "utf8");
-    } catch {
-      continue;
+function env(name, fallback) {
+  return { parts: [{ k: "env", name, ...fallback !== void 0 ? { fallback } : {} }], via: [] };
+}
+function concat(...vals) {
+  const parts = [];
+  const via = [];
+  for (const v of vals) {
+    for (const p of v.parts) {
+      if (p.k === "lit" && p.v === "") continue;
+      const last2 = parts[parts.length - 1];
+      if (p.k === "lit" && last2?.k === "lit") parts[parts.length - 1] = { k: "lit", v: last2.v + p.v };
+      else parts.push(p);
     }
-    if (!re.test(text2)) continue;
-    const noise = isTsFamily(entry.language) ? TS_NOISE : languageById(entry.language).noise;
-    const matched = matchingLines(text2, re, noise, includeComments);
-    if (!matched.length) continue;
-    languagesSeen.add(entry.language);
-    const fc = await catalogFile(entry);
-    const hits = labelHits(matched, labelRanges(fc));
-    out.push({ file: entry.rel, service: entry.service, hits });
-    totalHits += hits.length;
+    for (const w of v.via) if (!via.includes(w)) via.push(w);
   }
+  return { parts, via };
+}
+function withVia(v, note) {
+  return { parts: v.parts, via: v.via.includes(note) ? v.via : [...v.via, note] };
+}
+function literal2(v) {
+  if (!v || !v.parts.length) return v && !v.parts.length ? "" : void 0;
+  return v.parts.every((p) => p.k === "lit") ? v.parts.map((p) => p.v).join("") : void 0;
+}
+function show(v) {
+  return v.parts.map(
+    (p) => p.k === "lit" ? p.v : p.k === "env" ? `\${env:${p.name}}` : p.k === "ref" ? `\${${[p.local, ...p.path].join(".")}}` : `\${${p.text}}`
+  ).join("");
+}
+function emptyFacts(base) {
   return {
-    pattern,
-    servicesScanned: [...scanned].sort(),
-    languages: [...languagesSeen].sort(),
-    // A grammar that would not load is reported, not hidden: silently
-    // unlabelled output looks the same as code with no functions in it.
-    unparsed: loadFailures().map((f) => `${f.id} (${f.reason})`),
-    totalFiles: out.length,
-    totalHits,
-    files: out,
-    fingerprint: fingerprint(entries),
-    filesSearched: entries.length
+    ...base,
+    imports: /* @__PURE__ */ new Map(),
+    consts: /* @__PURE__ */ new Map(),
+    exportAs: /* @__PURE__ */ new Map(),
+    reexports: [],
+    classes: /* @__PURE__ */ new Map(),
+    newVars: /* @__PURE__ */ new Map(),
+    varTypes: /* @__PURE__ */ new Map(),
+    calls: [],
+    routers: /* @__PURE__ */ new Map(),
+    routes: [],
+    mounts: [],
+    instances: /* @__PURE__ */ new Map(),
+    clients: [],
+    pending: [],
+    handlers: [],
+    sends: [],
+    ports: [],
+    globalPrefix: [],
+    kafka: /* @__PURE__ */ new Map(),
+    notes: [],
+    unproven: []
   };
 }
-function renderMap(result, args = {}) {
-  if (!result.servicesScanned.length) {
-    return [
-      `pattern: ${result.pattern}`,
-      `scanned: NOTHING \u2014 no project under the root held a file in a supported language.`,
-      ``,
-      `This is not "the pattern is absent": nothing was searched. Check that`,
-      `SPEC_NAV_ROOT is the right repo, and that it contains source in one of the`,
-      `supported languages (spec_nav_services lists what was found).`
-    ].join("\n");
-  }
-  const flat = [];
-  for (const f of result.files) for (const h of f.hits) flat.push({ file: f.file, hit: h, fileHits: f.hits.length });
-  const key2 = (i) => `${i.file}\0${String(i.hit.line).padStart(8, "0")}`;
-  const qHash = paramsHash({ p: result.pattern, s: args.services ?? null, c: !!args.includeComments });
-  const cur = decodeCursor(args.cursor, "map", qHash, result.fingerprint);
-  let start = 0;
-  if (typeof cur.position === "string") {
-    const after = cur.position;
-    start = flat.findIndex((i) => key2(i) > after);
-    if (start < 0) start = flat.length;
-  }
-  const census = result.files.map((f) => `  ${String(f.hits.length).padStart(4)} | ${f.file}`);
-  const censusChars = census.reduce((a, l) => a + l.length + 1, 0);
-  const firstPage = start === 0;
-  const build = (withCensus2) => {
-    const budget = CHAR_BUDGET - 1500 - (withCensus2 ? censusChars : 0);
-    let lastFile = start > 0 ? flat[start - 1].file : "";
-    const page2 = takePage(flat, start, args.pageSize ?? Number.MAX_SAFE_INTEGER, budget, (i) => {
-      const header2 = i.file !== lastFile ? `
-${i.file}${i.fileHits > 1 ? `  (${i.fileHits} hits)` : ""}
-` : "";
-      lastFile = i.file;
-      return `${header2}  ${i.hit.line} | ${i.hit.enclosing} | ${i.hit.text}`;
-    });
-    if (start > 0 && flat[start] && flat[start - 1].file === flat[start].file) {
-      page2.rendered.unshift(`
-${flat[start].file}  (continued)`);
-    }
-    return page2;
-  };
-  let page = build(false);
-  const complete = page.end >= flat.length;
-  let withCensus = false;
-  if (firstPage && !complete && censusChars <= CHAR_BUDGET * 0.4) {
-    withCensus = true;
-    page = build(true);
-  }
-  const done = page.end >= flat.length;
-  const nextCursor = done ? void 0 : encodeCursor({ t: "map", q: qHash, p: key2(flat[page.end - 1]), f: cur.fingerprint });
-  const header = [
-    `pattern: ${result.pattern}`,
-    `scanned: ${result.filesSearched} files in ${result.servicesScanned.length} project(s): ${result.servicesScanned.join(", ")}`,
-    // Which languages were read is worth a line: it is how you notice that
-    // the Go service you expected in the results was never parsed.
-    ...result.languages.length ? [`languages with hits: ${result.languages.join(", ")}`] : [],
-    ...result.unparsed.length ? [`NOT PARSED (hits shown without function names): ${result.unparsed.join("; ")}`] : [],
-    `${result.totalHits} hits in ${result.totalFiles} files` + (flat.length ? ` \u2014 this page: hits ${start + 1}-${page.end}` + (done ? " \u2014 COMPLETE" : ` \u2014 MORE: call again with the same pattern and cursor="${nextCursor}"`) : ""),
-    ...cur.changedSinceFirstPage ? [CHANGED_WARNING] : [],
-    ...firstPage && !done && !withCensus ? [`(${result.totalFiles} files \u2014 too many to list on this page; they follow in order across pages.)`] : []
-  ];
-  const parts = [...header];
-  if (withCensus) parts.push("", "All files with hits (count | file):", ...census);
-  parts.push("", "Format:  line | enclosing function:its line | source", ...page.rendered);
-  return parts.join("\n");
-}
-async function listServices() {
-  const snap = await snapshot();
-  const per = /* @__PURE__ */ new Map();
-  for (const s of snap.scan.services) per.set(s, { files: 0, functions: 0, languages: /* @__PURE__ */ new Set() });
-  for (const fc of snap.files) {
-    const p = per.get(fc.entry.service) ?? { files: 0, functions: 0, languages: /* @__PURE__ */ new Set() };
-    p.files++;
-    p.functions += fc.functions.length;
-    p.languages.add(fc.entry.language);
-    per.set(fc.entry.service, p);
-  }
-  const coverage = coverageOf(snap);
-  return {
-    root: REPO_ROOT,
-    services: snap.scan.services,
-    details: [...per].map(([service, p]) => ({
-      service,
-      files: p.files,
-      functions: p.functions,
-      languages: [...p.languages].sort()
-    })),
-    note: `Each file belongs to exactly one service: the innermost project directory holding it. "." is the root's own files (those outside every sub-project).`,
-    coverage: coverage.summary
-  };
-}
+var HTTP_VERBS = ["get", "post", "put", "patch", "delete", "options", "head"];
+
+// src/flow/link.ts
+init_cjs_shim();
+var import_node_fs6 = require("node:fs");
+var path5 = __toESM(require("node:path"), 1);
+
+// src/flow/facts.ts
+init_cjs_shim();
+var import_node_fs5 = require("node:fs");
+var path4 = __toESM(require("node:path"), 1);
+var import_ts_morph5 = __toESM(require_ts_morph(), 1);
 
 // src/callers.ts
 init_cjs_shim();
 var import_ts_morph3 = __toESM(require_ts_morph(), 1);
-var import_node_fs5 = require("node:fs");
+var import_node_fs4 = require("node:fs");
 var path3 = __toESM(require("node:path"), 1);
 
 // src/polycallers.ts
 init_cjs_shim();
-var import_node_fs4 = require("node:fs");
+var import_node_fs3 = require("node:fs");
 var path2 = __toESM(require("node:path"), 1);
 function familyOf(language) {
   return languageById(language)?.family ?? language;
@@ -291628,7 +291740,7 @@ async function polyCallers(base, targets, entries, allSameName) {
     if (!lang) continue;
     let text2;
     try {
-      text2 = (0, import_node_fs4.readFileSync)(entry.abs, "utf8");
+      text2 = (0, import_node_fs3.readFileSync)(entry.abs, "utf8");
     } catch {
       continue;
     }
@@ -291816,7 +291928,7 @@ function nearestConfig(file) {
   for (; ; ) {
     for (const name of ["tsconfig.json", "jsconfig.json"]) {
       const c = path3.join(dir, name);
-      if ((0, import_node_fs5.existsSync)(c)) return c;
+      if ((0, import_node_fs4.existsSync)(c)) return c;
     }
     if (dir === REPO_ROOT || !dir.startsWith(REPO_ROOT)) return void 0;
     const up = path3.dirname(dir);
@@ -291867,9 +291979,9 @@ function workspacePackages(scan) {
   const out = /* @__PURE__ */ new Map();
   for (const s of scan.services) {
     const pj = path3.join(REPO_ROOT, s, "package.json");
-    if (!(0, import_node_fs5.existsSync)(pj)) continue;
+    if (!(0, import_node_fs4.existsSync)(pj)) continue;
     try {
-      const name = JSON.parse((0, import_node_fs5.readFileSync)(pj, "utf8")).name;
+      const name = JSON.parse((0, import_node_fs4.readFileSync)(pj, "utf8")).name;
       if (typeof name === "string" && name) out.set(name, path3.join(REPO_ROOT, s));
     } catch {
     }
@@ -291877,10 +291989,10 @@ function workspacePackages(scan) {
   return out;
 }
 function firstExisting(base) {
-  if ((0, import_node_fs5.existsSync)(base) && SOURCE_EXTS.includes(path3.extname(base)) && !base.endsWith(".d.ts")) return base;
+  if ((0, import_node_fs4.existsSync)(base) && SOURCE_EXTS.includes(path3.extname(base)) && !base.endsWith(".d.ts")) return base;
   const stripped = base.replace(/\.(js|mjs|cjs|jsx)$/, "");
-  for (const ext of SOURCE_EXTS) if ((0, import_node_fs5.existsSync)(stripped + ext)) return stripped + ext;
-  for (const ext of SOURCE_EXTS) if ((0, import_node_fs5.existsSync)(path3.join(base, "index" + ext))) return path3.join(base, "index" + ext);
+  for (const ext of SOURCE_EXTS) if ((0, import_node_fs4.existsSync)(stripped + ext)) return stripped + ext;
+  for (const ext of SOURCE_EXTS) if ((0, import_node_fs4.existsSync)(path3.join(base, "index" + ext))) return path3.join(base, "index" + ext);
   return void 0;
 }
 function resolveWorkspace(spec, pkgs) {
@@ -291890,7 +292002,7 @@ function resolveWorkspace(spec, pkgs) {
     if (sub) return firstExisting(path3.join(dir, "src", sub)) ?? firstExisting(path3.join(dir, sub));
     let pj = {};
     try {
-      pj = JSON.parse((0, import_node_fs5.readFileSync)(path3.join(dir, "package.json"), "utf8"));
+      pj = JSON.parse((0, import_node_fs4.readFileSync)(path3.join(dir, "package.json"), "utf8"));
     } catch {
     }
     for (const field of ["source", "types", "typings", "module", "main"]) {
@@ -291946,7 +292058,7 @@ function sync(st, entries) {
     if (st.stamps.get(p) === e.stamp) continue;
     let text2;
     try {
-      text2 = (0, import_node_fs5.readFileSync)(e.abs, "utf8");
+      text2 = (0, import_node_fs4.readFileSync)(e.abs, "utf8");
     } catch {
       continue;
     }
@@ -292055,25 +292167,108 @@ function buildTarget(n) {
     qualified: [...qualifierOf(n), name].join("."),
     file: relPath2(sf.getFilePath()),
     line: n.getStartLineNumber(),
+    endLine: n.getEndLineNumber(),
     kind: kindOf(n),
     isDefaultExport,
     keys,
     related
   };
 }
+var textCache = /* @__PURE__ */ new Map();
+function textOf(e) {
+  const hit = textCache.get(e.abs);
+  if (hit && hit.stamp === e.stamp) return hit.text;
+  try {
+    const text2 = (0, import_node_fs4.readFileSync)(e.abs, "utf8");
+    textCache.set(e.abs, { stamp: e.stamp, text: text2 });
+    return text2;
+  } catch {
+    textCache.delete(e.abs);
+    return void 0;
+  }
+}
+var SNIPPET_LIMIT = 160;
+var SHORT_FUNCTION = 80;
+function snippetOf(node) {
+  const sf = node.getSourceFile();
+  const { line, column } = sf.getLineAndColumnAtPos(node.getStart());
+  const raw = sf.getFullText().split("\n")[line - 1] ?? "";
+  const indent = raw.length - raw.trimStart().length;
+  const text2 = raw.trim();
+  if (text2.length <= SNIPPET_LIMIT) return text2.replace(/\s+/g, " ");
+  const from = Math.max(0, column - 1 - indent - 50);
+  const to = Math.min(text2.length, from + SNIPPET_LIMIT - 2);
+  return ((from > 0 ? "\u2026" : "") + text2.slice(from, to) + (to < text2.length ? "\u2026" : "")).replace(/\s+/g, " ");
+}
+var CONVERTERS = /* @__PURE__ */ new Set(["String", "Number", "Boolean", "parseFloat", "parseInt", "BigInt", "JSON.stringify"]);
+function usageOf(call) {
+  let n = call;
+  const via = [];
+  for (; ; ) {
+    const p2 = n.getParent();
+    if (!p2) break;
+    if (import_ts_morph3.Node.isParenthesizedExpression(p2) || import_ts_morph3.Node.isAwaitExpression(p2) || import_ts_morph3.Node.isAsExpression(p2) || import_ts_morph3.Node.isNonNullExpression(p2) || import_ts_morph3.Node.isTypeAssertion(p2) || import_ts_morph3.Node.isSatisfiesExpression(p2)) {
+      n = p2;
+      continue;
+    }
+    if (import_ts_morph3.Node.isConditionalExpression(p2) && p2.getCondition() !== n) {
+      via.push("a ?: branch");
+      n = p2;
+      continue;
+    }
+    if (import_ts_morph3.Node.isBinaryExpression(p2) && ["??", "||", "&&"].includes(p2.getOperatorToken().getText()) && p2.getLeft() === n) {
+      via.push(`${p2.getOperatorToken().getText()} fallback`);
+      n = p2;
+      continue;
+    }
+    break;
+  }
+  const p = n.getParent();
+  const suffix = via.length ? ` (through ${via.join(", ")})` : "";
+  let use = "other";
+  if (!p) use = "other";
+  else if (import_ts_morph3.Node.isTemplateSpan(p)) use = "template string ${\u2026}";
+  else if (import_ts_morph3.Node.isCallExpression(p) && p.getExpression() !== n) {
+    const callee = p.getExpression().getText();
+    use = CONVERTERS.has(callee) ? `${callee}(\u2026)` : `argument of ${callee.length > 40 ? callee.slice(0, 39) + "\u2026" : callee}()`;
+  } else if (import_ts_morph3.Node.isPropertyAccessExpression(p) && p.getExpression() === n) use = `.${p.getName()} on the result`;
+  else if (import_ts_morph3.Node.isElementAccessExpression(p) && p.getExpression() === n) use = "[\u2026] on the result";
+  else if (import_ts_morph3.Node.isBinaryExpression(p)) {
+    const op = p.getOperatorToken().getText();
+    if (op === "=") use = p.getRight() === n ? "assigned" : "other";
+    else if (/^[-+*/%]=$|^\*\*=$/.test(op)) use = `${op} (accumulated)`;
+    else if (/^[-+*/%]$|^\*\*$/.test(op)) use = `arithmetic ${op}`;
+    else if (/^[<>]=?$|^[!=]==?$/.test(op)) use = `compared ${op}`;
+    else use = `operand of ${op}`;
+  } else if (import_ts_morph3.Node.isPrefixUnaryExpression(p)) use = `unary ${p.getText().charAt(0)}`;
+  else if (import_ts_morph3.Node.isVariableDeclaration(p)) use = "assigned";
+  else if (import_ts_morph3.Node.isPropertyAssignment(p) || import_ts_morph3.Node.isShorthandPropertyAssignment(p)) use = "object property";
+  else if (import_ts_morph3.Node.isReturnStatement(p) || import_ts_morph3.Node.isArrowFunction(p)) use = "returned";
+  else if (import_ts_morph3.Node.isExpressionStatement(p)) use = "result unused";
+  else if (import_ts_morph3.Node.isArrayLiteralExpression(p)) use = "array element";
+  else if (import_ts_morph3.Node.isIfStatement(p) || import_ts_morph3.Node.isWhileStatement(p)) use = "condition";
+  else if (import_ts_morph3.Node.isSpreadElement(p) || import_ts_morph3.Node.isSpreadAssignment(p)) use = "spread";
+  else use = p.getKindName();
+  return use + suffix;
+}
+var enclosingEnd = /* @__PURE__ */ new WeakMap();
 function siteOf(node, extra, wholeLine = false) {
   const enc = enclosingFunction(node);
   const sf = node.getSourceFile();
-  const text2 = (wholeLine ? sf.getFullText().split("\n")[node.getStartLineNumber() - 1].trim() : node.getText()).replace(/\s+/g, " ");
-  return {
+  const isCall2 = !wholeLine && (import_ts_morph3.Node.isCallExpression(node) || import_ts_morph3.Node.isNewExpression(node));
+  const text2 = wholeLine ? sf.getFullText().split("\n")[node.getStartLineNumber() - 1].trim().replace(/\s+/g, " ") : snippetOf(node);
+  const site = {
     file: relPath2(node.getSourceFile().getFilePath()),
     line: node.getStartLineNumber(),
     enclosing: enc.name,
     enclosingLine: enc.line,
     enclosingParams: enc.params,
-    snippet: text2.length > 120 ? text2.slice(0, 119) + "\u2026" : text2,
+    snippet: text2.length > SNIPPET_LIMIT ? text2.slice(0, SNIPPET_LIMIT - 1) + "\u2026" : text2,
+    ...isCall2 ? { usage: usageOf(node) } : {},
     ...extra
   };
+  if (enc.endLine) enclosingEnd.set(site, enc.endLine);
+  return site;
 }
 function templateUses(text2, ranges, name) {
   const out = [];
@@ -292111,16 +292306,20 @@ async function findCallers(args) {
   const inScope = (rel) => fileMatches(rel) && (!serviceFilter || serviceFilter.has(rel));
   const polySameName = [];
   let tsDeclared = false;
+  const declServices = /* @__PURE__ */ new Set();
   for (const fc of snap.files) {
     let text2;
     for (const f of fc.functions) {
       if (f.rec.shortName !== base) continue;
       if (isTsFamily(f.rec.language)) {
         const q = f.rec.name.split(".").slice(0, -1);
-        if (inScope(f.rec.file) && qualifierWanted.every((w) => q.includes(w))) tsDeclared = true;
+        if (inScope(f.rec.file) && qualifierWanted.every((w) => q.includes(w))) {
+          tsDeclared = true;
+          declServices.add(fc.entry.service);
+        }
         continue;
       }
-      if (f.rec.language === "kotlin") text2 ??= (0, import_node_fs5.readFileSync)(fc.entry.abs, "utf8");
+      if (f.rec.language === "kotlin") text2 ??= (0, import_node_fs4.readFileSync)(fc.entry.abs, "utf8");
       polySameName.push(polyTarget(f.rec, fc.entry.abs, text2));
     }
   }
@@ -292128,13 +292327,59 @@ async function findCallers(args) {
   let polyTargets = polySameName.filter((t) => polyQualifierOk(t) && inScope(t.rec.file));
   const tsText = /* @__PURE__ */ new Map();
   for (const f of allTs) {
-    try {
-      tsText.set(f.abs, (0, import_node_fs5.readFileSync)(f.abs, "utf8"));
-    } catch {
-    }
+    const t = textOf(f);
+    if (t !== void 0) tsText.set(f.abs, t);
   }
   const tsMentioned = searchEntries.some((f) => tsText.get(f.abs)?.includes(base));
   const runTs = tsMentioned && (tsDeclared || !polyTargets.length);
+  const reachable = (() => {
+    if (!tsDeclared || declServices.has(".")) return void 0;
+    const pkgs = workspacePackages(scan);
+    const declDirs = [...declServices].map((s) => path3.join(REPO_ROOT, s) + path3.sep);
+    const declPkgs = [...pkgs].filter(([, dir]) => declDirs.includes(dir + path3.sep)).map(([n]) => n);
+    const out = new Set(declServices);
+    const inDecl = (abs) => declDirs.some((d) => (abs + path3.sep).startsWith(d) || d.startsWith(abs + path3.sep));
+    clearConfigCache();
+    const aliasCache = /* @__PURE__ */ new Map();
+    const aliasesInto = (opts) => {
+      let got = aliasCache.get(opts);
+      if (got) return got;
+      got = [];
+      const basePath = opts.pathsBasePath ?? opts.baseUrl;
+      for (const [pattern, targets2] of Object.entries(opts.paths ?? {})) {
+        if (basePath && targets2.some((t) => inDecl(path3.resolve(basePath, t.replace(/\*.*$/, ""))))) got.push(pattern.replace(/\*.*$/, ""));
+      }
+      aliasCache.set(opts, got);
+      return got;
+    };
+    const SPEC = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|^\s*import\s+)["'`]([^"'`]+)["'`]/gm;
+    for (const f of allTs) {
+      if (out.has(f.service)) continue;
+      const text2 = tsText.get(f.abs);
+      if (!text2) continue;
+      let aliases;
+      for (const m of text2.matchAll(SPEC)) {
+        const spec = m[1];
+        const hit = spec.startsWith(".") ? declDirs.some((d) => (path3.resolve(path3.dirname(f.abs), spec) + path3.sep).startsWith(d)) : declPkgs.some((n) => spec === n || spec.startsWith(n + "/")) || (aliases ??= aliasesInto(optionsFor(f.abs))).some((a) => spec.startsWith(a));
+        if (hit) {
+          out.add(f.service);
+          break;
+        }
+      }
+    }
+    return out;
+  })();
+  const reachableTs = reachable ? allTs.filter((f) => reachable.has(f.service)) : allTs;
+  if (reachable) {
+    const left = [...new Set(allTs.map((f) => f.service))].filter((s) => !reachable.has(s));
+    if (left.length) {
+      notes.push(`Searched only ${[...reachable].join(", ")}: the declaration is not importable from the other ${left.length} service(s) (no package or relative import reaches it), so they cannot call it directly.`);
+    }
+  }
+  const wordIn = (names) => {
+    const alt = [...names].map((x) => x.replace(/[$]/g, "\\$")).join("|");
+    return new RegExp(`(^|[^\\p{L}\\p{N}_$])(${alt})(?![\\p{L}\\p{N}_$])`, "u");
+  };
   const relevant = (() => {
     const names = /* @__PURE__ */ new Set([base]);
     for (let round = 0; round < 5; round++) {
@@ -292159,10 +292404,11 @@ async function findCallers(args) {
       declStems.add(stem2 === "index" ? path3.basename(path3.dirname(fc.entry.rel)) : stem2);
     }
     const stemRe = declStems.size ? new RegExp(`["'\`][^"'\`]*\\b(${[...declStems].map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(\\.[a-z]+)?["'\`]`) : void 0;
-    const files = allTs.filter((f) => {
+    const nameRe = wordIn(names);
+    const files = reachableTs.filter((f) => {
       const text2 = tsText.get(f.abs);
       if (!text2) return false;
-      return [...names].some((n) => text2.includes(n)) || !!stemRe && stemRe.test(text2);
+      return nameRe.test(text2) || !!stemRe && stemRe.test(text2);
     });
     return { files, names, declAbs };
   })();
@@ -292176,7 +292422,7 @@ async function findCallers(args) {
   const otherSymbols = /* @__PURE__ */ new Map();
   let targets = [];
   const BATCH = 150;
-  const declEntries = allTs.filter((f) => relevant.declAbs.has(f.abs));
+  const declEntries = reachableTs.filter((f) => relevant.declAbs.has(f.abs));
   const reexporters = allTs.filter((f) => /\bexport\s+(\*|\{[^}]*\}|\*\s+as\s+[\w$]+)\s+from\s/.test(tsText.get(f.abs) ?? "")).map((f) => path3.normalize(tsPathOf(f)));
   const chunks = [];
   if (runTs) {
@@ -292378,7 +292624,7 @@ async function findCallers(args) {
           }
         });
         if (isSfc && boundHere.size) {
-          const fileText = (0, import_node_fs5.readFileSync)(e.abs, "utf8");
+          const fileText = (0, import_node_fs4.readFileSync)(e.abs, "utf8");
           const tpl = extractSfcScript(fileText, e.ext).template;
           const lines = fileText.split("\n");
           for (const [local2, t] of boundHere) {
@@ -292451,10 +292697,39 @@ async function findCallers(args) {
   const cur = decodeCursor(args.cursor, "callers", qHash, fp);
   const start = typeof cur.position === "number" ? cur.position : 0;
   const limit = Math.min(Math.max(args.limit ?? 100, 1), 500);
-  const page = takePage(all, start, limit, CHAR_BUDGET - 5e3, (s) => JSON.stringify(s));
+  const budget = args.limit ? Math.max(CHAR_BUDGET - 5e3, Math.min(args.limit * 450, MAX_EXPLICIT_BUDGET)) : CHAR_BUDGET - 5e3;
+  const page = takePage(all, start, limit, budget, (s) => JSON.stringify(s));
   const shown = all.slice(start, page.end);
   const complete = page.end >= all.length;
   const nextCursor = complete ? void 0 : encodeCursor({ t: "callers", q: qHash, p: page.end, f: cur.fingerprint });
+  let partial2;
+  let nextPage;
+  if (!complete) {
+    const rest = /* @__PURE__ */ new Map();
+    for (const s of all.slice(page.end)) rest.set(s.file, (rest.get(s.file) ?? 0) + 1);
+    const list = [...rest].sort((a, b) => b[1] - a[1]);
+    const named = list.slice(0, 12).map(([f, n]) => `${f} ${n}`).join(", ");
+    partial2 = `PARTIAL PAGE: sites ${shown.length ? start + 1 : 0}-${page.end} of ${all.length}. NOT SHOWN YET: ${all.length - page.end} site(s) in ${list.length} file(s): ${named}${list.length > 12 ? `, \u2026 ${list.length - 12} more file(s)` : ""}. Fetch the rest before concluding anything about "all callers" (see nextPage).`;
+    const again = Object.fromEntries(Object.entries({ ...args, cursor: nextCursor }).filter(([, v]) => v !== void 0));
+    nextPage = `Next \u2014 the next page: spec_nav_callers ${JSON.stringify(again)}`;
+  }
+  const usage = {};
+  for (const s of all) if (s.usage) usage[s.usage] = (usage[s.usage] ?? 0) + 1;
+  const usageSorted = Object.fromEntries(Object.entries(usage).sort((a, b) => b[1] - a[1]));
+  const boundaries = boundariesAt([
+    ...targets.map((t) => ({
+      file: t.file,
+      line: t.line,
+      toLine: t.endLine,
+      fnName: t.qualified.split(".").pop(),
+      fnLine: t.line
+    })),
+    ...all.filter((s) => s.resolution !== "unresolved" && s.resolution !== "dynamic").slice(0, 300).map((s) => ({ file: s.file, line: s.line, fnName: s.enclosing.split(".").pop(), fnLine: s.enclosingLine }))
+  ]);
+  const traces = boundaries ? [] : traceHints(
+    [...targets.map((t) => ({ name: t.qualified, file: t.file, line: t.line }))],
+    all
+  );
   const allTargets = [
     ...targets.map((t) => ({ name: t.qualified, file: t.file, line: t.line, kind: t.kind, resolvedBy: "type checker" })),
     ...polyTargets.map((t) => ({ name: t.rec.name, file: t.rec.file, line: t.rec.start, kind: t.rec.kind, language: t.rec.language, resolvedBy: "names and imports (not type-checked)" }))
@@ -292496,6 +292771,12 @@ async function findCallers(args) {
       otherSymbolsSameName: [...otherSymbols.values()].reduce((a, b) => a + b, 0)
     },
     exhaustive,
+    ...partial2 ? { partial: partial2, nextPage } : {},
+    ...Object.keys(usageSorted).length ? {
+      usage: usageSorted,
+      usageNote: "How each call's result is used, counted over ALL sites (every page). Changing what the function returns breaks sites by how they use it: group them by `usage` first."
+    } : {},
+    ...boundaries?.length ? { boundaries } : {},
     targets: allTargets,
     sites: shown.filter((s) => s.resolution === "resolved"),
     viaInterfaceOrBase: shown.filter((s) => s.resolution === "via-interface-or-base"),
@@ -292515,239 +292796,78 @@ async function findCallers(args) {
       nextCursor,
       changedSinceFirstPage: cur.changedSinceFirstPage || void 0
     },
-    notes
+    notes,
+    next: nextReads2(shown),
+    ...traces.length ? { nextTrace: traces } : {}
   };
   return JSON.stringify(result, null, args.format === "json" ? void 0 : 1);
 }
-
-// src/similar.ts
-init_cjs_shim();
-var cached2;
-var CALL_WEIGHT = 1.5;
-var isCall = (f) => f.startsWith("()");
-var weightOf = (f, idf) => isCall(f) ? CALL_WEIGHT * idf : idf;
-function behaviourWords(ix) {
-  const own = new Set(ix.search.name);
-  return (ix.search.body ?? []).filter((w) => !BODY_NOISE.has(w) && !own.has(w));
-}
-function features(callees, words) {
-  return [.../* @__PURE__ */ new Set([...callees.map((c) => "()" + c), ...words])];
-}
-function buildIndex(snap, key2) {
-  if (cached2?.key === key2) return cached2;
-  const fns = [];
-  for (const fc of snap.files) for (const f of fc.functions) fns.push(f);
-  const postings = /* @__PURE__ */ new Map();
-  const feats = [];
-  fns.forEach((f, i) => {
-    const fs2 = features(f.callees, behaviourWords(f));
-    feats.push(fs2);
-    for (const x of fs2) (postings.get(x) ?? postings.set(x, []).get(x)).push(i);
-  });
-  const n = Math.max(fns.length, 1);
-  const idf = /* @__PURE__ */ new Map();
-  for (const [k, list] of postings) idf.set(k, Math.log(1 + n / list.length));
-  const norm2 = new Float64Array(fns.length);
-  feats.forEach((fs2, i) => {
-    norm2[i] = Math.sqrt(fs2.reduce((a, x) => a + weightOf(x, idf.get(x)) ** 2, 0));
-  });
-  cached2 = { key: key2, fns, postings, idf, norm: norm2 };
-  return cached2;
-}
-function cosine(query, index) {
-  const maxIdf = Math.log(1 + Math.max(index.fns.length, 1));
-  const qNorm = Math.sqrt(query.reduce((a, f) => a + weightOf(f, index.idf.get(f) ?? maxIdf) ** 2, 0));
-  const out = /* @__PURE__ */ new Map();
-  if (!qNorm) return out;
-  for (const f of query) {
-    const list = index.postings.get(f);
-    if (!list) continue;
-    const w = weightOf(f, index.idf.get(f)) ** 2;
-    for (const i of list) {
-      const e = out.get(i) ?? out.set(i, { score: 0, shared: [] }).get(i);
-      e.score += w;
-      e.shared.push(f);
-    }
+var MAX_EXPLICIT_BUDGET = 12e4;
+function functionText(file, line) {
+  let text2;
+  try {
+    text2 = (0, import_node_fs4.readFileSync)(path3.join(REPO_ROOT, file), "utf8");
+  } catch {
+    return "";
   }
-  for (const [i, e] of out) e.score = index.norm[i] ? e.score / (qNorm * index.norm[i]) : 0;
-  return out;
-}
-async function similarFunctions(args) {
-  let subject;
-  if (args.code) {
-    const own = args.code.match(/\b(?:function|def|func|fun|fn|sub)\s+([\p{L}_$][\p{L}\p{N}_$]*)/u)?.[1];
-    subject = {
-      callees: [...new Set(calleeNames(args.code, own).map(calleeKey))],
-      words: uniqueTokens(args.code).filter((w) => !BODY_NOISE.has(w)),
-      label: own ? `the code you passed (${own})` : "the code you passed"
-    };
-  } else {
-    let r;
-    try {
-      r = await resolveFunction({ id: args.id, file: args.file, name: args.name, line: args.line });
-    } catch (err) {
-      if (err instanceof StaleIdError) return { text: err.message, isError: true };
-      throw err;
+  const lines = text2.split("\n").slice(line - 1, line + 300);
+  let depth = 0;
+  let opened = false;
+  const out = [];
+  for (const l of lines) {
+    out.push(l);
+    for (const ch of l) {
+      if (ch === "{") depth++, opened = true;
+      else if (ch === "}") depth--;
     }
-    subject = { rec: r.ix.rec, callees: r.ix.callees, words: behaviourWords(r.ix), label: r.ix.rec.name };
+    if (opened && depth <= 0) break;
   }
-  if (subject.callees.length + subject.words.length < 3) {
-    throw new Error(
-      `${subject.label} has too little in it to compare (${subject.callees.length} calls, ${subject.words.length} words). Similarity needs a function body with some calls or domain words; use spec_nav_find_functions for a name search.`
+  return out.join("\n");
+}
+function traceHints(targets, all) {
+  const out = [];
+  const t = targets.find((x) => HTTP_CALL.test(functionText(x.file, x.line)));
+  if (t) {
+    const name = t.name.split(".").pop();
+    out.push(
+      `Next \u2014 ${t.name} makes an HTTP call: which service and handler receive it: spec_nav_trace_flow ${JSON.stringify({ file: t.file, name: t.name.includes(".") ? t.name : name, direction: "downstream" })}`
     );
   }
-  const snap = await snapshot(args.services);
-  const index = buildIndex(snap, `${snap.fingerprint}|${(args.services ?? []).join(",")}`);
-  const scores = cosine(features(subject.callees, subject.words), index);
-  const fileOk = fileMatcher(args.inFile);
-  const minScore = args.minScore ?? 0.2;
-  const hits = [];
-  const byIdf = (a, b) => index.idf.get(b) - index.idf.get(a);
-  for (const [i, e] of scores) {
-    const ix = index.fns[i];
-    if (subject.rec && ix.rec.id === subject.rec.id) continue;
-    if (e.score < minScore) continue;
-    if (!fileOk(ix.rec.file)) continue;
-    if (args.language && ix.rec.language !== args.language.toLowerCase()) continue;
-    const shared = [...e.shared].sort(byIdf);
-    hits.push({
-      rec: ix.rec,
-      score: Math.round(e.score * 1e3) / 1e3,
-      sharedCalls: shared.filter(isCall).map((f) => f.slice(2)).slice(0, 8),
-      sharedWords: shared.filter((f) => !isCall(f)).slice(0, 10)
-    });
+  const r = all.find((s) => ROUTE_FILE.test(s.file) && s.enclosing && !s.enclosing.startsWith("<"));
+  if (r) {
+    out.push(
+      `Next \u2014 ${r.file} (${r.enclosing}) is an endpoint handler: who calls it, across services: spec_nav_trace_flow ${JSON.stringify({ file: r.file, name: r.enclosing, direction: "upstream" })}`
+    );
   }
-  hits.sort((a, b) => b.score - a.score || (sortKey(a.rec) < sortKey(b.rec) ? -1 : 1));
-  const qHash = paramsHash({ ...args, cursor: void 0, format: void 0, limit: void 0 });
-  const cur = decodeCursor(args.cursor, "similar", qHash, snap.fingerprint);
-  const start = typeof cur.position === "number" ? cur.position : 0;
-  const limit = Math.min(Math.max(args.limit ?? 10, 1), 100);
-  const page = takePage(hits, start, limit, CHAR_BUDGET - 3e3, (h, i) => {
-    const r = h.rec;
-    return [
-      `#${i + 1}  similarity ${h.score}  ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
-      `    [${flags(r)}] ${r.name}`,
-      `    sig: ${r.signature}`,
-      `    id:  ${r.id}`,
-      ...h.sharedCalls.length ? [`    both call: ${h.sharedCalls.join(", ")}`] : [],
-      ...h.sharedWords.length ? [`    shared words: ${h.sharedWords.join(", ")}`] : [],
-      ...r.doc ? [`    doc: ${r.doc.replace(/\s+/g, " ")}${r.docTruncated ? " [truncated]" : ""}`] : []
-    ].join("\n");
-  });
-  const complete = page.end >= hits.length;
-  const nextCursor = complete ? void 0 : encodeCursor({ t: "similar", q: qHash, p: page.end, f: cur.fingerprint });
-  const coverage = coverageOf(snap);
-  if (args.format === "json") {
-    return {
-      text: JSON.stringify({
-        subject: subject.rec ? { id: subject.rec.id, name: subject.rec.name } : { code: true, label: subject.label },
-        features: { calls: subject.callees.length, words: subject.words.length },
-        functionsCompared: index.fns.length,
-        totalCandidates: hits.length,
-        minScore,
-        complete,
-        nextCursor,
-        coverage,
-        candidates: hits.slice(start, page.end).map((h) => ({ ...h.rec, similarity: h.score, sharedCalls: h.sharedCalls, sharedWords: h.sharedWords }))
-      })
-    };
-  }
-  return {
-    text: [
-      `similar to: ${subject.label} \u2014 ${subject.callees.length} distinct calls, ${subject.words.length} body words`,
-      `BEHAVIOURAL CANDIDATES by shared calls and body vocabulary (rare ones weigh more; calls weigh 1.5\xD7), candidates' own names ignored: ${hits.length} of ${index.fns.length} functions scored \u2265 ${minScore}. High similarity means the code looks alike, not that it is interchangeable \u2014 read both before reusing or merging.`,
-      hits.length ? `showing ${start + 1}-${page.end}` + (complete ? " \u2014 no further candidates" : ` \u2014 MORE: call again with cursor="${nextCursor}"`) : "no candidates \u2014 lower minScore, or describe the behaviour to spec_nav_find_functions",
-      ...renderCoverage(coverage),
-      "",
-      ...page.rendered
-    ].join("\n")
-  };
+  return out;
 }
-
-// src/flow/trace.ts
-init_cjs_shim();
-
-// src/flow/model.ts
-init_cjs_shim();
-function lit(v) {
-  return { parts: [{ k: "lit", v }], via: [] };
-}
-function dyn(text2) {
-  const t = text2.replace(/\s+/g, " ").trim();
-  return { parts: [{ k: "dyn", text: t.length > 60 ? t.slice(0, 59) + "\u2026" : t }], via: [] };
-}
-function env(name, fallback) {
-  return { parts: [{ k: "env", name, ...fallback !== void 0 ? { fallback } : {} }], via: [] };
-}
-function concat(...vals) {
-  const parts = [];
-  const via = [];
-  for (const v of vals) {
-    for (const p of v.parts) {
-      if (p.k === "lit" && p.v === "") continue;
-      const last2 = parts[parts.length - 1];
-      if (p.k === "lit" && last2?.k === "lit") parts[parts.length - 1] = { k: "lit", v: last2.v + p.v };
-      else parts.push(p);
+function nextReads2(shown) {
+  const whole = /* @__PURE__ */ new Map();
+  const windows = /* @__PURE__ */ new Map();
+  for (const s of shown) {
+    if (s.resolution === "unresolved" || s.resolution === "dynamic" || s.resolution === "reference") continue;
+    const end = enclosingEnd.get(s);
+    if (s.enclosing && !s.enclosing.startsWith("<") && end && end - s.enclosingLine + 1 <= SHORT_FUNCTION) {
+      whole.set(`${s.file}\0${s.enclosing}\0${s.enclosingLine}`, { file: s.file, name: s.enclosing, line: s.enclosingLine });
+    } else {
+      const w = windows.get(s.file) ?? { file: s.file, lines: [] };
+      if (w.lines.length < 12) w.lines.push(s.line);
+      windows.set(s.file, w);
     }
-    for (const w of v.via) if (!via.includes(w)) via.push(w);
   }
-  return { parts, via };
+  const functions = [...whole.values(), ...windows.values()];
+  if (!functions.length || functions.length > 10) return void 0;
+  const what = [
+    whole.size ? `${whole.size} short calling function${whole.size === 1 ? "" : "s"} whole` : "",
+    windows.size ? `\xB1${DEFAULT_AROUND} lines around the calls in ${windows.size} file${windows.size === 1 ? "" : "s"} (long functions are not read whole)` : ""
+  ].filter(Boolean).join(", ");
+  return `Next \u2014 read the callers in one call (${what}): spec_nav_read_function ${JSON.stringify({ functions })}`;
 }
-function withVia(v, note) {
-  return { parts: v.parts, via: v.via.includes(note) ? v.via : [...v.via, note] };
-}
-function literal2(v) {
-  if (!v || !v.parts.length) return v && !v.parts.length ? "" : void 0;
-  return v.parts.every((p) => p.k === "lit") ? v.parts.map((p) => p.v).join("") : void 0;
-}
-function show(v) {
-  return v.parts.map(
-    (p) => p.k === "lit" ? p.v : p.k === "env" ? `\${env:${p.name}}` : p.k === "ref" ? `\${${[p.local, ...p.path].join(".")}}` : `\${${p.text}}`
-  ).join("");
-}
-function emptyFacts(base) {
-  return {
-    ...base,
-    imports: /* @__PURE__ */ new Map(),
-    consts: /* @__PURE__ */ new Map(),
-    exportAs: /* @__PURE__ */ new Map(),
-    reexports: [],
-    classes: /* @__PURE__ */ new Map(),
-    newVars: /* @__PURE__ */ new Map(),
-    varTypes: /* @__PURE__ */ new Map(),
-    calls: [],
-    routers: /* @__PURE__ */ new Map(),
-    routes: [],
-    mounts: [],
-    instances: /* @__PURE__ */ new Map(),
-    clients: [],
-    pending: [],
-    handlers: [],
-    sends: [],
-    ports: [],
-    globalPrefix: [],
-    kafka: /* @__PURE__ */ new Map(),
-    notes: [],
-    unproven: []
-  };
-}
-var HTTP_VERBS = ["get", "post", "put", "patch", "delete", "options", "head"];
-
-// src/flow/link.ts
-init_cjs_shim();
-var import_node_fs7 = require("node:fs");
-var path5 = __toESM(require("node:path"), 1);
-
-// src/flow/facts.ts
-init_cjs_shim();
-var import_node_fs6 = require("node:fs");
-var path4 = __toESM(require("node:path"), 1);
-var import_ts_morph5 = __toESM(require_ts_morph(), 1);
 
 // src/flow/tsfacts.ts
 init_cjs_shim();
 var import_ts_morph4 = __toESM(require_ts_morph(), 1);
-var TS_PREFILTER = /\b(?:express|fastify|Fastify|koa-router|fetch|ofetch|axios|HttpService|kafkajs|setGlobalPrefix)\b|\$fetch\b|@koa\/router|@nestjs\/(?:common|microservices|event-emitter|axios)\b|\.(?:producer|consumer)\s*\(|\.(?:get|post|put|patch|delete|all|head|options)\s*\(\s*['"`]\//;
+var TS_PREFILTER = /\b(?:express|fastify|Fastify|koa-router|fetch|ofetch|axios|HttpService|kafkajs|setGlobalPrefix)\b|@medusajs\/medusa-js|\$fetch\b|@koa\/router|@nestjs\/(?:common|microservices|event-emitter|axios)\b|\.(?:producer|consumer)\s*\(|\.(?:get|post|put|patch|delete|all|head|options)\s*\(\s*['"`]\//;
 var FILE_ROUTE = /(^|\/)(src\/api\/(.+\/)?route|(src\/)?app\/(.+\/)?route|src\/routes\/(.+\/)?\+server)\.[cm]?[jt]sx?$|(^|\/)(src\/)?pages\/api\/.+\.[jt]sx?$/;
 function isFileRoute(rel) {
   return FILE_ROUTE.test(rel);
@@ -292951,10 +293071,10 @@ function extractTs(entry, text2, analysed) {
         return t !== void 0 ? lit(name === "encodeURI" ? encodeURI(t) : encodeURIComponent(t)) : dyn(e.arguments[0].getText(sf));
       }
       if (name === "join" && import_ts_morph4.ts.isPropertyAccessExpression(c) && import_ts_morph4.ts.isArrayLiteralExpression(unwrap2(c.expression))) {
-        const sep4 = e.arguments.length ? literal2(strOf(e.arguments[0], depth + 1)) : ",";
-        if (sep4 !== void 0) {
+        const sep5 = e.arguments.length ? literal2(strOf(e.arguments[0], depth + 1)) : ",";
+        if (sep5 !== void 0) {
           const items = unwrap2(c.expression).elements.map((x) => strOf(x, depth + 1));
-          return concat(...items.flatMap((v, i) => i ? [lit(sep4), v] : [v]));
+          return concat(...items.flatMap((v, i) => i ? [lit(sep5), v] : [v]));
         }
       }
       return dyn(e.getText(sf));
@@ -293576,6 +293696,15 @@ function extractTs(entry, text2, analysed) {
             n
           );
         }
+        return;
+      }
+    }
+    if (m === "request" && args.length >= 2 && import_ts_morph4.ts.isPropertyAccessExpression(recvExpr) && recvExpr.name.text === "client" && fileMentions("@medusajs/medusa-js")) {
+      const verb = literal2(strOf(args[0]))?.toUpperCase();
+      if (verb && VERBS.has(verb.toLowerCase())) {
+        addClient("medusa-js", verb, strOf(args[1]), n, {
+          methodNote: "the client's baseUrl is set where the Medusa client is created"
+        });
         return;
       }
     }
@@ -294536,7 +294665,7 @@ async function analysedFacts(entries) {
     if (!ce || ce.stamp !== e.stamp) {
       let text2;
       try {
-        text2 = (0, import_node_fs6.readFileSync)(e.abs, "utf8");
+        text2 = (0, import_node_fs5.readFileSync)(e.abs, "utf8");
       } catch {
         continue;
       }
@@ -294548,6 +294677,13 @@ async function analysedFacts(entries) {
   }
   return out;
 }
+async function prewarmFacts(entries) {
+  let n = 0;
+  for (const e of entries) {
+    await analysedFacts([e]);
+    if (++n % 20 === 0) await new Promise((r) => setImmediate(r));
+  }
+}
 async function factsOf(e) {
   const fam = familyOf2(e.language);
   if (!fam) return void 0;
@@ -294555,7 +294691,7 @@ async function factsOf(e) {
   if (ce && ce.stamp === e.stamp && ce.facts) return ce.facts;
   let text2;
   try {
-    text2 = (0, import_node_fs6.readFileSync)(e.abs, "utf8");
+    text2 = (0, import_node_fs5.readFileSync)(e.abs, "utf8");
   } catch {
     return void 0;
   }
@@ -294626,7 +294762,7 @@ var Repo = class {
     const asPath = mod ? mod.split(".").join(path4.sep) : "";
     const tryBase = (base) => {
       for (const c of [base + ".py", path4.join(base, "__init__.py")]) {
-        if ((0, import_node_fs6.existsSync)(c) && (0, import_node_fs6.statSync)(c).isFile()) return this.relIfScanned(c);
+        if ((0, import_node_fs5.existsSync)(c) && (0, import_node_fs5.statSync)(c).isFile()) return this.relIfScanned(c);
       }
       return void 0;
     };
@@ -294907,7 +295043,7 @@ var COMPOSE_FILES = ["docker-compose.yml", "docker-compose.yaml", "compose.yml",
 function readCompose(file) {
   let text2;
   try {
-    text2 = (0, import_node_fs7.readFileSync)(file, "utf8");
+    text2 = (0, import_node_fs6.readFileSync)(file, "utf8");
   } catch {
     return [];
   }
@@ -294977,9 +295113,9 @@ var ServiceMap = class {
       if (s === ".") continue;
       add(this.names, norm(path5.basename(s)), s, `project directory ${s}`);
       const pj = path5.join(REPO_ROOT, s, "package.json");
-      if ((0, import_node_fs7.existsSync)(pj)) {
+      if ((0, import_node_fs6.existsSync)(pj)) {
         try {
-          const name = JSON.parse((0, import_node_fs7.readFileSync)(pj, "utf8")).name;
+          const name = JSON.parse((0, import_node_fs6.readFileSync)(pj, "utf8")).name;
           if (typeof name === "string" && name) add(this.names, norm(name.replace(/^@[^/]+\//, "")), s, `package name ${name}`);
         } catch {
         }
@@ -294987,7 +295123,7 @@ var ServiceMap = class {
     }
     for (const f of COMPOSE_FILES) {
       const abs = path5.join(REPO_ROOT, f);
-      if ((0, import_node_fs7.existsSync)(abs) && (0, import_node_fs7.statSync)(abs).isFile()) this.compose.push(...readCompose(abs));
+      if ((0, import_node_fs6.existsSync)(abs) && (0, import_node_fs6.statSync)(abs).isFile()) this.compose.push(...readCompose(abs));
     }
     for (const c of this.compose) {
       const svc = c.dir ? this.serviceOfDir(c.dir) : void 0;
@@ -295055,12 +295191,16 @@ var hintCache = /* @__PURE__ */ new Map();
 function composeStamp() {
   return COMPOSE_FILES.map((f) => {
     try {
-      const st = (0, import_node_fs7.statSync)(path5.join(REPO_ROOT, f));
+      const st = (0, import_node_fs6.statSync)(path5.join(REPO_ROOT, f));
       return `${f}:${st.mtimeMs}:${st.size}`;
     } catch {
       return "";
     }
   }).join("|");
+}
+function currentGraph(scan) {
+  if (!last) return void 0;
+  return last.fingerprint === fingerprint(scan.files) + ":" + composeStamp() ? last : void 0;
 }
 async function buildGraph(scan) {
   const fp = fingerprint(scan.files) + ":" + composeStamp();
@@ -295109,7 +295249,7 @@ async function buildGraph(scan) {
     if (!h || h.stamp !== e.stamp) {
       let text2 = "";
       try {
-        text2 = (0, import_node_fs7.readFileSync)(e.abs, "utf8");
+        text2 = (0, import_node_fs6.readFileSync)(e.abs, "utf8");
       } catch {
       }
       h = { stamp: e.stamp, hit: COMM_HINT.test(text2) };
@@ -296010,7 +296150,7 @@ function coverageLines(c) {
   for (const n of c.notes.slice(0, 5)) out.push(`note: ${n}`);
   return out;
 }
-var SUPPORTED = "Supported: HTTP \u2014 Express, Fastify, koa-router, NestJS controllers, file-based routes (Next.js app/pages, Medusa src/api, SvelteKit +server), FastAPI, Flask (servers); fetch, axios, NestJS HttpService, requests, httpx, aiohttp (clients). RPC \u2014 NestJS microservices @MessagePattern/ClientProxy.send. Events \u2014 NestJS @EventPattern/ClientProxy.emit, @nestjs/event-emitter @OnEvent/EventEmitter2.emit (same service only), kafkajs producer/consumer. Nothing else (gRPC, GraphQL, BullMQ, RabbitMQ, Hono, Go, Java\u2026) is traced.";
+var SUPPORTED = "Supported: HTTP \u2014 Express, Fastify, koa-router, NestJS controllers, file-based routes (Next.js app/pages, Medusa src/api, SvelteKit +server), FastAPI, Flask (servers); fetch, axios, NestJS HttpService, medusa-js, requests, httpx, aiohttp (clients). RPC \u2014 NestJS microservices @MessagePattern/ClientProxy.send. Events \u2014 NestJS @EventPattern/ClientProxy.emit, @nestjs/event-emitter @OnEvent/EventEmitter2.emit (same service only), kafkajs producer/consumer. Nothing else (gRPC, GraphQL, BullMQ, RabbitMQ, Hono, Go, Java\u2026) is traced.";
 function counts(steps) {
   const c = {};
   for (const s of steps) c[s.resolution] = (c[s.resolution] ?? 0) + 1;
@@ -296105,19 +296245,518 @@ async function traceFlow(args) {
     ].join("\n")
   };
 }
+async function prewarmFlow() {
+  const t0 = Date.now();
+  const scan = scanRepo();
+  await prewarmFacts(scan.files);
+  const g = await buildGraph(scan);
+  return { edges: g.edges.length, ms: Date.now() - t0 };
+}
+function boundariesAt(places, max = 6) {
+  const g = currentGraph(scanRepo());
+  if (!g) return void 0;
+  const lines = [];
+  const seen = /* @__PURE__ */ new Set();
+  let more = 0;
+  const push = (k, text2) => {
+    if (seen.has(k)) return;
+    seen.add(k);
+    if (lines.length < max) lines.push(text2);
+    else more++;
+  };
+  const files = new Set(places.map((p) => p.file));
+  const handled = g.endpoints.filter((e) => files.has(e.file) || e.handler && files.has(e.handler.file));
+  for (const p of places) {
+    for (const e of handled) {
+      const h = e.handler;
+      const here = h && h.file === p.file && (h.line === p.fnLine || h.line === p.line) || e.file === p.file && (e.line === p.line || !!p.fnName && e.method === p.fnName.toUpperCase());
+      if (!here) continue;
+      const callers = g.edges.filter((x) => x.targets.includes(e));
+      if (!callers.length) {
+        push(`in:${e.uid}`, `${e.display} (${p.file}:${p.line}) \u2014 called by: nothing in the repo (external clients, or a URL built at runtime)`);
+        continue;
+      }
+      for (const x of callers) {
+        push(
+          `in:${e.uid}:${x.site.file}:${x.site.line}`,
+          `${e.display} (${p.file}:${p.line}) \u2014 called by ${x.source.service}: ${x.site.file}:${x.site.line} ${x.source.label} [${x.resolution}]`
+        );
+      }
+    }
+    for (const x of g.edges) {
+      if (x.site.file !== p.file || x.site.line < p.line || x.site.line > (p.toLine ?? p.line)) continue;
+      if (!x.targets.length) {
+        push(`out:${x.site.file}:${x.site.line}`, `${x.site.file}:${x.site.line} ${x.call} \u2014 sends to: no handler in the repo matches [${x.resolution}]`);
+        continue;
+      }
+      for (const t of x.targets) {
+        push(
+          `out:${x.site.file}:${x.site.line}:${t.uid}`,
+          `${x.site.file}:${x.site.line} ${x.call} \u2014 sends to ${t.service}: ${t.handler ? `${t.handler.file}:${t.handler.line} ${t.handler.label}` : `${t.file}:${t.line}`} [${x.resolution}]`
+        );
+      }
+    }
+  }
+  if (more) lines.push(`\u2026 ${more} more \u2014 spec_nav_trace_flow on the handler or call lists them all, with evidence.`);
+  return lines;
+}
+
+// src/tools.ts
+var HIT_TEXT_LIMIT = 160;
+var MAX_CONTEXT = 10;
+var SUGGEST_READS = 10;
+var SHORT_FUNCTION2 = 80;
+var WINDOWS_PER_FILE = 12;
+var cut = (t) => t.length > HIT_TEXT_LIMIT ? t.slice(0, HIT_TEXT_LIMIT - 1) + "\u2026" : t;
+var TS_NOISE = /^\s*(\/\/|\*|\/\*|import\s|export\s*\{)/;
+function matchingLines(text2, re, noise, includeComments) {
+  const matched = [];
+  text2.split("\n").forEach((raw, idx) => {
+    const lineText = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
+    if (!re.test(lineText)) return;
+    if (!includeComments && noise.test(lineText)) return;
+    matched.push({ idx, text: cut(lineText.trim()) });
+  });
+  return matched;
+}
+function withContext(hits, lines, n) {
+  if (n <= 0) return hits;
+  const hitLines = new Set(hits.map((h) => h.line));
+  return hits.map((h) => {
+    const around = [];
+    for (let l = Math.max(1, h.line - n); l <= Math.min(lines.length, h.line + n); l++) {
+      if (!hitLines.has(l)) around.push({ line: l, text: cut(lines[l - 1].replace(/\s+$/, "")) });
+    }
+    return { ...h, around };
+  });
+}
+function labelHits(matched, ranges) {
+  return matched.map(({ idx, text: lineText }) => {
+    const lineNo = idx + 1;
+    let named;
+    let anon;
+    for (const r of ranges) {
+      if (r.start > lineNo || lineNo > r.end) continue;
+      const span2 = r.end - r.start;
+      if (r.name === "<anonymous>") {
+        if (!anon || span2 < anon.end - anon.start) anon = r;
+      } else if (!named || span2 < named.end - named.start) {
+        named = r;
+      }
+    }
+    const best = named ?? anon;
+    return best ? { line: lineNo, enclosing: `${best.name}:${best.line}`, enclosingEnd: best.end, text: lineText } : { line: lineNo, enclosing: "-", text: lineText };
+  });
+}
+async function mapPattern(pattern, services, opts = {}) {
+  const scan = scanRepo();
+  const fileOk = fileMatcher(opts.file);
+  const scoped = filterFiles(scan, services);
+  const entries = scoped.filter((e) => fileOk(e.rel));
+  const inScope = pathFilter(scan, services);
+  const scopedTexts = opts.includeText === false ? [] : scan.texts.filter((e) => inScope(e.rel, e.service));
+  const texts = scopedTexts.filter((e) => fileOk(e.rel));
+  const fileFilterMatchedNothing = opts.file && !entries.length && !texts.length && (scoped.length || scopedTexts.length) ? opts.file : void 0;
+  const re = new RegExp(pattern, "i");
+  const inFile = new RegExp(pattern, "im");
+  const includeComments = opts.includeComments ?? false;
+  const context = Math.min(Math.max(opts.context ?? 0, 0), MAX_CONTEXT);
+  const out = [];
+  const scanned = /* @__PURE__ */ new Set();
+  const languagesSeen = /* @__PURE__ */ new Set();
+  let totalHits = 0;
+  for (const entry of entries) {
+    scanned.add(entry.service);
+    let text2;
+    try {
+      text2 = (0, import_node_fs7.readFileSync)(entry.abs, "utf8");
+    } catch {
+      continue;
+    }
+    if (!inFile.test(text2)) continue;
+    const noise = isTsFamily(entry.language) ? TS_NOISE : languageById(entry.language).noise;
+    const matched = matchingLines(text2, re, noise, includeComments);
+    if (!matched.length) continue;
+    languagesSeen.add(entry.language);
+    const fc = await catalogFile(entry);
+    const hits = withContext(labelHits(matched, labelRanges(fc)), text2.split("\n"), context);
+    out.push({ file: entry.rel, service: entry.service, hits });
+    totalHits += hits.length;
+  }
+  const NO_NOISE = /(?!)/;
+  for (const entry of texts) {
+    scanned.add(entry.service);
+    let text2;
+    try {
+      text2 = (0, import_node_fs7.readFileSync)(entry.abs, "utf8");
+    } catch {
+      continue;
+    }
+    if (!inFile.test(text2)) continue;
+    const matched = matchingLines(text2, re, NO_NOISE, true);
+    if (!matched.length) continue;
+    languagesSeen.add("text");
+    const hits = withContext(
+      matched.map(({ idx, text: t }) => ({ line: idx + 1, enclosing: "-", text: t })),
+      text2.split("\n"),
+      context
+    );
+    out.push({ file: entry.rel, service: entry.service, text: true, hits });
+    totalHits += hits.length;
+  }
+  return {
+    pattern,
+    servicesScanned: [...scanned].sort(),
+    languages: [...languagesSeen].sort(),
+    // A grammar that would not load is reported, not hidden: silently
+    // unlabelled output looks the same as code with no functions in it.
+    unparsed: loadFailures().map((f) => `${f.id} (${f.reason})`),
+    totalFiles: out.length,
+    totalHits,
+    files: out,
+    fingerprint: fingerprint([...entries, ...texts]),
+    filesSearched: entries.length,
+    textFilesSearched: texts.length,
+    fileFilterMatchedNothing
+  };
+}
+function renderMap(result, args = {}) {
+  if (result.fileFilterMatchedNothing) {
+    return [
+      `pattern: ${result.pattern}`,
+      `scanned: NOTHING \u2014 \`file\` "${result.fileFilterMatchedNothing}" matched no file in scope.`,
+      ``,
+      `This is not "the pattern is absent": nothing was searched. \`file\` is a path`,
+      `substring ("services/order"), a glob ("be/*/src/**/*.ts"), or a regex \u2014 "/\u2026/", or any`,
+      `value with | ( ^ $ \\ ("services/(order|payment)"). Paths are relative to the root, e.g.`,
+      `"be/BEXMP-order/src/services/order.ts". Drop \`file\` to search everything.`
+    ].join("\n");
+  }
+  if (!result.servicesScanned.length) {
+    return [
+      `pattern: ${result.pattern}`,
+      `scanned: NOTHING \u2014 no project under the root held a file in a supported language.`,
+      ``,
+      `This is not "the pattern is absent": nothing was searched. Check that`,
+      `SPEC_NAV_ROOT is the right repo, and that it contains source in one of the`,
+      `supported languages (spec_nav_services lists what was found).`
+    ].join("\n");
+  }
+  const flat = [];
+  for (const f of result.files) for (const h of f.hits) flat.push({ file: f.file, hit: h, fileHits: f.hits.length, text: !!f.text });
+  const key2 = (i) => `${i.text ? 1 : 0}\0${i.file}\0${String(i.hit.line).padStart(8, "0")}`;
+  const qHash = paramsHash({
+    p: result.pattern,
+    s: args.services ?? null,
+    c: !!args.includeComments,
+    f: args.file ?? null,
+    x: args.context ?? 0,
+    t: args.includeText !== false
+  });
+  const cur = decodeCursor(args.cursor, "map", qHash, result.fingerprint);
+  let start = 0;
+  if (typeof cur.position === "string") {
+    const after = cur.position;
+    start = flat.findIndex((i) => key2(i) > after);
+    if (start < 0) start = flat.length;
+  }
+  const census = result.files.map((f) => `  ${String(f.hits.length).padStart(4)} | ${f.file}`);
+  const censusChars = census.reduce((a, l) => a + l.length + 1, 0);
+  const firstPage = start === 0;
+  const build = (withCensus2) => {
+    const budget = CHAR_BUDGET - 1500 - (withCensus2 ? censusChars : 0);
+    let lastFile = start > 0 ? flat[start - 1].file : "";
+    let shown = /* @__PURE__ */ new Set();
+    const page2 = takePage(flat, start, args.pageSize ?? Number.MAX_SAFE_INTEGER, budget, (i) => {
+      let header2 = "";
+      if (i.file !== lastFile) {
+        header2 = `
+${i.file}${i.fileHits > 1 ? `  (${i.fileHits} hits)` : ""}${i.text ? "  [text: no functions]" : ""}
+`;
+        shown = /* @__PURE__ */ new Set();
+      }
+      lastFile = i.file;
+      const ctx = (pick2) => (i.hit.around ?? []).filter((a) => pick2(a.line) && !shown.has(a.line)).map((a) => (shown.add(a.line), `  ${a.line} : ${a.text}`));
+      const before = ctx((l) => l < i.hit.line);
+      const after = ctx((l) => l > i.hit.line);
+      return [header2 + [...before, `  ${i.hit.line} | ${i.hit.enclosing} | ${i.hit.text}`].join("\n"), ...after].join("\n");
+    });
+    if (start > 0 && flat[start] && flat[start - 1].file === flat[start].file) {
+      page2.rendered.unshift(`
+${flat[start].file}  (continued)`);
+    }
+    return page2;
+  };
+  let page = build(false);
+  const complete = page.end >= flat.length;
+  let withCensus = false;
+  if (firstPage && !complete && censusChars <= CHAR_BUDGET * 0.4) {
+    withCensus = true;
+    page = build(true);
+  }
+  const done = page.end >= flat.length;
+  const nextCursor = done ? void 0 : encodeCursor({ t: "map", q: qHash, p: key2(flat[page.end - 1]), f: cur.fingerprint });
+  const header = [
+    `pattern: ${result.pattern}`,
+    `scanned: ${result.filesSearched} code files` + (result.textFilesSearched ? ` + ${result.textFilesSearched} text files (config, docs, SQL\u2026)` : "") + ` in ${result.servicesScanned.length} project(s): ${result.servicesScanned.join(", ")}`,
+    // Which languages were read is worth a line: it is how you notice that
+    // the Go service you expected in the results was never parsed.
+    ...result.languages.length ? [`languages with hits: ${result.languages.join(", ")}`] : [],
+    ...result.unparsed.length ? [`NOT PARSED (hits shown without function names): ${result.unparsed.join("; ")}`] : [],
+    `${result.totalHits} hits in ${result.totalFiles} files` + (flat.length ? ` \u2014 this page: hits ${start + 1}-${page.end}` + (done ? " \u2014 COMPLETE" : ` \u2014 MORE: call again with the same pattern and cursor="${nextCursor}"`) : ""),
+    ...cur.changedSinceFirstPage ? [CHANGED_WARNING] : [],
+    ...firstPage && !done && !withCensus ? [`(${result.totalFiles} files \u2014 too many to list on this page; they follow in order across pages.)`] : []
+  ];
+  const onPage = flat.slice(start, page.end);
+  const boundaries = boundariesAt(onPage.filter((i) => !i.text).map((i) => placeOf(i.file, i.hit)));
+  const parts = [...header];
+  if (boundaries?.length) parts.push("", "Service boundaries on this page (static flow graph; spec_nav_trace_flow for the whole chain):", ...boundaries.map((b) => `  ${b}`));
+  if (withCensus) parts.push("", "All files with hits (count | file):", ...census);
+  parts.push(
+    "",
+    "Format:  line | enclosing function:its line | source" + (args.context ? "   (context lines:  line : source)" : ""),
+    ...page.rendered
+  );
+  const next = [suggestReads(onPage), ...boundaries ? [] : suggestTraces(onPage)].filter((s) => !!s);
+  if (next.length) parts.push("", ...next);
+  return parts.join("\n");
+}
+function placeOf(file, hit) {
+  const at = hit.enclosing.lastIndexOf(":");
+  if (at <= 0) return { file, line: hit.line };
+  const name = hit.enclosing.slice(0, at);
+  return { file, line: hit.line, fnName: name.split(".").pop(), fnLine: Number(hit.enclosing.slice(at + 1)) };
+}
+var HTTP_CALL = /\b(?:axios|fetch|got|ky|superagent)(?:\s*\.\s*(?:get|post|put|patch|delete|head|request))?\s*(?:<[^>]*>)?\s*\(|\bhttp(?:Service|Client)?\s*\.\s*(?:get|post|put|patch|delete|request)\s*(?:<[^>]*>)?\s*\(/i;
+var ROUTE_FILE = /(^|\/)(api|app|routes)\/(.*\/)?(route|\+server)\.[cm]?[jt]sx?$|(^|\/)pages\/api\//;
+function suggestTraces(items) {
+  const out = [];
+  const named = (i) => {
+    const at = i.hit.enclosing.lastIndexOf(":");
+    const name = at > 0 ? i.hit.enclosing.slice(0, at) : "";
+    return name && name !== "<anonymous>" ? name : void 0;
+  };
+  const client = items.find((i) => !i.text && named(i) && HTTP_CALL.test(i.hit.text));
+  if (client) {
+    out.push(
+      `Next \u2014 ${client.file}:${client.hit.line} makes an HTTP call; which service and handler receive it: spec_nav_trace_flow ${JSON.stringify({ file: client.file, name: named(client), direction: "downstream" })}`
+    );
+  }
+  const route = items.find((i) => !i.text && named(i) && ROUTE_FILE.test(i.file));
+  if (route) {
+    out.push(
+      `Next \u2014 ${route.file} is an endpoint handler; who calls it, across services: spec_nav_trace_flow ${JSON.stringify({ file: route.file, name: named(route), direction: "upstream" })}`
+    );
+  }
+  return out;
+}
+function suggestReads(items) {
+  const whole = /* @__PURE__ */ new Map();
+  const windows = /* @__PURE__ */ new Map();
+  for (const i of items) {
+    if (i.text) continue;
+    const at = i.hit.enclosing.lastIndexOf(":");
+    const name = at > 0 ? i.hit.enclosing.slice(0, at) : "";
+    const start = at > 0 ? Number(i.hit.enclosing.slice(at + 1)) : 0;
+    const length = i.hit.enclosingEnd ? i.hit.enclosingEnd - start + 1 : Infinity;
+    if (name && name !== "<anonymous>" && length <= SHORT_FUNCTION2) {
+      whole.set(`${i.file}\0${i.hit.enclosing}`, { file: i.file, name, line: start });
+    } else {
+      const w = windows.get(i.file) ?? { file: i.file, lines: [] };
+      if (w.lines.length < WINDOWS_PER_FILE) w.lines.push(i.hit.line);
+      windows.set(i.file, w);
+    }
+  }
+  const functions = [...whole.values(), ...windows.values()];
+  if (!functions.length || functions.length > SUGGEST_READS) return void 0;
+  const what = [
+    whole.size ? `${whole.size} short function${whole.size === 1 ? "" : "s"} whole` : "",
+    windows.size ? `\xB1${DEFAULT_AROUND} lines around the hits in ${windows.size} file${windows.size === 1 ? "" : "s"} (long functions are not read whole)` : ""
+  ].filter(Boolean).join(", ");
+  return `Next \u2014 read them in one call (${what}): spec_nav_read_function ${JSON.stringify({ functions })}`;
+}
+async function listServices() {
+  const snap = await snapshot();
+  const per = /* @__PURE__ */ new Map();
+  for (const s of snap.scan.services) per.set(s, { files: 0, functions: 0, languages: /* @__PURE__ */ new Set() });
+  for (const fc of snap.files) {
+    const p = per.get(fc.entry.service) ?? { files: 0, functions: 0, languages: /* @__PURE__ */ new Set() };
+    p.files++;
+    p.functions += fc.functions.length;
+    p.languages.add(fc.entry.language);
+    per.set(fc.entry.service, p);
+  }
+  const coverage = coverageOf(snap);
+  return {
+    root: REPO_ROOT,
+    services: snap.scan.services,
+    details: [...per].map(([service, p]) => ({
+      service,
+      files: p.files,
+      functions: p.functions,
+      languages: [...p.languages].sort()
+    })),
+    note: `Each file belongs to exactly one service: the innermost project directory holding it. "." is the root's own files (those outside every sub-project).`,
+    coverage: coverage.summary
+  };
+}
+
+// src/similar.ts
+init_cjs_shim();
+var cached2;
+var CALL_WEIGHT = 1.5;
+var isCall = (f) => f.startsWith("()");
+var weightOf = (f, idf) => isCall(f) ? CALL_WEIGHT * idf : idf;
+function behaviourWords(ix) {
+  const own = new Set(ix.search.name);
+  return (ix.search.body ?? []).filter((w) => !BODY_NOISE.has(w) && !own.has(w));
+}
+function features(callees, words) {
+  return [.../* @__PURE__ */ new Set([...callees.map((c) => "()" + c), ...words])];
+}
+function buildIndex(snap, key2) {
+  if (cached2?.key === key2) return cached2;
+  const fns = [];
+  for (const fc of snap.files) for (const f of fc.functions) fns.push(f);
+  const postings = /* @__PURE__ */ new Map();
+  const feats = [];
+  fns.forEach((f, i) => {
+    const fs2 = features(f.callees, behaviourWords(f));
+    feats.push(fs2);
+    for (const x of fs2) (postings.get(x) ?? postings.set(x, []).get(x)).push(i);
+  });
+  const n = Math.max(fns.length, 1);
+  const idf = /* @__PURE__ */ new Map();
+  for (const [k, list] of postings) idf.set(k, Math.log(1 + n / list.length));
+  const norm2 = new Float64Array(fns.length);
+  feats.forEach((fs2, i) => {
+    norm2[i] = Math.sqrt(fs2.reduce((a, x) => a + weightOf(x, idf.get(x)) ** 2, 0));
+  });
+  cached2 = { key: key2, fns, postings, idf, norm: norm2 };
+  return cached2;
+}
+function cosine(query, index) {
+  const maxIdf = Math.log(1 + Math.max(index.fns.length, 1));
+  const qNorm = Math.sqrt(query.reduce((a, f) => a + weightOf(f, index.idf.get(f) ?? maxIdf) ** 2, 0));
+  const out = /* @__PURE__ */ new Map();
+  if (!qNorm) return out;
+  for (const f of query) {
+    const list = index.postings.get(f);
+    if (!list) continue;
+    const w = weightOf(f, index.idf.get(f)) ** 2;
+    for (const i of list) {
+      const e = out.get(i) ?? out.set(i, { score: 0, shared: [] }).get(i);
+      e.score += w;
+      e.shared.push(f);
+    }
+  }
+  for (const [i, e] of out) e.score = index.norm[i] ? e.score / (qNorm * index.norm[i]) : 0;
+  return out;
+}
+async function similarFunctions(args) {
+  let subject;
+  if (args.code) {
+    const own = args.code.match(/\b(?:function|def|func|fun|fn|sub)\s+([\p{L}_$][\p{L}\p{N}_$]*)/u)?.[1];
+    subject = {
+      callees: [...new Set(calleeNames(args.code, own).map(calleeKey))],
+      words: uniqueTokens(args.code).filter((w) => !BODY_NOISE.has(w)),
+      label: own ? `the code you passed (${own})` : "the code you passed"
+    };
+  } else {
+    let r;
+    try {
+      r = await resolveFunction({ id: args.id, file: args.file, name: args.name, line: args.line });
+    } catch (err) {
+      if (err instanceof StaleIdError) return { text: err.message, isError: true };
+      throw err;
+    }
+    subject = { rec: r.ix.rec, callees: r.ix.callees, words: behaviourWords(r.ix), label: r.ix.rec.name };
+  }
+  if (subject.callees.length + subject.words.length < 3) {
+    throw new Error(
+      `${subject.label} has too little in it to compare (${subject.callees.length} calls, ${subject.words.length} words). Similarity needs a function body with some calls or domain words; use spec_nav_find_functions for a name search.`
+    );
+  }
+  const snap = await snapshot(args.services);
+  const index = buildIndex(snap, `${snap.fingerprint}|${(args.services ?? []).join(",")}`);
+  const scores = cosine(features(subject.callees, subject.words), index);
+  const fileOk = fileMatcher(args.inFile);
+  const minScore = args.minScore ?? 0.2;
+  const hits = [];
+  const byIdf = (a, b) => index.idf.get(b) - index.idf.get(a);
+  for (const [i, e] of scores) {
+    const ix = index.fns[i];
+    if (subject.rec && ix.rec.id === subject.rec.id) continue;
+    if (e.score < minScore) continue;
+    if (!fileOk(ix.rec.file)) continue;
+    if (args.language && ix.rec.language !== args.language.toLowerCase()) continue;
+    const shared = [...e.shared].sort(byIdf);
+    hits.push({
+      rec: ix.rec,
+      score: Math.round(e.score * 1e3) / 1e3,
+      sharedCalls: shared.filter(isCall).map((f) => f.slice(2)).slice(0, 8),
+      sharedWords: shared.filter((f) => !isCall(f)).slice(0, 10)
+    });
+  }
+  hits.sort((a, b) => b.score - a.score || (sortKey(a.rec) < sortKey(b.rec) ? -1 : 1));
+  const qHash = paramsHash({ ...args, cursor: void 0, format: void 0, limit: void 0 });
+  const cur = decodeCursor(args.cursor, "similar", qHash, snap.fingerprint);
+  const start = typeof cur.position === "number" ? cur.position : 0;
+  const limit = Math.min(Math.max(args.limit ?? 10, 1), 100);
+  const page = takePage(hits, start, limit, CHAR_BUDGET - 3e3, (h, i) => {
+    const r = h.rec;
+    return [
+      `#${i + 1}  similarity ${h.score}  ${r.file}:${span(r)}  (service ${r.service}, ${r.language})`,
+      `    [${flags(r)}] ${r.name}`,
+      `    sig: ${r.signature}`,
+      `    id:  ${r.id}`,
+      ...h.sharedCalls.length ? [`    both call: ${h.sharedCalls.join(", ")}`] : [],
+      ...h.sharedWords.length ? [`    shared words: ${h.sharedWords.join(", ")}`] : [],
+      ...r.doc ? [`    doc: ${r.doc.replace(/\s+/g, " ")}${r.docTruncated ? " [truncated]" : ""}`] : []
+    ].join("\n");
+  });
+  const complete = page.end >= hits.length;
+  const nextCursor = complete ? void 0 : encodeCursor({ t: "similar", q: qHash, p: page.end, f: cur.fingerprint });
+  const coverage = coverageOf(snap);
+  if (args.format === "json") {
+    return {
+      text: JSON.stringify({
+        subject: subject.rec ? { id: subject.rec.id, name: subject.rec.name } : { code: true, label: subject.label },
+        features: { calls: subject.callees.length, words: subject.words.length },
+        functionsCompared: index.fns.length,
+        totalCandidates: hits.length,
+        minScore,
+        complete,
+        nextCursor,
+        coverage,
+        candidates: hits.slice(start, page.end).map((h) => ({ ...h.rec, similarity: h.score, sharedCalls: h.sharedCalls, sharedWords: h.sharedWords }))
+      })
+    };
+  }
+  return {
+    text: [
+      `similar to: ${subject.label} \u2014 ${subject.callees.length} distinct calls, ${subject.words.length} body words`,
+      `BEHAVIOURAL CANDIDATES by shared calls and body vocabulary (rare ones weigh more; calls weigh 1.5\xD7), candidates' own names ignored: ${hits.length} of ${index.fns.length} functions scored \u2265 ${minScore}. High similarity means the code looks alike, not that it is interchangeable \u2014 read both before reusing or merging.`,
+      hits.length ? `showing ${start + 1}-${page.end}` + (complete ? " \u2014 no further candidates" : ` \u2014 MORE: call again with cursor="${nextCursor}"`) : "no candidates \u2014 lower minScore, or describe the behaviour to spec_nav_find_functions",
+      ...renderCoverage(coverage),
+      "",
+      ...page.rendered
+    ].join("\n")
+  };
+}
 
 // src/index.ts
-var INSTRUCTIONS = `spec-nav indexes every function in every service under the root, from syntax trees rather than text. If its tools are listed by name only (deferred), load them with ToolSearch before calling.
+var INSTRUCTIONS = `spec-nav indexes every function in every service under the root, from syntax trees rather than text. If its tools are listed by name only (deferred), load all of them in ONE ToolSearch call (query "+spec_nav", max_results 10) rather than one at a time.
 
 Use spec-nav instead of Grep/Read when:
 - About to write a new function or helper \u2192 spec_nav_find_functions first, describing the behaviour in words. Existing code is often named differently from the name you would grep for. Nothing fits \u2192 spec_nav_similar_functions with your draft as \`code\`.
 - Changing a function's signature or behaviour \u2192 spec_nav_callers, not a grep for its name: it drops same-named methods on other classes and finds calls through aliases and re-exports.
-- A concept spread across files or services (a field, fee, status, flag) \u2192 one broad spec_nav_map regex instead of several greps; each hit names its enclosing function.
+- Searching the repo for a name or concept (a field, fee, status, flag) \u2192 one broad spec_nav_map regex instead of grep -rn. It covers code and config/docs/SQL, names each hit's enclosing function, and takes \`file\` and \`context\` like grep.
 - Reading functions you will NOT edit (candidates, callers, siblings) \u2192 spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file.
 - A change touches an endpoint, RPC call or event \u2192 spec_nav_trace_flow (upstream: who reaches it; downstream: what it reaches).
 - Seeing what a file or service defines \u2192 spec_nav_functions. Unsure of the root or service names \u2192 spec_nav_services.
 
-Grep/Read remain the right tools for an exact string you already know, non-code files (config, YAML, JSON, Markdown), and a file you are about to Edit (Edit requires a Read).`;
+When a result ends with a ready "Next \u2014" call, send that instead of searching again. Grep/Read remain the right tools for a string in one file you already know, and a file you are about to Edit (Edit requires a Read).`;
 var server2 = new McpServer({ name: "spec-nav", version: "0.7.0" }, { instructions: INSTRUCTIONS });
 function text(t, isError = false) {
   return { content: [{ type: "text", text: t }], ...isError ? { isError: true } : {} };
@@ -296134,19 +296773,22 @@ var formatArg = external_exports.enum(["text", "json"]).optional().describe('"te
 server2.registerTool(
   "spec_nav_map",
   {
-    description: 'Use INSTEAD OF several Grep calls when a concept (a field, fee, status, flag) may appear in many files or services. For an exact string in non-code files (config, YAML, JSON, Markdown), use Grep. Survey a change: every line matching a regex across EVERY project under the root, in TypeScript, JavaScript, Vue/Svelte/Astro, Python, Go, Java, Kotlin, Swift, C#, Ruby, Rust, PHP, C, C++, Scala, Elixir and Bash, each tagged with the function or method it sits in. One wide pattern beats many narrow greps. Large results are paged, not cut: the header says COMPLETE or gives a cursor for the next page, and when there are more pages the first one lists every file with its hit count (if that list fits). Long source lines are shortened and end with \u2026. Files in other languages are not searched. Pass a regex, e.g. "handl(e|ing)_?fee|HANDLING_FEE".',
+    description: 'Use INSTEAD OF grep -rn: one regex across EVERY project under the root, each hit tagged with the function or method it sits in (TypeScript, JavaScript, Vue/Svelte/Astro, Python, Go, Java, Kotlin, Swift, C#, Ruby, Rust, PHP, C, C++, Scala, Elixir, Bash). Config, docs and other text (JSON, YAML, Markdown, .env, SQL, HTML/CSS\u2026) are searched too and listed after the code. One wide pattern beats many narrow greps. `file` narrows to paths (substring, glob or regex), `context` adds lines around each hit like grep -C. Large results are paged, not cut: the header says COMPLETE or gives a cursor, and the first of several pages lists every file with its hit count (if that fits). A focused result ends with a ready spec_nav_read_function call for the functions it names. Long lines end with \u2026. Pass a regex, e.g. "handl(e|ing)_?fee|HANDLING_FEE".',
     inputSchema: {
       pattern: external_exports.string().describe('Regex, case-insensitive. E.g. "handl(e|ing)_?fee|handling_charge"'),
       services: servicesArg,
       includeComments: external_exports.boolean().optional().describe("Include comment and import lines (skipped by default as noise)"),
+      file: external_exports.string().optional().describe('Only files whose path contains this, matches it as a * glob, or matches it as a regex (/\u2026/, or any value with | ( ^ $ \\, e.g. "services/(order|payment)").'),
+      context: external_exports.number().int().min(0).optional().describe("Lines shown before and after each hit, like grep -C (default 0; above 10 is read as 10)."),
+      includeText: external_exports.boolean().optional().describe("Also search config, docs and other text files (default true)."),
       cursor: cursorArg,
       pageSize: external_exports.number().int().positive().optional().describe("Max hits per page (pages are also cut at ~30k characters).")
     }
   },
-  async ({ pattern, services, includeComments, cursor, pageSize }) => {
+  async ({ pattern, services, includeComments, file, context, includeText, cursor, pageSize }) => {
     try {
-      const result = await mapPattern(pattern, services, { includeComments });
-      return text(renderMap(result, { cursor, services, includeComments, pageSize }));
+      const result = await mapPattern(pattern, services, { includeComments, file, context, includeText });
+      return text(renderMap(result, { cursor, services, includeComments, pageSize, file, context, includeText }));
     } catch (err) {
       return fail(err);
     }
@@ -296159,7 +296801,7 @@ server2.registerTool(
     inputSchema: {
       query: external_exports.string().describe('What the function does, in words. E.g. "calculate order fees"'),
       services: servicesArg,
-      file: external_exports.string().optional().describe("Only files whose path contains this (or matches it, with * globs)."),
+      file: external_exports.string().optional().describe('Only files whose path contains this, matches it as a * glob, or matches it as a regex (/\u2026/, or any value with | ( ^ $ \\, e.g. "services/(order|payment)").'),
       language: external_exports.string().optional().describe('e.g. "typescript", "javascript", "python", "go"'),
       searchBodies: external_exports.boolean().optional().describe("Also match words in function bodies (default true; weighted low; body-only matches need every word). false drops body-only matches."),
       limit: external_exports.number().int().positive().optional().describe("Candidates per page (default 20, max 100)."),
@@ -296209,7 +296851,7 @@ server2.registerTool(
     description: "Use INSTEAD OF reading whole files to see what a file, directory or service defines: names, signatures and line ranges, without the bodies. The function catalog, read from each file's syntax tree: every named function, method, constructor, accessor and named arrow/function expression \u2014 in JS/TS also functions assigned to a variable or property after declaration (`x = () => \u2026`, `obj.k = function \u2026`, `this.k = \u2026`) and CommonJS exports (`module.exports = function name\u2026`, `exports.k = \u2026`; an anonymous `module.exports = \u2026` is named module.exports). Each has qualified name (Class.method, outer.inner), kind, signature, parameters, return type when written, export/visibility (exportedAs lists aliases such as module.exports.x), exact line:column range, doc comment (shortened, marked when cut) and a stable id. A variable assigned several functions lists each, with `alternatives` naming the others. Filter by services, file, name, kind, language. Paged: the header gives the total, this page's range, and COMPLETE or a cursor. A coverage line says which files were read and which were not (syntax errors, unsupported languages, skipped files) \u2014 the catalog is only complete when it says so. Inline anonymous callbacks are counted, not listed.",
     inputSchema: {
       services: servicesArg,
-      file: external_exports.string().optional().describe("Only files whose path contains this (or matches it, with * globs)."),
+      file: external_exports.string().optional().describe('Only files whose path contains this, matches it as a * glob, or matches it as a regex (/\u2026/, or any value with | ( ^ $ \\, e.g. "services/(order|payment)").'),
       name: external_exports.string().optional().describe("Case-insensitive substring of the qualified name, or /regex/."),
       kind: external_exports.string().optional().describe('e.g. "method", "function", "constructor", "arrow"'),
       language: external_exports.string().optional(),
@@ -296230,22 +296872,26 @@ server2.registerTool(
 server2.registerTool(
   "spec_nav_read_function",
   {
-    description: "Use INSTEAD OF Read for functions you will NOT edit \u2014 search candidates, callers, siblings \u2014 so you load the functions, not whole files. To edit a file, Read it (Edit requires that). Read functions in full \u2014 up to 10 in one call with `functions`, instead of one Read per file: signature, whole doc comment, the imports it uses, and its exact source with line numbers \u2014 from the column it starts at to the column it ends at, so a neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported under; + `line` to pick among same-named ones). In a batch the functions share one page; one that is not found is reported in its place. Long functions come in parts: the output says where it stopped and gives a `cursor` (or `fromLine`) to continue with \u2014 nothing is cut silently. If the function changed since the id was issued, or between parts, it answers STALE instead of showing different code. When a variable is assigned several functions, it says which others exist. Does not tell you whether another service may import it \u2014 check dependencies and service boundaries before reusing.",
+    description: "Use INSTEAD OF Read for functions you will NOT edit \u2014 search candidates, callers, siblings \u2014 so you load the functions, not whole files. To edit a file, Read it (Edit requires that). Read functions in full \u2014 up to 10 in one call with `functions`, instead of one Read per file: signature, whole doc comment, the imports it uses, and its exact source with line numbers \u2014 from the column it starts at to the column it ends at, so a neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported under; + `line` to pick among same-named ones). In a batch the functions share one page; one that is not found is reported in its place. For a LONG function (a 1,000-line component or route handler) or lines outside any function, pass `lines` (file lines, e.g. the map hits) to get only \xB1`around` lines (default 15) around each, merged, with the function's signature \u2014 like Read with offset/limit, but up to 10 windows in different files in one call; `file` + `lines` without `name` reads windows anywhere in a file. Long functions read in full come in parts: the output says where it stopped and gives a `cursor` (or `fromLine`) to continue with \u2014 nothing is cut silently. If the function changed since the id was issued, or between parts, it answers STALE instead of showing different code. When a variable is assigned several functions, it says which others exist. Does not tell you whether another service may import it \u2014 check dependencies and service boundaries before reusing.",
     inputSchema: {
       functions: external_exports.array(
         external_exports.object({
           id: external_exports.string().optional(),
           file: external_exports.string().optional(),
           name: external_exports.string().optional(),
-          line: external_exports.number().int().positive().optional()
+          line: external_exports.number().int().positive().optional(),
+          lines: external_exports.array(external_exports.number().int().positive()).max(40).optional(),
+          around: external_exports.number().int().min(0).optional()
         })
       ).min(1).max(MAX_BATCH_READS).optional().describe(
-        `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`). Use instead of the single-function fields below.`
+        `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`), or only windows of them with \`lines\` (or \`file\` + \`lines\`: windows anywhere in that file). Use instead of the single-function fields below.`
       ),
       id: external_exports.string().optional(),
       file: external_exports.string().optional().describe("Path relative to the repo root."),
       name: external_exports.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),
       line: external_exports.number().int().positive().optional().describe("A line inside the function, to disambiguate."),
+      lines: external_exports.array(external_exports.number().int().positive()).max(40).optional().describe("Only the lines around these file lines (\xB1`around`), not the whole function. With `file` alone: windows anywhere in the file."),
+      around: external_exports.number().int().min(0).optional().describe("Lines either side of each of `lines` (default 15, max 60)."),
       cursor: external_exports.string().optional().describe("nextCursor from the previous part: continues there even if the function moved; refuses if it changed."),
       fromLine: external_exports.number().int().positive().optional().describe("Continue a long function from this file line."),
       maxLines: external_exports.number().int().positive().optional().describe("Lines per part (default 400)."),
@@ -296331,6 +296977,9 @@ async function main() {
   const transport = new StdioServerTransport();
   await server2.connect(transport);
   console.error(`spec-nav running, repo root = ${REPO_ROOT}`);
+  if (process.env.SPEC_NAV_PREWARM !== "0") {
+    prewarm().then(({ files, ms }) => console.error(`spec-nav: indexed ${files} files in ${(ms / 1e3).toFixed(1)}s`)).then(() => prewarmFlow()).then(({ edges, ms }) => console.error(`spec-nav: flow graph with ${edges} links in ${(ms / 1e3).toFixed(1)}s`)).catch((err) => console.error(`spec-nav: background indexing stopped: ${err instanceof Error ? err.message : err}`));
+  }
 }
 main().catch((err) => {
   console.error("spec-nav failed to start:", err);

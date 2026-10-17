@@ -75,13 +75,15 @@ test("same-named methods on different classes are told apart", async () => {
   // through the interface Order implements
   assert.deepEqual(where(r.viaInterfaceOrBase), ["services/api/src/checkout.ts:8"]);
   assert.match(r.viaInterfaceOrBase[0].reason, /Totaler\.total \(interface\)/);
-  // untyped JS receiver: reported, not guessed
-  assert.deepEqual(where(r.unresolved), ["services/web/src/legacy.js:1"]);
-  assert.equal(r.exhaustive, false);
+  // services/web imports nothing from billing, so its untyped `order.total()`
+  // cannot be a call of Order.total: the service is left out, and a note says so.
+  assert.deepEqual(where(r.unresolved), []);
+  assert.ok(r.notes.some((n) => /^Searched only .*services\/billing/.test(n) && !/services\/web,/.test(n)), JSON.stringify(r.notes));
   // Python is analysed now: totals.py only declares an unrelated `total`, so it adds no site.
   assert.equal(r.notAnalyzedOtherLanguages.count, 0);
   assert.ok(![...r.sites, ...r.likely, ...r.ambiguous].some((x) => x.file.endsWith(".py")));
-  assert.ok(r.notes.some((n) => /NOT a complete list/.test(n)));
+  assert.equal(r.exhaustive, true);
+  assert.ok(r.notes.some((n) => /every call to the target\(s\) was resolved/.test(n)));
 
   const cart = await s.json("spec_nav_callers", { symbol: "total", className: "Cart" });
   assert.deepEqual(cart.targets.map((t) => t.name), ["Cart.total"]);

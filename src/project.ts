@@ -148,6 +148,29 @@ const UNSUPPORTED_SOURCE = new Set([
   ".coffee", ".mdx", ".graphql", ".gql", ".proto",
 ]);
 
+/**
+ * Text that is not code but holds the same names: configuration, docs, SQL,
+ * translations. No functions to attach a hit to, but `spec_nav_map` searches
+ * it so a survey does not need a grep for the config half of a change.
+ */
+const TEXT_EXTENSIONS = new Set([
+  ".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".properties", ".xml",
+  ".md", ".mdx", ".rst", ".txt",
+  ".sql", ".graphql", ".gql", ".proto", ".prisma",
+  ".html", ".css", ".scss", ".sass", ".less",
+  ".env", ".conf", ".cfg", ".tf", ".hcl",
+]);
+/** Generated files that match everything and mean nothing. */
+const TEXT_SKIP = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "composer.lock", "Gemfile.lock", "Cargo.lock", "poetry.lock"]);
+
+/** `.env`, `.env.local`, `.env.example` have no extension in the usual sense. */
+function textExt(name: string): string | undefined {
+  if (TEXT_SKIP.has(name)) return undefined;
+  if (name === ".env" || name.startsWith(".env.")) return ".env";
+  const ext = path.extname(name).toLowerCase();
+  return TEXT_EXTENSIONS.has(ext) ? ext : undefined;
+}
+
 /** Files bigger than this are almost always generated or minified bundles. */
 export const MAX_FILE_BYTES = 1_500_000;
 
@@ -169,6 +192,8 @@ export interface RepoScan {
   root: string;
   services: string[];
   files: SourceEntry[];
+  /** Non-code text (config, docs, SQL…), language "text". Searched by map only. */
+  texts: SourceEntry[];
   /** Source files in languages we cannot parse (relative paths). */
   unsupported: string[];
   /** Directories not entered, with why. Relative paths. */
@@ -223,6 +248,7 @@ export function scanRepo(): RepoScan {
   assertRoot();
   const projects: string[] = [];
   const files: SourceEntry[] = [];
+  const texts: SourceEntry[] = [];
   const unsupported: string[] = [];
   const skippedDirs: RepoScan["skippedDirs"] = [];
   const skippedFiles: RepoScan["skippedFiles"] = [];
@@ -268,6 +294,20 @@ export function scanRepo(): RepoScan {
         if (e.name.endsWith(".d.ts") || e.name.endsWith(".d.mts") || e.name.endsWith(".d.cts")) continue;
         if (!SCANNABLE.has(ext)) {
           if (UNSUPPORTED_SOURCE.has(ext)) unsupported.push(toPosix(childRel));
+          const tExt = textExt(e.name);
+          if (tExt) {
+            let st: fs.BigIntStats;
+            try {
+              st = fs.statSync(abs, { bigint: true });
+            } catch {
+              continue;
+            }
+            if (st.size > BigInt(MAX_FILE_BYTES)) continue;
+            texts.push({
+              abs, rel: toPosix(childRel), service: current, ext: tExt, language: "text", size: Number(st.size),
+              stamp: `${st.mtimeNs}:${st.ctimeNs}:${st.size}:${st.ino}`,
+            });
+          }
           continue;
         }
         let st: fs.BigIntStats;
@@ -300,13 +340,15 @@ export function scanRepo(): RepoScan {
   };
 
   walk(REPO_ROOT, "", ".");
-  files.sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0));
+  const byRel = (a: SourceEntry, b: SourceEntry) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0);
+  files.sort(byRel);
+  texts.sort(byRel);
 
   // The root counts as a project when it owns files of its own, or when
   // nothing below it is a project (a single-project checkout).
   const services = [...projects];
   if (!projects.length || files.some((f) => f.service === ".")) services.push(".");
-  return { root: REPO_ROOT, services: services.sort(), files, unsupported, skippedDirs, skippedFiles, unreadable };
+  return { root: REPO_ROOT, services: services.sort(), files, texts, unsupported, skippedDirs, skippedFiles, unreadable };
 }
 
 /** Every project under the root, at any depth. */
@@ -370,6 +412,8 @@ export function relPath(abs: string): string {
 }
 
 export interface EnclosingInfo {
+  /** Last line of the enclosing function (absent at file scope). */
+  endLine?: number;
   /** Enclosing function or method name, or "<top-level>". */
   name: string;
   /** Line where the enclosing function is declared. */
@@ -422,6 +466,7 @@ export function enclosingFunction(node: Node): EnclosingInfo {
       return {
         name,
         line: current.getStartLineNumber(),
+        endLine: current.getEndLineNumber(),
         signature: `${name}(${sigParts.join(", ")})`,
         params,
       };

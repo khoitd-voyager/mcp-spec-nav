@@ -85,6 +85,15 @@ export async function analysedFacts(entries: SourceEntry[]): Promise<FileFacts[]
   return out;
 }
 
+/** Parse the inventory in the background, yielding between files so requests are not held up. */
+export async function prewarmFacts(entries: SourceEntry[]): Promise<void> {
+  let n = 0;
+  for (const e of entries) {
+    await analysedFacts([e]);
+    if (++n % 20 === 0) await new Promise((r) => setImmediate(r));
+  }
+}
+
 /** Facts of one file, parsed if needed — for its direct calls and exports. */
 export async function factsOf(e: SourceEntry): Promise<FileFacts | undefined> {
   const fam = familyOf(e.language);

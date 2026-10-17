@@ -61,6 +61,8 @@ Dùng đường dẫn/tên thật từ kết quả, hoặc truyền `{ "id": "<i
 
 Hàm dài được chia phần: đọc tiếp bằng `nextCursor` trả về, truyền vào `cursor` (hoặc dùng `fromLine`); `maxLines` đặt số dòng mỗi phần (mặc định 400). Không có phần nào bị cắt mà không báo.
 
+Để chỉ đọc một phần của hàm dài — component hay route handler cả nghìn dòng — truyền `lines` (dòng trong file, ví dụ các hit của map) và tùy chọn `around` (mặc định 15, tối đa 60): kết quả gồm chữ ký hàm và ±`around` dòng quanh mỗi dòng, gộp khi chồng nhau, dòng được yêu cầu đánh dấu `>`. `file` + `lines` không có `name` đọc khúc ở bất kỳ đâu trong file, mỗi khúc ghi nó nằm trong hàm nào. Dùng được trong batch, nên nhiều chỗ ở nhiều file về trong một lần gọi.
+
 Đọc tối đa 10 hàm trong một lần gọi bằng `functions`:
 
 ```json
@@ -86,7 +88,7 @@ Bỏ `services` để xem mọi project. `services: ["."]` chỉ chọn file c�
 { "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }
 ```
 
-Dùng tên đầy đủ như `OrderService.calculateFee`, `className` hoặc `file` khai báo để phân biệt hàm đích. `service` thu hẹp nơi khai báo; `searchServices` thu hẹp nơi tìm caller. `limit` mặc định 100 site mỗi trang.
+Dùng tên đầy đủ như `OrderService.calculateFee`, `className` hoặc `file` khai báo để phân biệt hàm đích. `service` thu hẹp nơi khai báo; `searchServices` thu hẹp nơi tìm caller. `limit` mặc định 100 site mỗi trang; `limit` truyền vào được tôn trọng tới khoảng 120k ký tự. Mỗi site có `snippet` là nguyên dòng code và `usage`: kết quả lời gọi được dùng thế nào (`assigned`, `template string ${…}`, `String(…)`, `+= (accumulated)`, `arithmetic +`, `.toFixed on the result`, `returned`…). `usage` ở cấp trên đếm trên mọi site, không chỉ trang hiện tại. Trang chưa đủ site sẽ mở đầu bằng `partial` (còn bao nhiêu site chưa hiện, theo từng file) và `nextPage` (lệnh lấy trang tiếp). Khi hàm đích gọi HTTP hoặc có site nằm trong endpoint handler, `boundaries` (ngay sau `usage`) ghi luôn phía bên kia — `sends to <service>: <handler>` hoặc `called by <service>: <file:line>` — lấy từ flow graph được dựng nền sau khi server khởi động; khi graph chưa sẵn, `nextTrace` đưa lệnh `spec_nav_trace_flow` thay thế. `next` đọc các hàm gọi trong một lần: hàm ngắn đọc nguyên, hàm dài (trên 80 dòng) chỉ đọc ±15 dòng quanh lời gọi. Chỉ tìm trong các service import được nơi khai báo: chính service đó, và service import nó qua tên package, alias `paths` trong tsconfig hoặc đường dẫn tương đối; kết quả có note ghi rõ đã tìm ở đâu. Hàm bọc trong `cache(…)`, `unstable_cache(…)`, `memo(…)` hay `useCallback(…)` được nhận theo tên biến.
 
 TypeScript/JavaScript (và script, template của Vue/Svelte/Astro) được resolve bằng type checker của TypeScript. Các ngôn ngữ hỗ trợ khác được gắn theo bằng chứng — cùng file/class, qualifier, import hoặc alias, package, hoặc receiver được khai báo đúng kiểu class — và trường `reason` của từng site cho biết bằng chứng nào. Mỗi site có hàm chứa nó, tham số của hàm đó và số đối số.
 
@@ -98,7 +100,9 @@ Output luôn là JSON (mặc định có thụt lề; `format: "json"` trả v�
 { "pattern": "handl(e|ing)_?fee|handling_charge|HANDLING_FEE" }
 ```
 
-Không phân biệt hoa thường. Mặc định bỏ qua dòng comment/import; đặt `includeComments: true` để lấy cả chúng. Tham số khác: `services`, `cursor`, `pageSize` (trang cũng được cắt ở khoảng 30k ký tự).
+Không phân biệt hoa thường. Mặc định bỏ qua dòng comment/import; đặt `includeComments: true` để lấy cả chúng. File config, docs và file text khác (JSON, YAML, Markdown, `.env`, SQL, HTML/CSS…; trừ lockfile) cũng được quét và liệt kê sau phần code, đánh dấu `[text: no functions]`; `includeText: false` để chỉ quét code. `^` và `$` khớp theo từng dòng. `file` lọc theo đường dẫn (chuỗi con, glob có `*`, hoặc regex: `/…/`, hay bất kỳ giá trị nào có `|` `(` `^` `$` `\`, ví dụ `services/(order|payment)`; nếu không khớp file nào thì kết quả nói rõ, không trả về map rỗng); `context` thêm tối đa 10 dòng (giá trị lớn hơn được tính là 10) trước và sau mỗi hit như `grep -C`, hiển thị dạng `line : source`. Khi một trang nêu không quá mười chỗ, kết quả kết thúc bằng lệnh `Next —` soạn sẵn để đọc bằng một lần `spec_nav_read_function`: hàm bao ngoài ngắn thì đọc nguyên, hàm dài (trên 80 dòng) hoặc hit ở cấp file thì chỉ đọc ±15 dòng quanh hit. Khi một hit gọi HTTP hoặc nằm trong endpoint handler, khối "Service boundaries" phía trên các hit ghi lời gọi đi tới đâu hoặc ai gọi endpoint đó (từ flow graph dựng sau khi khởi động; khi chưa sẵn thì gợi ý lệnh `spec_nav_trace_flow`). Tham số khác: `services`, `cursor`, `pageSize` (trang cũng được cắt ở khoảng 30k ký tự).
+
+`spec_nav_find_functions` kết thúc bằng lệnh đọc sẵn các ứng viên đầu bảng, còn `spec_nav_callers` có lệnh đọc các hàm đang gọi (trường `next`) khi không quá mười hàm.
 
 ## `spec_nav_trace_flow`
 

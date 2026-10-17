@@ -4,10 +4,10 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { REPO_ROOT } from "./project.js";
 import { mapPattern, renderMap, listServices } from "./tools.js";
-import { listFunctions, findFunctions, readFunction, MAX_BATCH_READS } from "./catalog.js";
+import { listFunctions, findFunctions, readFunction, prewarm, MAX_BATCH_READS } from "./catalog.js";
 import { findCallers } from "./callers.js";
 import { similarFunctions } from "./similar.js";
-import { traceFlow } from "./flow/trace.js";
+import { traceFlow, prewarmFlow } from "./flow/trace.js";
 
 /**
  * Sent once, in the client's system prompt. Unlike tool descriptions it is
@@ -15,17 +15,17 @@ import { traceFlow } from "./flow/trace.js";
  * defers MCP schemas), so it carries the triggers: when to reach for which
  * tool instead of Grep/Read — and, so the rest is believed, when not to.
  */
-const INSTRUCTIONS = `spec-nav indexes every function in every service under the root, from syntax trees rather than text. If its tools are listed by name only (deferred), load them with ToolSearch before calling.
+const INSTRUCTIONS = `spec-nav indexes every function in every service under the root, from syntax trees rather than text. If its tools are listed by name only (deferred), load all of them in ONE ToolSearch call (query "+spec_nav", max_results 10) rather than one at a time.
 
 Use spec-nav instead of Grep/Read when:
 - About to write a new function or helper → spec_nav_find_functions first, describing the behaviour in words. Existing code is often named differently from the name you would grep for. Nothing fits → spec_nav_similar_functions with your draft as \`code\`.
 - Changing a function's signature or behaviour → spec_nav_callers, not a grep for its name: it drops same-named methods on other classes and finds calls through aliases and re-exports.
-- A concept spread across files or services (a field, fee, status, flag) → one broad spec_nav_map regex instead of several greps; each hit names its enclosing function.
+- Searching the repo for a name or concept (a field, fee, status, flag) → one broad spec_nav_map regex instead of grep -rn. It covers code and config/docs/SQL, names each hit's enclosing function, and takes \`file\` and \`context\` like grep.
 - Reading functions you will NOT edit (candidates, callers, siblings) → spec_nav_read_function with \`functions\` (up to 10 per call) instead of one Read per file.
 - A change touches an endpoint, RPC call or event → spec_nav_trace_flow (upstream: who reaches it; downstream: what it reaches).
 - Seeing what a file or service defines → spec_nav_functions. Unsure of the root or service names → spec_nav_services.
 
-Grep/Read remain the right tools for an exact string you already know, non-code files (config, YAML, JSON, Markdown), and a file you are about to Edit (Edit requires a Read).`;
+When a result ends with a ready "Next —" call, send that instead of searching again. Grep/Read remain the right tools for a string in one file you already know, and a file you are about to Edit (Edit requires a Read).`;
 
 const server = new McpServer({ name: "spec-nav", version: "0.7.0" }, { instructions: INSTRUCTIONS });
 
@@ -58,16 +58,15 @@ server.registerTool(
   "spec_nav_map",
   {
     description:
-      "Use INSTEAD OF several Grep calls when a concept (a field, fee, status, flag) may appear in many " +
-      "files or services. For an exact string in non-code files (config, YAML, JSON, Markdown), use Grep. " +
-      "Survey a change: every line matching a regex across EVERY project under the root, in " +
-      "TypeScript, JavaScript, Vue/Svelte/Astro, Python, Go, Java, Kotlin, Swift, C#, Ruby, Rust, PHP, C, C++, " +
-      "Scala, Elixir and Bash, " +
-      "each tagged with the function or method it sits in. One wide pattern beats many narrow " +
-      "greps. Large results are paged, not cut: the header says COMPLETE or gives a cursor for " +
-      "the next page, and when there are more pages the first one lists every file with its hit " +
-      "count (if that list fits). Long source lines are shortened and end with …. Files in other " +
-      "languages are not searched. Pass a regex, e.g. \"handl(e|ing)_?fee|HANDLING_FEE\".",
+      "Use INSTEAD OF grep -rn: one regex across EVERY project under the root, each hit tagged with the " +
+      "function or method it sits in (TypeScript, JavaScript, Vue/Svelte/Astro, Python, Go, Java, Kotlin, " +
+      "Swift, C#, Ruby, Rust, PHP, C, C++, Scala, Elixir, Bash). Config, docs and other text (JSON, YAML, " +
+      "Markdown, .env, SQL, HTML/CSS…) are searched too and listed after the code. One wide pattern beats " +
+      "many narrow greps. `file` narrows to paths (substring, glob or regex), `context` adds lines around each " +
+      "hit like grep -C. Large results are paged, not cut: the header says COMPLETE or gives a cursor, and " +
+      "the first of several pages lists every file with its hit count (if that fits). A focused result " +
+      "ends with a ready spec_nav_read_function call for the functions it names. Long lines end with …. " +
+      "Pass a regex, e.g. \"handl(e|ing)_?fee|HANDLING_FEE\".",
     inputSchema: {
       pattern: z.string().describe('Regex, case-insensitive. E.g. "handl(e|ing)_?fee|handling_charge"'),
       services: servicesArg,
@@ -75,14 +74,17 @@ server.registerTool(
         .boolean()
         .optional()
         .describe("Include comment and import lines (skipped by default as noise)"),
+      file: z.string().optional().describe("Only files whose path contains this, matches it as a * glob, or matches it as a regex (/…/, or any value with | ( ^ $ \\, e.g. \"services/(order|payment)\")."),
+      context: z.number().int().min(0).optional().describe("Lines shown before and after each hit, like grep -C (default 0; above 10 is read as 10)."),
+      includeText: z.boolean().optional().describe("Also search config, docs and other text files (default true)."),
       cursor: cursorArg,
       pageSize: z.number().int().positive().optional().describe("Max hits per page (pages are also cut at ~30k characters)."),
     },
   },
-  async ({ pattern, services, includeComments, cursor, pageSize }) => {
+  async ({ pattern, services, includeComments, file, context, includeText, cursor, pageSize }) => {
     try {
-      const result = await mapPattern(pattern, services, { includeComments });
-      return text(renderMap(result, { cursor, services, includeComments, pageSize }));
+      const result = await mapPattern(pattern, services, { includeComments, file, context, includeText });
+      return text(renderMap(result, { cursor, services, includeComments, pageSize, file, context, includeText }));
     } catch (err) {
       return fail(err);
     }
@@ -109,7 +111,7 @@ server.registerTool(
     inputSchema: {
       query: z.string().describe('What the function does, in words. E.g. "calculate order fees"'),
       services: servicesArg,
-      file: z.string().optional().describe("Only files whose path contains this (or matches it, with * globs)."),
+      file: z.string().optional().describe("Only files whose path contains this, matches it as a * glob, or matches it as a regex (/…/, or any value with | ( ^ $ \\, e.g. \"services/(order|payment)\")."),
       language: z.string().optional().describe('e.g. "typescript", "javascript", "python", "go"'),
       searchBodies: z
         .boolean()
@@ -188,7 +190,7 @@ server.registerTool(
       "anonymous callbacks are counted, not listed.",
     inputSchema: {
       services: servicesArg,
-      file: z.string().optional().describe("Only files whose path contains this (or matches it, with * globs)."),
+      file: z.string().optional().describe("Only files whose path contains this, matches it as a * glob, or matches it as a regex (/…/, or any value with | ( ^ $ \\, e.g. \"services/(order|payment)\")."),
       name: z.string().optional().describe("Case-insensitive substring of the qualified name, or /regex/."),
       kind: z.string().optional().describe('e.g. "method", "function", "constructor", "arrow"'),
       language: z.string().optional(),
@@ -219,7 +221,11 @@ server.registerTool(
       "neighbour on the same line is not included. Identify it by `id` (from spec_nav_functions / " +
       "spec_nav_find_functions), or by `file` + `name` (qualified, short, or a name it is exported " +
       "under; + `line` to pick among same-named ones). In a batch the functions share one page; one " +
-      "that is not found is reported in its place. Long functions come in parts: the output says " +
+      "that is not found is reported in its place. For a LONG function (a 1,000-line component or " +
+      "route handler) or lines outside any function, pass `lines` (file lines, e.g. the map hits) to " +
+      "get only ±`around` lines (default 15) around each, merged, with the function's signature — " +
+      "like Read with offset/limit, but up to 10 windows in different files in one call; `file` + " +
+      "`lines` without `name` reads windows anywhere in a file. Long functions read in full come in parts: the output says " +
       "where it stopped and gives a `cursor` (or `fromLine`) to continue with — nothing is cut " +
       "silently. If the function changed since the id was issued, or between parts, it answers STALE " +
       "instead of showing different code. When a variable is assigned several functions, it says " +
@@ -233,19 +239,28 @@ server.registerTool(
             file: z.string().optional(),
             name: z.string().optional(),
             line: z.number().int().positive().optional(),
+            lines: z.array(z.number().int().positive()).max(40).optional(),
+            around: z.number().int().min(0).optional(),
           }),
         )
         .min(1)
         .max(MAX_BATCH_READS)
         .optional()
         .describe(
-          `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`). ` +
+          `Read up to ${MAX_BATCH_READS} functions at once, each by \`id\` or \`file\`+\`name\` (+ \`line\`), ` +
+            "or only windows of them with `lines` (or `file` + `lines`: windows anywhere in that file). " +
             "Use instead of the single-function fields below.",
         ),
       id: z.string().optional(),
       file: z.string().optional().describe("Path relative to the repo root."),
       name: z.string().optional().describe('Qualified ("OrderService.calculateFee"), short, or exported name.'),
       line: z.number().int().positive().optional().describe("A line inside the function, to disambiguate."),
+      lines: z
+        .array(z.number().int().positive())
+        .max(40)
+        .optional()
+        .describe("Only the lines around these file lines (±`around`), not the whole function. With `file` alone: windows anywhere in the file."),
+      around: z.number().int().min(0).optional().describe("Lines either side of each of `lines` (default 15, max 60)."),
       cursor: z
         .string()
         .optional()
@@ -369,6 +384,15 @@ async function main() {
   await server.connect(transport);
   // stderr, so it does not corrupt the MCP protocol stream on stdout
   console.error(`spec-nav running, repo root = ${REPO_ROOT}`);
+  // Index in the background so the first call is not the slow one.
+  if (process.env.SPEC_NAV_PREWARM !== "0") {
+    prewarm()
+      .then(({ files, ms }) => console.error(`spec-nav: indexed ${files} files in ${(ms / 1000).toFixed(1)}s`))
+      // Then the flow graph, so map and callers can show service boundaries inline.
+      .then(() => prewarmFlow())
+      .then(({ edges, ms }) => console.error(`spec-nav: flow graph with ${edges} links in ${(ms / 1000).toFixed(1)}s`))
+      .catch((err) => console.error(`spec-nav: background indexing stopped: ${err instanceof Error ? err.message : err}`));
+  }
 }
 
 main().catch((err) => {

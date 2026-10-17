@@ -61,6 +61,8 @@
 
 函数较长时会分段返回：把返回的 `nextCursor` 作为 `cursor`（或使用 `fromLine`）继续读取；`maxLines` 设置每段行数（默认 400）。不会静默截断。
 
+只读长函数的一部分（上千行的组件或路由 handler）时，传入 `lines`（文件行号，例如 map 的命中）和可选的 `around`（默认 15，最大 60）：输出函数签名以及每行前后 ±`around` 行，重叠处合并，请求的行以 `>` 标记。只传 `file` + `lines`（不传 `name`）可读取文件任意位置的片段，每段注明所在函数。批量调用同样支持，多个文件中的多处可一次取回。
+
 用 `functions` 一次最多读取 10 个函数：
 
 ```json
@@ -86,7 +88,7 @@
 { "symbol": "calculateFee", "file": "services/billing/src/fees.ts", "format": "json" }
 ```
 
-可用限定名（如 `OrderService.calculateFee`）、`className` 或声明所在的 `file` 消除歧义。`service` 缩小声明的范围；`searchServices` 缩小查找调用方的范围。`limit` 默认每页 100 个位置。
+可用限定名（如 `OrderService.calculateFee`）、`className` 或声明所在的 `file` 消除歧义。`service` 缩小声明的范围；`searchServices` 缩小查找调用方的范围。`limit` 默认每页 100 个位置；显式传入的 `limit` 在约 120k 字符内会被遵守。每个位置带有 `snippet`（整行源码）和 `usage`：调用结果的用法（`assigned`、`template string ${…}`、`String(…)`、`+= (accumulated)`、`arithmetic +`、`.toFixed on the result`、`returned`…）。顶层 `usage` 统计全部位置，而不只是当前页。未包含全部位置的页面以 `partial`（按文件列出尚未显示的数量）和 `nextPage`（获取下一页的调用）开头。目标函数发起 HTTP 调用或有位置位于 endpoint handler 时，`boundaries`（紧跟 `usage`）直接给出另一端——`sends to <service>: <handler>` 或 `called by <service>: <file:line>`——来自启动后在后台构建的 flow graph；graph 未就绪时，`nextTrace` 给出对应的 `spec_nav_trace_flow` 调用。`next` 一次读取调用方函数：短函数整段读取，长函数（超过 80 行）只读调用处前后 ±15 行。只在能 import 到声明的服务中查找：声明所在的服务，以及通过包名、tsconfig `paths` 别名或相对路径 import 它的服务；结果中的 note 会列出查找范围。包在 `cache(…)`、`unstable_cache(…)`、`memo(…)` 或 `useCallback(…)` 中的函数按变量名识别。
 
 TypeScript/JavaScript（以及 Vue/Svelte/Astro 的脚本和模板）使用 TypeScript 类型检查器解析。其他受支持语言基于证据绑定——同一文件/类、限定符、import 或别名、包，或声明为该类类型的接收者——每个位置的 `reason` 说明依据。每个位置都包含所在函数、该函数的参数以及实参个数。
 
@@ -98,7 +100,9 @@ TypeScript/JavaScript（以及 Vue/Svelte/Astro 的脚本和模板）使用 Type
 { "pattern": "handl(e|ing)_?fee|handling_charge|HANDLING_FEE" }
 ```
 
-不区分大小写。默认跳过注释和 import 行；设置 `includeComments: true` 可包含它们。其他参数：`services`、`cursor`、`pageSize`（每页也会在约 30k 字符处截断）。
+不区分大小写。默认跳过注释和 import 行；设置 `includeComments: true` 可包含它们。配置、文档等文本文件（JSON、YAML、Markdown、`.env`、SQL、HTML/CSS…；不含 lockfile）也会被搜索，列在代码之后并标记为 `[text: no functions]`；`includeText: false` 只搜索代码。`^` 和 `$` 按行匹配。`file` 按路径过滤（子串、带 `*` 的 glob，或正则：`/…/`，或任何含 `|` `(` `^` `$` `\` 的值，例如 `services/(order|payment)`；没有匹配到任何文件时会明确说明，而不是返回空结果）；`context` 像 `grep -C` 一样在每个命中前后加最多 10 行（更大的值按 10 处理），显示为 `line : source`。当一页涉及的位置不超过十个时，结果末尾会给出现成的 `Next —` 调用，用一次 `spec_nav_read_function` 读取：短的外层函数整段读取，长函数（超过 80 行）或文件顶层的命中只读前后 ±15 行。命中发起 HTTP 调用或位于 endpoint handler 时，命中列表上方的 "Service boundaries" 块会写明调用去向或谁调用该 endpoint（来自启动后构建的 flow graph；未就绪时改为给出 `spec_nav_trace_flow` 调用）。其他参数：`services`、`cursor`、`pageSize`（每页也会在约 30k 字符处截断）。
+
+`spec_nav_find_functions` 末尾会给出读取前几个候选的现成调用；`spec_nav_callers` 在调用函数不超过十个时也会给出（`next` 字段）。
 
 ## `spec_nav_trace_flow`
 

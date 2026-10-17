@@ -61,6 +61,8 @@ Use a real path/name from your results, or pass `{ "id": "<id returned by the to
 
 For long functions, continue with the returned `nextCursor` as `cursor` (or `fromLine`); `maxLines` sets the lines per part (default 400). Nothing is cut silently.
 
+To read only part of a long function — a 1,000-line component or route handler — pass `lines` (file lines, such as map hits) and optionally `around` (default 15, max 60): the output is the signature and ±`around` lines around each, merged where they overlap, with requested lines marked `>`. `file` + `lines` without `name` reads windows anywhere in the file, each labelled with the function it is in. Windows work in a batch too, so several places in different files come back in one call.
+
 Read up to 10 functions in one call with `functions`:
 
 ```json
@@ -88,7 +90,7 @@ Omit `services` to cover all discovered projects. `services: ["."]` selects the 
 
 Use a qualified name such as `OrderService.calculateFee`, `className`, or a declaration `file` to disambiguate targets. `service` narrows the declaration; `searchServices` narrows where callers are searched. `limit` defaults to 100 sites per page.
 
-TypeScript/JavaScript (and Vue/Svelte/Astro scripts and templates) are resolved with the TypeScript type checker. Other supported languages are bound by evidence — same file/class, qualifier, import or alias, package, or a receiver declared with the class's type — and each site's `reason` says which. Every site includes its enclosing function, that function's parameters and the argument count.
+TypeScript/JavaScript (and Vue/Svelte/Astro scripts and templates) are resolved with the TypeScript type checker. Other supported languages are bound by evidence — same file/class, qualifier, import or alias, package, or a receiver declared with the class's type — and each site's `reason` says which. Every site includes its enclosing function, that function's parameters, the argument count, its source line as `snippet`, and `usage`: how the call's result is used (`assigned`, `template string ${…}`, `String(…)`, `+= (accumulated)`, `arithmetic +`, `.toFixed on the result`, `returned`…). The top-level `usage` counts those over every site, not just the page, so a change to what the function returns can be checked group by group. An explicit `limit` is honoured up to about 120k characters. A page that does not hold every site starts with `partial` (what is not shown yet, per file) and `nextPage` (the call for the next page). When the target makes an HTTP call, or a site sits in an endpoint handler, `boundaries` (right after `usage`) names the other side — `sends to <service>: <handler>` or `called by <service>: <file:line>` — from the flow graph, which is built in the background after start; until it is ready, `nextTrace` gives the matching `spec_nav_trace_flow` call instead. `next` reads the calling functions in one batch: short ones whole, long ones (over 80 lines) only ±15 lines around the calls. Only services that can import the declaration are searched — its own, and those that import it by package name, tsconfig `paths` alias or a relative path — and a note names them; functions wrapped in `cache(…)`, `unstable_cache(…)`, `memo(…)` or `useCallback(…)` are found under the variable's name.
 
 The output is always JSON (indented by default; `format: "json"` returns it on one line). Its `notes` state what is not counted: names computed at runtime, calls through HTTP/RPC/queues, unsupported file types and code outside the repository. To follow HTTP, RPC and event links between services, use [`spec_nav_trace_flow`](#spec_nav_trace_flow).
 
@@ -98,7 +100,9 @@ The output is always JSON (indented by default; `format: "json"` returns it on o
 { "pattern": "handl(e|ing)_?fee|handling_charge|HANDLING_FEE" }
 ```
 
-Matching is case-insensitive. Comment/import lines are skipped by default; set `includeComments: true` to include them. Other arguments: `services`, `cursor`, `pageSize` (pages are also cut at ~30k characters).
+Matching is case-insensitive. Comment/import lines are skipped by default; set `includeComments: true` to include them. Config, docs and other text files (JSON, YAML, Markdown, `.env`, SQL, HTML/CSS…; lockfiles excluded) are searched too and listed after the code, marked `[text: no functions]`; `includeText: false` searches code only. `^` and `$` anchor to each line. `file` narrows to paths (substring, a glob with `*`, or a regex: `/…/`, or any value with `|` `(` `^` `$` `\`, such as `services/(order|payment)`; a filter that matches no file says so instead of returning an empty map); `context` adds up to 10 lines (larger values are read as 10) before and after each hit, like `grep -C`, shown as `line : source`. When a page names at most ten places, it ends with a ready `Next —` call that reads them with one `spec_nav_read_function`: short enclosing functions whole, and only ±15 lines around the hits in long ones (over 80 lines) or at file scope. When a hit makes an HTTP call or sits in an endpoint handler, a "Service boundaries" block above the hits says where the call lands or who calls the endpoint (from the flow graph built after start; until it is ready, a `spec_nav_trace_flow` call is offered instead). Other arguments: `services`, `cursor`, `pageSize` (pages are also cut at ~30k characters).
+
+`spec_nav_find_functions` ends with a ready read of its top candidates, and `spec_nav_callers` with one for the calling functions (its `next` field) when there are at most ten.
 
 ## `spec_nav_trace_flow`
 

@@ -138,32 +138,34 @@ npm run pack:mcpb
 安装 MCP 只是让工具可用，并不保证代理会去调用。把下面这段加入项目的 `CLAUDE.md`：
 
 ```markdown
-## 编写新逻辑之前先查找已有代码
+## 用 spec-nav 查找已有代码
 
-对于新逻辑，或会影响其他函数的修改：
+- 编写新函数之前：用 spec_nav_find_functions，用文字描述行为。
+  找不到合适的 → 把草稿交给 spec_nav_similar_functions。
+  其他服务的函数并不一定可以直接导入：先检查依赖。
+- 修改函数签名或行为之前：用 spec_nav_callers，不要 grep 函数名。
+  手动检查标记为 likely、ambiguous、unresolved 或 dynamic 的位置。
+- 在仓库中搜索某个名称或概念：用一个宽泛的正则调用 spec_nav_map，代替 grep -rn。
+  它同时覆盖代码和配置/文档，并像 grep 一样支持 `file` 和 `context`。
+- 修改涉及接口、事件或其他服务：用 spec_nav_trace_flow。
+  标记为 partial、ambiguous 或 unresolved 的连接只是线索，不是结论：请阅读两端。
+- 结果末尾给出现成的 "Next —" 调用时，直接发送它，不要重新搜索。
 
-1. 用 spec_nav_find_functions 在各服务中查找已有实现。
-   代码用英文命名时使用英文关键词；必要时换一种说法再试。
-2. 用 spec_nav_read_function 阅读最相关的候选。
-   避免把整个函数目录或所有函数体加载进上下文。
-   找不到合适的函数时，先写草稿，再交给 spec_nav_similar_functions。
-3. 复用前检查行为、导出、依赖和服务边界。
-   其他服务的函数并不一定可以直接导入。
-4. 修改函数签名或行为之前使用 spec_nav_callers。
-   手动检查标记为 likely、ambiguous、unresolved 或 dynamic 的位置。
-   涉及多个文件或服务的概念，用一个宽泛的正则配合 spec_nav_map。
-5. 当修改涉及接口、事件或对其他服务的调用时，使用 spec_nav_trace_flow
-   （upstream：谁会到达这里；downstream：它会到达哪里）。
-   标记为 partial、ambiguous 或 unresolved 的连接只是线索，不是结论：请阅读两端。
-6. 查看覆盖率和未解析结果。需要完整结果时继续翻页（cursor）；
-   对不支持或缺失的部分，使用普通搜索和文件读取。
-7. 修改完成后，重新执行相关查询，并运行项目相应的检查。
-
-按任务规模取舍。小而独立的修改不需要用到每个工具。
-搜索结果只是候选，找不到并不能证明仓库里没有其他实现。
+一个问题一次调用，不需要用到每个工具。结果只是候选，
+不能证明仓库里没有其他实现。
 ```
 
-其他代理请把这段改写到各自的项目说明文件中，例如 `AGENTS.md`。
+每一行是触发条件，不是步骤：要求代理在修改前按固定顺序调用一串工具，只会让调用变多而不是变少。其他代理请把这段改写到各自的项目说明文件中，例如 `AGENTS.md`。
+
+### 预先加载工具（Claude Code）
+
+Claude Code 可能把 MCP 工具藏在工具搜索之后：代理只看到名称，必须先调用 `ToolSearch` 才能使用，这会多花一次调用，而且代理常常因此直接改用 Grep。要从一开始就加载 spec-nav 的工具，请设置 `ENABLE_TOOL_SEARCH=false`，可以写在启动 `claude` 的环境变量中，或写在 `.claude/settings.json` 中：
+
+```json
+{ "env": { "ENABLE_TOOL_SEARCH": "false" } }
+```
+
+代价是每次请求都会附带工具定义（spec-nav 的八个工具约 5k token），换来不再需要 `ToolSearch` 调用。
 
 ## 从本地源码安装
 
